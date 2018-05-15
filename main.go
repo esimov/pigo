@@ -2,14 +2,13 @@ package main
 
 import (
 	"bytes"
-	"fmt"
-	"log"
-	"io/ioutil"
 	"encoding/binary"
+	"fmt"
+	"io/ioutil"
+	"log"
 )
 
 type Pigo struct {
-
 }
 
 func NewPigo() *Pigo {
@@ -17,9 +16,9 @@ func NewPigo() *Pigo {
 }
 
 func main() {
-	cascadeFile, err := ioutil.ReadFile("data/facefinder")
+	cascadeFile, err := ioutil.ReadFile("facefinder")
 	if err != nil {
-		log.Fatalf("Error reading the cascade file: %s", err);
+		log.Fatalf("Error reading the cascade file: %s", err)
 	}
 
 	fmt.Println(cascadeFile[0])
@@ -40,13 +39,18 @@ func (pg *Pigo) Unpack(packet []byte) {
 	if err != nil {
 		log.Fatalf("Error writing buffer bytes: %v", err)
 	}
-	
+
 	if dataView.Len() > 0 {
 		// Read the depth of each tree.
-		depthTree := dataView.Bytes()
-		fmt.Println(dataView.Bytes())
-		binary.Read(dataView, binary.LittleEndian, packet[0:4])
-		binary.LittleEndian.Uint32(packet)
-		fmt.Println(depthTree[4])
+		depthTree := binary.LittleEndian.Uint32(packet[pos:])
+		fmt.Println("Depth tree: ", depthTree)
+
+		pos += 4
+		_, err := dataView.Write([]byte{packet[pos+0], packet[pos+1], packet[pos+2], packet[pos+3]})
+		if err != nil {
+			log.Fatalf("Error writing buffer bytes: %v", err)
+		}
+		numTree := binary.LittleEndian.Uint32(packet[pos:])
+		fmt.Println("Num tree: ", numTree)
 	}
 }
