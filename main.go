@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"image"
 	"io/ioutil"
 	"log"
 	"math"
@@ -11,6 +12,11 @@ import (
 )
 
 type Pigo struct {
+	treeDepth     uint32
+	treeNum       uint32
+	treeCodes     []int8
+	treePred      []float32
+	treeThreshold []float32
 }
 
 func NewPigo() *Pigo {
@@ -27,12 +33,15 @@ func main() {
 	pigo.Unpack(cascadeFile)
 }
 
-func (pg *Pigo) Unpack(packet []byte) {
+// Unpack unpack the binary face classification file.
+func (pg *Pigo) Unpack(packet []byte) *Pigo {
 	// We skip the first 8 bytes of the cascade file.
 	var (
-		pos int = 8
-		treeCodes []int8
-		treePredictions []float32
+		pos           int = 8
+		treeDepth     uint32
+		treeNum       uint32
+		treeCodes     []int8
+		treePred      []float32
 		treeThreshold []float32
 	)
 
@@ -46,7 +55,7 @@ func (pg *Pigo) Unpack(packet []byte) {
 	}
 
 	if dataView.Len() > 0 {
-		treeDepth := binary.LittleEndian.Uint32(packet[pos:])
+		treeDepth = binary.LittleEndian.Uint32(packet[pos:])
 		fmt.Println("Tree depth: ", treeDepth)
 		pos += 4
 
@@ -56,18 +65,18 @@ func (pg *Pigo) Unpack(packet []byte) {
 			log.Fatalf("Error writing cascade trees into the buffer array: %v", err)
 		}
 
-		treeNum := binary.LittleEndian.Uint32(packet[pos:])
+		treeNum = binary.LittleEndian.Uint32(packet[pos:])
 		pos += 4
 		fmt.Println("Tree numbers: ", treeNum)
 
 		for t := 0; t < int(treeNum); t++ {
 			treeCodes = append(treeCodes, []int8{0, 0, 0, 0}...)
 
-			res := packet[pos:pos+int(4*math.Pow(2, float64(treeDepth))-4)]
-			signedPacket := *(*[]int8)(unsafe.Pointer(&res))
-			treeCodes = append(treeCodes, signedPacket...)
+			code := packet[pos : pos+int(4*math.Pow(2, float64(treeDepth))-4)]
+			signedCode := *(*[]int8)(unsafe.Pointer(&code))
+			treeCodes = append(treeCodes, signedCode...)
 
-			pos = pos + int(4 * math.Pow(2, float64(treeDepth))-4)
+			pos = pos + int(4*math.Pow(2, float64(treeDepth))-4)
 
 			// Read prediction from tree's leaf nodes.
 			for i := 0; i < int(math.Pow(2, float64(treeDepth))); i++ {
@@ -77,9 +86,8 @@ func (pg *Pigo) Unpack(packet []byte) {
 				}
 				u32pred := binary.LittleEndian.Uint32(packet[pos:])
 				// Convert uint32 to float32
-				f32pred := math.Float32frombits(u32pred)
-
-				treePredictions = append(treePredictions, f32pred)
+				f32pred := *(*float32)(unsafe.Pointer(&u32pred))
+				treePred = append(treePred, f32pred)
 				pos += 4
 			}
 
@@ -90,10 +98,58 @@ func (pg *Pigo) Unpack(packet []byte) {
 			}
 			u32thr := binary.LittleEndian.Uint32(packet[pos:])
 			// Convert uint32 to float32
-			f32thr := math.Float32frombits(u32thr)
+			f32thr := *(*float32)(unsafe.Pointer(&u32thr))
 			treeThreshold = append(treeThreshold, f32thr)
-
 			pos += 4
 		}
 	}
+
+	return &Pigo{
+		treeDepth,
+		treeNum,
+		treeCodes,
+		treePred,
+		treeThreshold,
+	}
+}
+
+// classifyRegion constructs the classification function based on the parsed binary data.
+func (pg *Pigo) classifyRegion(row, col, center int, pixels []uint8, ldim int) float32 {
+	var (
+		root  int
+		out   float32
+		pTree = int(math.Pow(2, float64(pg.treeDepth)))
+	)
+	row = row * 256
+	col = col * 256
+
+	for i := 0; i < int(pg.treeNum); i++ {
+		var (
+			idx = 1
+			pix int
+		)
+		for j := 0; j < int(pg.treeDepth); j++ {
+			idx1 := pixels[((row+int(pg.treeCodes[root+4*idx+0])*center)>>8)*ldim+((col+int(pg.treeCodes[root+4*idx+1])*center)>>8)]
+			idx2 := pixels[((row+int(pg.treeCodes[root+4*idx+2])*center)>>8)*ldim+((col+int(pg.treeCodes[root+4*idx+3])*center)>>8)]
+
+			if idx1 <= idx2 {
+				pix = 1
+			} else {
+				pix = 0
+			}
+			idx = 2*idx + pix
+		}
+		out += pg.treePred[pTree*i+idx-pTree]
+
+		if out < pg.treeThreshold[i] {
+			return -1
+		}
+		root += 4 * pTree
+	}
+	return out - pg.treeThreshold[pg.treeNum-1]
+}
+
+func runCascade(image image.NRGBA, classifyRegion func(row, col, center int, pixels []uint8, ldim int), params ...interface{}) {
+	
+
 }
