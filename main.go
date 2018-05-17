@@ -13,10 +13,12 @@ func main() {
 		log.Fatalf("Error reading the cascade file: %s", err)
 	}
 
-	sampleImg, err := pigo.GetImage("sample.png")
+	src, err := pigo.GetImage("sample.png")
 	if err != nil {
 		log.Fatalf("Cannot open the image file: %v", err)
 	}
+
+	sampleImg := pigo.Grayscale(src)
 
 	cParams := pigo.CascadeParams{
 		MinSize: 100,

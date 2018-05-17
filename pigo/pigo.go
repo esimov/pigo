@@ -103,40 +103,39 @@ func (pg *pigo) Unpack(packet []byte) *pigo {
 }
 
 // classifyRegion constructs the classification function based on the parsed binary data.
-func (pg *pigo) classifyRegion(row, col, center int, pixels []uint8, ldim int) float32 {
+func (pg *pigo) classifyRegion(row, col, center int, pixels []uint8, dim int) float32 {
 	var (
 		root  int
 		out   float32
 		pTree = int(math.Pow(2, float64(pg.treeDepth)))
 	)
+
 	row = row * 256
 	col = col * 256
 
 	for i := 0; i < int(pg.treeNum); i++ {
-		var (
-			idx = 1
-			pix int
-		)
+		var idx = 1
 		for j := 0; j < int(pg.treeDepth); j++ {
-			//fmt.Println(((row+int(pg.treeCodes[root+4*idx+0])*center)>>8)*ldim+((col+int(pg.treeCodes[root+4*idx+1])*center)>>8))
-			idx1 := pixels[((row+int(pg.treeCodes[root+4*idx+0])*center)>>8)*ldim+((col+int(pg.treeCodes[root+4*idx+1])*center)>>8)]
-			idx2 := pixels[((row+int(pg.treeCodes[root+4*idx+2])*center)>>8)*ldim+((col+int(pg.treeCodes[root+4*idx+3])*center)>>8)]
+			var pix int
+			idx1 := ((row+int(pg.treeCodes[root+4*idx+0])*center)>>8)*dim + ((col + int(pg.treeCodes[root+4*idx+1])*center) >> 8)
+			idx2 := ((row+int(pg.treeCodes[root+4*idx+2])*center)>>8)*dim + ((col + int(pg.treeCodes[root+4*idx+3])*center) >> 8)
 
-			if idx1 <= idx2 {
+			if pixels[idx1] <= pixels[idx2] {
 				pix = 1
 			} else {
 				pix = 0
 			}
 			idx = 2*idx + pix
 		}
+
 		out += pg.treePred[pTree*i+idx-pTree]
 
-		if out < pg.treeThreshold[i] {
+		if out <= pg.treeThreshold[i] {
 			return -1
 		}
 		root += 4 * pTree
 	}
-	fmt.Println(len(pg.treeThreshold))
+	fmt.Println(out - pg.treeThreshold[pg.treeNum-1]);
 	return out - pg.treeThreshold[pg.treeNum-1]
 }
 
@@ -155,10 +154,10 @@ type ImageParams struct {
 }
 
 type detection struct {
-	row int
-	col int
+	row    int
+	col    int
 	center int
-	q float32
+	q      float32
 }
 
 func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []detection {
@@ -167,19 +166,20 @@ func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []detection {
 
 	// Run the classification function over the detection window
 	// and check if the false positive rate is over a certain value.
-	for ; center <= opts.MaxSize; {
-		step := int(math.Max(opts.ShiftFactor * float64(center), 1))
-		offset := (center /2 + 1)
+	for center <= opts.MaxSize {
+		step := int(math.Max(opts.ShiftFactor*float64(center), 1))
+		offset := (center/2 + 1)
 
-		for row := offset; row <= img.Rows - offset; row += step {
-			for col := offset; col <= img.Cols - offset; col += step {
+		for row := offset; row <= img.Rows-offset; row += step {
+			for col := offset; col <= img.Cols-offset; col += step {
 				q := pg.classifyRegion(row, col, center, img.Pix, img.Dim)
+				//fmt.Println(q)
 				if q > 0.0 {
 					detections = append(detections, detection{row, col, center, q})
 				}
 			}
-			center *= int(float64(center) * opts.ScaleFactor)
 		}
+		center *= int(float64(center) * opts.ScaleFactor)
 	}
 	return detections
 }
