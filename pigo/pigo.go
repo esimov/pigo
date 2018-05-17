@@ -24,9 +24,7 @@ func NewPigo() *pigo {
 
 // Unpack unpack the binary face classification file.
 func (pg *pigo) Unpack(packet []byte) *pigo {
-	// We skip the first 8 bytes of the cascade file.
 	var (
-		pos           int = 8
 		treeDepth     uint32
 		treeNum       uint32
 		treeCodes     []int8
@@ -34,6 +32,8 @@ func (pg *pigo) Unpack(packet []byte) *pigo {
 		treeThreshold []float32
 	)
 
+	// We skip the first 8 bytes of the cascade file.
+	pos := 8
 	buff := make([]byte, 4)
 	dataView := bytes.NewBuffer(buff)
 
@@ -135,7 +135,7 @@ func (pg *pigo) classifyRegion(row, col, center int, pixels []uint8, dim int) fl
 		}
 		root += 4 * pTree
 	}
-	fmt.Println(out - pg.treeThreshold[pg.treeNum-1]);
+	fmt.Println(out - pg.treeThreshold[pg.treeNum-1])
 	return out - pg.treeThreshold[pg.treeNum-1]
 }
 
@@ -165,7 +165,7 @@ func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []detection {
 	center := opts.MinSize
 
 	// Run the classification function over the detection window
-	// and check if the false positive rate is over a certain value.
+	// and check if the false positive rate is above a certain value.
 	for center <= opts.MaxSize {
 		step := int(math.Max(opts.ShiftFactor*float64(center), 1))
 		offset := (center/2 + 1)
