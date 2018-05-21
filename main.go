@@ -18,20 +18,20 @@ func main() {
 		log.Fatalf("Cannot open the image file: %v", err)
 	}
 
-	sampleImg := pigo.Grayscale(src)
-
+	sampleImg := pigo.RgbToGrayscale(src)
+	fmt.Println(len(sampleImg))
 	cParams := pigo.CascadeParams{
-		MinSize: 100,
+		MinSize: 20,
 		MaxSize: 1000,
 		ShiftFactor: 0.1,
-		ScaleFactor: 1.1,
+		ScaleFactor: 1.13,
 	}
 
-	imgParams := pigo.ImageParams{sampleImg, 480, 640, 640}
+	imgParams := pigo.ImageParams{sampleImg, 360, 480, 480}
 
 	pigo := pigo.NewPigo()
 	classifier := pigo.Unpack(cascadeFile)
 	dets := classifier.RunCascade(imgParams, cParams)
-	fmt.Println(dets)
+	fmt.Println("DETECTIONS: ", len(dets))
 
 }

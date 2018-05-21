@@ -2,21 +2,17 @@ package pigo
 
 import (
 	"image"
-	"image/color"
 )
 
-// Grayscale converts the image to grayscale mode.
-func Grayscale(src *image.NRGBA) *image.NRGBA {
-	dx, dy := src.Bounds().Max.X, src.Bounds().Max.Y
-	dst := image.NewNRGBA(src.Bounds())
+// RgbToGrayscale converts the image to grayscale mode.
+func RgbToGrayscale(src *image.NRGBA) []uint8 {
+	rows, cols := src.Bounds().Dx(), src.Bounds().Dy()
+	gray := make([]uint8, rows*cols)
 
-	for x := 0; x < dx; x++ {
-		for y := 0; y < dy; y++ {
-			r, g, b, _ := src.At(x, y).RGBA()
-			lum := float32(r)*0.299 + float32(g)*0.587 + float32(b)*0.114
-			pixel := color.Gray{Y: uint8(lum / 256)}
-			dst.Set(x, y, pixel)
+	for r := 0; r < rows; r++ {
+		for c := 0; c < cols; c++ {
+			gray[r*cols + c] = uint8(0.299*float64(src.Pix[r*4*cols+4*c+0])+0.587*float64(src.Pix[r*4*cols+4*c+1])+0.114*float64(src.Pix[r*4*cols+4*c+2]))
 		}
 	}
-	return dst
+	return gray
 }

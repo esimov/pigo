@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"image"
 	"log"
 	"math"
 	"unsafe"
@@ -93,6 +92,12 @@ func (pg *pigo) Unpack(packet []byte) *pigo {
 		}
 	}
 
+	fmt.Println("Codes:", len(treeCodes))
+	fmt.Println("Preds:", len(treePred))
+	fmt.Println("Thresh:", len(treeThreshold))
+	fmt.Println("Depth:", treeDepth)
+	fmt.Println("N trees:", treeNum)
+
 	return &pigo{
 		treeDepth,
 		treeNum,
@@ -103,40 +108,45 @@ func (pg *pigo) Unpack(packet []byte) *pigo {
 }
 
 // classifyRegion constructs the classification function based on the parsed binary data.
-func (pg *pigo) classifyRegion(row, col, center int, pixels []uint8, dim int) float32 {
+func (pg *pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 	var (
-		root  int
+		root  int = 0
 		out   float32
 		pTree = int(math.Pow(2, float64(pg.treeDepth)))
 	)
 
-	row = row * 256
-	col = col * 256
+	r = r * 256
+	c = c * 256
 
 	for i := 0; i < int(pg.treeNum); i++ {
 		var idx = 1
-		for j := 0; j < int(pg.treeDepth); j++ {
-			var pix int
-			idx1 := ((row+int(pg.treeCodes[root+4*idx+0])*center)>>8)*dim + ((col + int(pg.treeCodes[root+4*idx+1])*center) >> 8)
-			idx2 := ((row+int(pg.treeCodes[root+4*idx+2])*center)>>8)*dim + ((col + int(pg.treeCodes[root+4*idx+3])*center) >> 8)
 
-			if pixels[idx1] <= pixels[idx2] {
+		for j := 0; j < int(pg.treeDepth); j++ {
+			var pix = 0
+			var x1 = ((r+int(pg.treeCodes[root + 4*idx + 0])*s) >> 8)*dim+((c+int(pg.treeCodes[root + 4*idx + 1])*s) >> 8)
+			var x2 = ((r+int(pg.treeCodes[root + 4*idx + 2])*s) >> 8)*dim+((c+int(pg.treeCodes[root + 4*idx + 3])*s) >> 8)
+
+			var px1 = pixels[x1]
+			var px2 = pixels[x2]
+
+			if (px1 <= px2) {
 				pix = 1
 			} else {
 				pix = 0
 			}
 			idx = 2*idx + pix
 		}
-
 		out += pg.treePred[pTree*i+idx-pTree]
 
 		if out <= pg.treeThreshold[i] {
-			return -1
+			return -1.0
+		} else {
+			root += 4 * pTree
+			//fmt.Println(root)
 		}
-		root += 4 * pTree
 	}
-	fmt.Println(out - pg.treeThreshold[pg.treeNum-1])
-	return out - pg.treeThreshold[pg.treeNum-1]
+
+	return 1.0
 }
 
 type CascadeParams struct {
@@ -147,7 +157,7 @@ type CascadeParams struct {
 }
 
 type ImageParams struct {
-	*image.NRGBA
+	Pixels []uint8
 	Rows int
 	Cols int
 	Dim  int
@@ -162,24 +172,26 @@ type detection struct {
 
 func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []detection {
 	var detections []detection
-	center := opts.MinSize
+	var pixels = img.Pixels
+
+	scale := opts.MinSize
 
 	// Run the classification function over the detection window
 	// and check if the false positive rate is above a certain value.
-	for center <= opts.MaxSize {
-		step := int(math.Max(opts.ShiftFactor*float64(center), 1))
-		offset := (center/2 + 1)
+	for scale <= opts.MaxSize {
+		step := int(math.Max(opts.ShiftFactor * float64(scale), 1))
+		offset := (scale /2 + 1)
 
 		for row := offset; row <= img.Rows-offset; row += step {
 			for col := offset; col <= img.Cols-offset; col += step {
-				q := pg.classifyRegion(row, col, center, img.Pix, img.Dim)
-				//fmt.Println(q)
+				q := pg.classifyRegion(row, col, scale, pixels, img.Dim)
 				if q > 0.0 {
-					detections = append(detections, detection{row, col, center, q})
+					detections = append(detections, detection{row, col, scale, q})
 				}
 			}
 		}
-		center *= int(float64(center) * opts.ScaleFactor)
+		scale = int(float64(scale) * opts.ScaleFactor)
+		//fmt.Println(scale)
 	}
 	return detections
 }
