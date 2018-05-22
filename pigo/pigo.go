@@ -6,7 +6,7 @@ import (
 	"log"
 	"math"
 	"unsafe"
-	"go4.org/sort"
+	"sort"
 )
 
 // CascadeParams contains the basic parameters to run the analyzer function over the defined image.
