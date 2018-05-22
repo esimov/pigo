@@ -19,19 +19,19 @@ func main() {
 	}
 
 	sampleImg := pigo.RgbToGrayscale(src)
-	fmt.Println(len(sampleImg))
+	
 	cParams := pigo.CascadeParams{
 		MinSize: 20,
 		MaxSize: 1000,
 		ShiftFactor: 0.1,
 		ScaleFactor: 1.13,
 	}
-
-	imgParams := pigo.ImageParams{sampleImg, 360, 480, 480}
+	cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
+	imgParams := pigo.ImageParams{sampleImg, rows, cols, cols}
 
 	pigo := pigo.NewPigo()
 	classifier := pigo.Unpack(cascadeFile)
 	dets := classifier.RunCascade(imgParams, cParams)
-	fmt.Println("DETECTIONS: ", len(dets))
+	fmt.Println(len(dets))
 
 }

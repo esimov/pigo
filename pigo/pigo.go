@@ -9,6 +9,39 @@ import (
 	"unsafe"
 )
 
+// CascadeParams contains the basic cascade parameters to run
+// the cascade analyzer function over the provided image.
+// MinSize: minimum size of the face
+// MaxSize: maximum size of the face
+// ShiftFactor: determine to what percentage to move the detection window of its size
+// ScaleFactor: determine the resize of the detection window in percentage when moving to a higher scale
+type CascadeParams struct {
+	MinSize     int
+	MaxSize     int
+	ShiftFactor float64
+	ScaleFactor float64
+}
+
+// ImageParams contains the image related settings to run
+// the cascade analyzer function over the the provided image as follows:
+// Pixels: the grayscale converted image pixel data
+// Rows: number of image rows
+// Cols: number of image columns
+// Dim: image dimension
+type ImageParams struct {
+	Pixels []uint8
+	Rows   int
+	Cols   int
+	Dim    int
+}
+
+type detection struct {
+	row    int
+	col    int
+	center int
+	q      float32
+}
+
 type pigo struct {
 	treeDepth     uint32
 	treeNum       uint32
@@ -17,6 +50,7 @@ type pigo struct {
 	treeThreshold []float32
 }
 
+// NewPigo instantiate a new pigo struct.
 func NewPigo() *pigo {
 	return &pigo{}
 }
@@ -44,7 +78,6 @@ func (pg *pigo) Unpack(packet []byte) *pigo {
 
 	if dataView.Len() > 0 {
 		treeDepth = binary.LittleEndian.Uint32(packet[pos:])
-		fmt.Println("Tree depth: ", treeDepth)
 		pos += 4
 
 		// Get the number of cascade trees as 32-bit unsigned integer and write it into the buffer array.
@@ -55,7 +88,6 @@ func (pg *pigo) Unpack(packet []byte) *pigo {
 
 		treeNum = binary.LittleEndian.Uint32(packet[pos:])
 		pos += 4
-		fmt.Println("Tree numbers: ", treeNum)
 
 		for t := 0; t < int(treeNum); t++ {
 			treeCodes = append(treeCodes, []int8{0, 0, 0, 0}...)
@@ -123,13 +155,13 @@ func (pg *pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 
 		for j := 0; j < int(pg.treeDepth); j++ {
 			var pix = 0
-			var x1 = ((r+int(pg.treeCodes[root + 4*idx + 0])*s) >> 8)*dim+((c+int(pg.treeCodes[root + 4*idx + 1])*s) >> 8)
-			var x2 = ((r+int(pg.treeCodes[root + 4*idx + 2])*s) >> 8)*dim+((c+int(pg.treeCodes[root + 4*idx + 3])*s) >> 8)
+			var x1 = ((r+int(pg.treeCodes[root+4*idx+0])*s)>>8)*dim + ((c + int(pg.treeCodes[root+4*idx+1])*s)>>8)
+			var x2 = ((r+int(pg.treeCodes[root+4*idx+2])*s)>>8)*dim + ((c + int(pg.treeCodes[root+4*idx+3])*s)>>8)
 
 			var px1 = pixels[x1]
 			var px2 = pixels[x2]
 
-			if (px1 <= px2) {
+			if px1 <= px2 {
 				pix = 1
 			} else {
 				pix = 0
@@ -142,56 +174,32 @@ func (pg *pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 			return -1.0
 		} else {
 			root += 4 * pTree
-			//fmt.Println(root)
 		}
 	}
-
 	return 1.0
-}
-
-type CascadeParams struct {
-	MinSize     int
-	MaxSize     int
-	ShiftFactor float64
-	ScaleFactor float64
-}
-
-type ImageParams struct {
-	Pixels []uint8
-	Rows int
-	Cols int
-	Dim  int
-}
-
-type detection struct {
-	row    int
-	col    int
-	center int
-	q      float32
 }
 
 func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []detection {
 	var detections []detection
 	var pixels = img.Pixels
 
-	scale := opts.MinSize
+	center := opts.MinSize
 
 	// Run the classification function over the detection window
 	// and check if the false positive rate is above a certain value.
-	for scale <= opts.MaxSize {
-		step := int(math.Max(opts.ShiftFactor * float64(scale), 1))
-		offset := (scale /2 + 1)
+	for center <= opts.MaxSize {
+		step := int(math.Max(opts.ShiftFactor*float64(center), 1))
+		offset := (center/2 + 1)
 
 		for row := offset; row <= img.Rows-offset; row += step {
 			for col := offset; col <= img.Cols-offset; col += step {
-				q := pg.classifyRegion(row, col, scale, pixels, img.Dim)
+				q := pg.classifyRegion(row, col, center, pixels, img.Dim)
 				if q > 0.0 {
-					detections = append(detections, detection{row, col, scale, q})
+					detections = append(detections, detection{row, col, center, q})
 				}
 			}
 		}
-		scale = int(float64(scale) * opts.ScaleFactor)
-		//fmt.Println(scale)
+		center = int(float64(center) * opts.ScaleFactor)
 	}
 	return detections
 }

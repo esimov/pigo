@@ -11,7 +11,11 @@ func RgbToGrayscale(src *image.NRGBA) []uint8 {
 
 	for r := 0; r < rows; r++ {
 		for c := 0; c < cols; c++ {
-			gray[r*cols + c] = uint8(0.299*float64(src.Pix[r*4*cols+4*c+0])+0.587*float64(src.Pix[r*4*cols+4*c+1])+0.114*float64(src.Pix[r*4*cols+4*c+2]))
+			gray[r*cols+c] = uint8(
+				0.299*float64(src.Pix[r*4*cols+4*c+0]) +
+				0.587*float64(src.Pix[r*4*cols+4*c+1]) +
+				0.114*float64(src.Pix[r*4*cols+4*c+2]),
+			)
 		}
 	}
 	return gray
