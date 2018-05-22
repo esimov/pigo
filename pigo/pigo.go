@@ -170,17 +170,17 @@ func (pg *pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 	return out - pg.treeThreshold[pg.treeNum-1]
 }
 
-type detection struct {
-	row    int
-	col    int
-	center int
-	q      float32
+type Detection struct {
+	Row    int
+	Col    int
+	Center int
+	Q      float32
 }
 
 // RunCascade analyze the grayscale converted image pixel data and run the classification function over the detection window.
 // It will return a slice containing the detection row, column, it's center and the detection score (in case this is > than 0.0).
-func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []detection {
-	var detections []detection
+func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []Detection {
+	var detections []Detection
 	var pixels = img.Pixels
 
 	center := opts.MinSize
@@ -195,7 +195,7 @@ func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []detection {
 			for col := offset; col <= img.Cols-offset; col += step {
 				q := pg.classifyRegion(row, col, center, pixels, img.Dim)
 				if q > 0.0 {
-					detections = append(detections, detection{row, col, center, q})
+					detections = append(detections, Detection{row, col, center, q})
 				}
 			}
 		}
@@ -203,5 +203,3 @@ func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []detection {
 	}
 	return detections
 }
-
-
