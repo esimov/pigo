@@ -3,10 +3,10 @@ package pigo
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"log"
 	"math"
 	"unsafe"
+	"go4.org/sort"
 )
 
 // CascadeParams contains the basic parameters to run the analyzer function over the defined image.
@@ -114,13 +114,6 @@ func (pg *pigo) Unpack(packet []byte) *pigo {
 			pos += 4
 		}
 	}
-
-	fmt.Println("Codes:", len(treeCodes))
-	fmt.Println("Preds:", len(treePred))
-	fmt.Println("Thresh:", len(treeThreshold))
-	fmt.Println("Depth:", treeDepth)
-	fmt.Println("N trees:", treeNum)
-
 	return &pigo{
 		treeDepth,
 		treeNum,
@@ -171,10 +164,10 @@ func (pg *pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 }
 
 type Detection struct {
-	Row    int
-	Col    int
-	Center int
-	Q      float32
+	Row   int
+	Col   int
+	Scale int
+	Q     float32
 }
 
 // RunCascade analyze the grayscale converted image pixel data and run the classification function over the detection window.
@@ -183,23 +176,84 @@ func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []Detection {
 	var detections []Detection
 	var pixels = img.Pixels
 
-	center := opts.MinSize
+	scale := opts.MinSize
 
 	// Run the classification function over the detection window
 	// and check if the false positive rate is above a certain value.
-	for center <= opts.MaxSize {
-		step := int(math.Max(opts.ShiftFactor*float64(center), 1))
-		offset := (center/2 + 1)
+	for scale <= opts.MaxSize {
+		step := int(math.Max(opts.ShiftFactor*float64(scale), 1))
+		offset := (scale /2 + 1)
 
 		for row := offset; row <= img.Rows-offset; row += step {
 			for col := offset; col <= img.Cols-offset; col += step {
-				q := pg.classifyRegion(row, col, center, pixels, img.Dim)
+				q := pg.classifyRegion(row, col, scale, pixels, img.Dim)
 				if q > 0.0 {
-					detections = append(detections, Detection{row, col, center, q})
+					detections = append(detections, Detection{row, col, scale, q})
 				}
 			}
 		}
-		center = int(float64(center) * opts.ScaleFactor)
+		scale = int(float64(scale) * opts.ScaleFactor)
 	}
 	return detections
+}
+
+// ClusterDetections returns the intersection over union of multiple clusters.
+// We need to make this comparision to filter out multiple face detection regions.
+func (pg *pigo) ClusterDetections(detections []Detection, iouThreshold float64) []Detection {
+	// Sort detections by their score
+	sort.Sort(det(detections))
+
+	calcIoU := func(det1, det2 Detection) float64 {
+		// Unpack the position and size of each detection.
+		r1, c1, s1 := float64(det1.Row), float64(det1.Col), float64(det1.Scale)
+		r2, c2, s2 := float64(det2.Row), float64(det2.Col), float64(det2.Scale)
+
+		overRow := math.Max(0, math.Min(r1+s1/2, r2+s2/2) - math.Max(r1-s1/2, r2-s2/2))
+		overCol := math.Max(0, math.Min(c1+s1/2, c2+s2/2) - math.Max(c1-s1/2, c2-s2/2))
+
+		// Return intersection over union.
+		return overRow*overCol/(s1*s1+s2*s2-overRow*overCol)
+	}
+	assignments := make([]bool, len(detections))
+	clusters := []Detection{}
+
+	for i := 0; i < len(detections); i++ {
+		// Compare the intersection over union only for two different clusters.
+		// Skip the comparison in case there already exists a cluster A in the bucket.
+		if !assignments[i] {
+			var (
+				r, c, s, n int
+				q float32
+			)
+			for j := 0; j < len(detections); j++ {
+				// Check if the comparision result is below a certain threshold.
+				if calcIoU(detections[i], detections[j]) > iouThreshold {
+					assignments[j] = true
+					r += detections[j].Row
+					c += detections[j].Col
+					s += detections[j].Scale
+					q += detections[j].Q
+					n++
+				}
+			}
+			clusters = append(clusters, Detection{r / n, c / n, s / n, q})
+		}
+	}
+	return clusters
+}
+
+
+// Implement sorting function on detection values.
+type det []Detection
+
+func (q det) Len() int      { return len(q) }
+func (q det) Swap(i, j int) { q[i], q[j] = q[j], q[i] }
+func (q det) Less(i, j int) bool {
+	if q[i].Q < q[j].Q {
+		return true
+	}
+	if q[i].Q > q[j].Q {
+		return false
+	}
+	return q[i].Q < q[j].Q
 }

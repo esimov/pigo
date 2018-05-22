@@ -4,7 +4,6 @@ import (
 	"log"
 	"io/ioutil"
 	"github.com/esimov/pigo/pigo"
-	"fmt"
 	"image/color"
 	"github.com/fogleman/gg"
 )
@@ -16,7 +15,7 @@ func main() {
 		log.Fatalf("Error reading the cascade file: %s", err)
 	}
 
-	src, err := pigo.GetImage("sample.png")
+	src, err := pigo.GetImage("me.jpg")
 	if err != nil {
 		log.Fatalf("Cannot open the image file: %v", err)
 	}
@@ -40,7 +39,10 @@ func main() {
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
 	dets := classifier.RunCascade(imgParams, cParams)
-	fmt.Println(dets)
+
+	// Calculate the intersection over union (IoU) for two
+	dets = classifier.ClusterDetections(classifier.RunCascade(imgParams, cParams), 0.2)
+
 	dc = gg.NewContext(cols, rows)
 	dc.DrawImage(src, 0, 0)
 
@@ -55,11 +57,12 @@ func output(detections []pigo.Detection) error {
 	for i := 0; i < len(detections); i++ {
 		if detections[i].Q > qThresh {
 			dc.DrawRectangle(
-				float64(detections[i].Col-detections[i].Center/2),
-				float64(detections[i].Row-detections[i].Center/2),
-				float64(detections[i].Center),
-				float64(detections[i].Center),
+				float64(detections[i].Col-detections[i].Scale /2),
+				float64(detections[i].Row-detections[i].Scale /2),
+				float64(detections[i].Scale),
+				float64(detections[i].Scale),
 			)
+			dc.SetLineWidth(3.0)
 			dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 0, B: 0, A: 255}))
 			dc.Stroke()
 		}
