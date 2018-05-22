@@ -9,12 +9,11 @@ import (
 	"unsafe"
 )
 
-// CascadeParams contains the basic cascade parameters to run
-// the cascade analyzer function over the provided image.
-// MinSize: minimum size of the face
-// MaxSize: maximum size of the face
-// ShiftFactor: determine to what percentage to move the detection window of its size
-// ScaleFactor: determine the resize of the detection window in percentage when moving to a higher scale
+// CascadeParams contains the basic parameters to run the analyzer function over the defined image.
+// MinSize: represents the minimum size of the face.
+// MaxSize: represents the maximum size of the face.
+// ShiftFactor: determines to what percentage to move the detection window over its size.
+// ScaleFactor: defines in percentage the resize value of the detection window when moving to a higher scale.
 type CascadeParams struct {
 	MinSize     int
 	MaxSize     int
@@ -22,24 +21,16 @@ type CascadeParams struct {
 	ScaleFactor float64
 }
 
-// ImageParams contains the image related settings to run
-// the cascade analyzer function over the the provided image as follows:
-// Pixels: the grayscale converted image pixel data
-// Rows: number of image rows
-// Cols: number of image columns
-// Dim: image dimension
+// ImageParams is a struct for image related settings.
+// Pixels: contains the grayscale converted image pixel data.
+// Rows: the number of image rows.
+// Cols: the number of image columns.
+// Dim: the image dimension.
 type ImageParams struct {
 	Pixels []uint8
 	Rows   int
 	Cols   int
 	Dim    int
-}
-
-type detection struct {
-	row    int
-	col    int
-	center int
-	q      float32
 }
 
 type pigo struct {
@@ -176,9 +167,18 @@ func (pg *pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 			root += 4 * pTree
 		}
 	}
-	return 1.0
+	return out - pg.treeThreshold[pg.treeNum-1]
 }
 
+type detection struct {
+	row    int
+	col    int
+	center int
+	q      float32
+}
+
+// RunCascade analyze the grayscale converted image pixel data and run the classification function over the detection window.
+// It will return a slice containing the detection row, column, it's center and the detection score (in case this is > than 0.0).
 func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []detection {
 	var detections []detection
 	var pixels = img.Pixels
@@ -203,3 +203,5 @@ func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []detection {
 	}
 	return detections
 }
+
+

@@ -19,7 +19,7 @@ func main() {
 	}
 
 	sampleImg := pigo.RgbToGrayscale(src)
-	
+
 	cParams := pigo.CascadeParams{
 		MinSize: 20,
 		MaxSize: 1000,
@@ -30,8 +30,13 @@ func main() {
 	imgParams := pigo.ImageParams{sampleImg, rows, cols, cols}
 
 	pigo := pigo.NewPigo()
+	// Unpack the binary file. This will return the number of cascade trees,
+	// the tree depth, the threshold and the prediction from tree's leaf nodes.
 	classifier := pigo.Unpack(cascadeFile)
+
+	// Run the classifier over the obtained leaf nodes and return the detection results.
+	// The result contains quadruplets representing the row, column, scale and detection score.
 	dets := classifier.RunCascade(imgParams, cParams)
-	fmt.Println(len(dets))
+	fmt.Println(dets)
 
 }
