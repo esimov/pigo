@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"log"
 	"math"
-	"unsafe"
 	"sort"
+	"unsafe"
 )
 
 // CascadeParams contains the basic parameters to run the analyzer function over the defined image.
@@ -139,8 +139,8 @@ func (pg *pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 
 		for j := 0; j < int(pg.treeDepth); j++ {
 			var pix = 0
-			var x1 = ((r+int(pg.treeCodes[root+4*idx+0])*s)>>8)*dim + ((c + int(pg.treeCodes[root+4*idx+1])*s)>>8)
-			var x2 = ((r+int(pg.treeCodes[root+4*idx+2])*s)>>8)*dim + ((c + int(pg.treeCodes[root+4*idx+3])*s)>>8)
+			var x1 = ((r+int(pg.treeCodes[root+4*idx+0])*s)>>8)*dim + ((c + int(pg.treeCodes[root+4*idx+1])*s) >> 8)
+			var x2 = ((r+int(pg.treeCodes[root+4*idx+2])*s)>>8)*dim + ((c + int(pg.treeCodes[root+4*idx+3])*s) >> 8)
 
 			var px1 = pixels[x1]
 			var px2 = pixels[x2]
@@ -181,8 +181,8 @@ func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []Detection {
 	// Run the classification function over the detection window
 	// and check if the false positive rate is above a certain value.
 	for scale <= opts.MaxSize {
-		step := int(math.Max(opts.ShiftFactor*float64(scale), 1))
-		offset := (scale /2 + 1)
+		step := int(math.Max(opts.ShiftFactor/100*float64(scale), 1))
+		offset := (scale/2 + 1)
 
 		for row := offset; row <= img.Rows-offset; row += step {
 			for col := offset; col <= img.Cols-offset; col += step {
@@ -208,11 +208,11 @@ func (pg *pigo) ClusterDetections(detections []Detection, iouThreshold float64) 
 		r1, c1, s1 := float64(det1.Row), float64(det1.Col), float64(det1.Scale)
 		r2, c2, s2 := float64(det2.Row), float64(det2.Col), float64(det2.Scale)
 
-		overRow := math.Max(0, math.Min(r1+s1/2, r2+s2/2) - math.Max(r1-s1/2, r2-s2/2))
-		overCol := math.Max(0, math.Min(c1+s1/2, c2+s2/2) - math.Max(c1-s1/2, c2-s2/2))
+		overRow := math.Max(0, math.Min(r1+s1/2, r2+s2/2)-math.Max(r1-s1/2, r2-s2/2))
+		overCol := math.Max(0, math.Min(c1+s1/2, c2+s2/2)-math.Max(c1-s1/2, c2-s2/2))
 
 		// Return intersection over union.
-		return overRow*overCol/(s1*s1+s2*s2-overRow*overCol)
+		return overRow * overCol / (s1*s1 + s2*s2 - overRow*overCol)
 	}
 	assignments := make([]bool, len(detections))
 	clusters := []Detection{}
@@ -223,7 +223,7 @@ func (pg *pigo) ClusterDetections(detections []Detection, iouThreshold float64) 
 		if !assignments[i] {
 			var (
 				r, c, s, n int
-				q float32
+				q          float32
 			)
 			for j := 0; j < len(detections); j++ {
 				// Check if the comparision result is below a certain threshold.
@@ -241,7 +241,6 @@ func (pg *pigo) ClusterDetections(detections []Detection, iouThreshold float64) 
 	}
 	return clusters
 }
-
 
 // Implement sorting function on detection values.
 type det []Detection
