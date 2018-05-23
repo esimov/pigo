@@ -1,0 +1,5 @@
+*.bmp
+*.png
+*.jpg
+*.jpeg
+/packages
