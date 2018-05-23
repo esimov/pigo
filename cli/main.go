@@ -31,6 +31,7 @@ var (
 	// Flags
 	source       = flag.String("in", "", "Source image")
 	destination  = flag.String("out", "", "Destination image")
+	cascadeFile  = flag.String("cf", "", "Cascade binary file")
 	minSize      = flag.Int("min", 20, "Minimum size of face")
 	maxSize      = flag.Int("max", 1000, "Maximum size of face")
 	shiftFactor  = flag.Float64("shift", 10.0, "Shift detection window by percentage")
@@ -60,7 +61,7 @@ func main() {
 	s.start("Processing...")
 	start := time.Now()
 
-	cascadeFile, err := ioutil.ReadFile("data/facefinder")
+	cascadeFile, err := ioutil.ReadFile(*cascadeFile)
 	if err != nil {
 		log.Fatalf("Error reading the cascade file: %v", err)
 	}
