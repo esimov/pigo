@@ -11,6 +11,7 @@ import (
 
 	"github.com/esimov/pigo/pigo"
 	"github.com/fogleman/gg"
+	"time"
 )
 
 const Banner = `
@@ -55,9 +56,13 @@ func main() {
 		log.Fatal("Scale factor must be greater than 1.")
 	}
 
+	s := new(spinner)
+	s.start("Processing...")
+	start := time.Now()
+
 	cascadeFile, err := ioutil.ReadFile("data/facefinder")
 	if err != nil {
-		log.Fatalf("Error reading the cascade file: %s", err)
+		log.Fatalf("Error reading the cascade file: %v", err)
 	}
 
 	src, err := pigo.GetImage(*source)
@@ -94,6 +99,9 @@ func main() {
 	if err := output(dets, *circleMarker); err != nil {
 		log.Fatalf("Cannot save the output image %v", err)
 	}
+
+	s.stop()
+	fmt.Printf("\nDone in: \x1b[92m%.2fs\n", time.Since(start).Seconds())
 }
 
 // output mark the face region with the provided marker (rectangle or circle).
@@ -124,4 +132,32 @@ func output(detections []pigo.Detection, isCircle bool) error {
 		}
 	}
 	return dc.SavePNG(*destination)
+}
+
+type spinner struct {
+	stopChan chan struct{}
+}
+
+// Start process
+func (s *spinner) start(message string) {
+	s.stopChan = make(chan struct{}, 1)
+
+	go func() {
+		for {
+			for _, r := range `-\|/` {
+				select {
+				case <-s.stopChan:
+					return
+				default:
+					fmt.Printf("\r%s%s %c%s", message, "\x1b[92m", r, "\x1b[39m")
+					time.Sleep(time.Millisecond * 100)
+				}
+			}
+		}
+	}()
+}
+
+// End process
+func (s *spinner) stop() {
+	s.stopChan <- struct{}{}
 }
