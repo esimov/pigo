@@ -36,7 +36,7 @@ var (
 	maxSize      = flag.Int("max", 1000, "Maximum size of face")
 	shiftFactor  = flag.Float64("shift", 10.0, "Shift detection window by percentage")
 	scaleFactor  = flag.Float64("scale", 1.1, "Scale detection window by percentage")
-	iouThreshold = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
+	iouThreshold = flag.Float64("iou", 0.1, "Intersection over union (IoU) threshold")
 	circleMarker = flag.Bool("circle", false, "Use circle as detection marker")
 )
 
