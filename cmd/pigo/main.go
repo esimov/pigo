@@ -62,6 +62,7 @@ func main() {
 		log.Fatalf("Error reading the cascade file: %v", err)
 	}
 
+	// Progress indicator
 	s := new(spinner)
 	s.start("Processing...")
 	start := time.Now()
