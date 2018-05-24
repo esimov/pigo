@@ -19,7 +19,7 @@ const Banner = `
 ├─┘││ ┬│ │
 ┴  ┴└─┘└─┘
 
-Go Face detection library.
+Go (Golang) Face detection library.
     Version: %s
 
 `
@@ -57,14 +57,14 @@ func main() {
 		log.Fatal("Scale factor must be greater than 1.")
 	}
 
-	s := new(spinner)
-	s.start("Processing...")
-	start := time.Now()
-
 	cascadeFile, err := ioutil.ReadFile(*cascadeFile)
 	if err != nil {
 		log.Fatalf("Error reading the cascade file: %v", err)
 	}
+
+	s := new(spinner)
+	s.start("Processing...")
+	start := time.Now()
 
 	src, err := pigo.GetImage(*source)
 	if err != nil {
