@@ -181,7 +181,7 @@ func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []Detection {
 	// Run the classification function over the detection window
 	// and check if the false positive rate is above a certain value.
 	for scale <= opts.MaxSize {
-		step := int(math.Max(opts.ShiftFactor/100*float64(scale), 1))
+		step := int(math.Max(opts.ShiftFactor*float64(scale), 1))
 		offset := (scale/2 + 1)
 
 		for row := offset; row <= img.Rows-offset; row += step {

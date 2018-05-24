@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-// GetImage retrieve the image file and convert to .
+// GetImage retrieves and decodes the image file to *image.NRGBA type.
 func GetImage(input string) (*image.NRGBA, error) {
 	file, err := os.Open(input)
 	if err != nil {
@@ -25,7 +25,7 @@ func GetImage(input string) (*image.NRGBA, error) {
 	return img, nil
 }
 
-// Converts any image type to *image.NRGBA with min-point at (0, 0).
+// imgToNRGBA converts any image type to *image.NRGBA with min-point at (0, 0).
 func imgToNRGBA(img image.Image) *image.NRGBA {
 	srcBounds := img.Bounds()
 	if srcBounds.Min.X == 0 && srcBounds.Min.Y == 0 {
