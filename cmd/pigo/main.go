@@ -9,9 +9,10 @@ import (
 	"math"
 	"os"
 
+	"time"
+
 	"github.com/esimov/pigo/pigo"
 	"github.com/fogleman/gg"
-	"time"
 )
 
 const Banner = `
@@ -49,8 +50,8 @@ func main() {
 	}
 	flag.Parse()
 
-	if len(*source) == 0 || len(*destination) == 0 {
-		log.Fatal("Usage: pigo -in input.jpg -out out.jpg")
+	if len(*source) == 0 || len(*destination) == 0 || len(*cascadeFile) == 0 {
+		log.Fatal("Usage: pigo -in input.jpg -out out.jpg -cf data/facefinder")
 	}
 
 	if *scaleFactor < 1 {
