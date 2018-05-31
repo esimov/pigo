@@ -98,13 +98,12 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 
 		buff := new(bytes.Buffer)
 		if err := drawMarker(dets, buff, false); err != nil {
-			log.Fatalf("Cannot save the output image %v", err)
+			log.Println("Cannot save the output image %v", err)
 		}
-
+		buff.Write(frameBuffer.Bytes())
 		// just MJPEG
 		w.Write([]byte("Content-Type: image/jpeg\r\n"))
 		w.Write([]byte("Content-Length: " + string(len(data)) + "\r\n\r\n"))
-		//w.Write(frameBuffer.Bytes())
 		w.Write(buff.Bytes())
 		w.Write([]byte("\r\n"))
 		w.Write([]byte("--informs\r\n"))
@@ -112,7 +111,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 	cmd.Wait()
 }
 
-// drawMarker mark the face region with the provided marker (rectangle or circle).
+// drawMarker mark the face region with the provided marker (rectangle or circle) and write it to io.Writer.
 func drawMarker(detections []pigo.Detection, w io.Writer, isCircle bool) error {
 	var qThresh float32 = 5.0
 
