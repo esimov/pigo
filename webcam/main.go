@@ -69,7 +69,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 		}
 
 		src := pigo.ImgToNRGBA(img)
-		sampleImg := pigo.RgbToGrayscale(src)
+		frame := pigo.RgbToGrayscale(src)
 
 		cParams := pigo.CascadeParams{
 			MinSize:     100,
@@ -78,7 +78,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 			ScaleFactor: 1.1,
 		}
 		cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
-		imgParams := pigo.ImageParams{sampleImg, rows, cols, cols}
+		imgParams := pigo.ImageParams{frame, rows, cols, cols}
 
 		pigo := pigo.NewPigo()
 		// Unpack the binary file. This will return the number of cascade trees,
@@ -96,7 +96,8 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 		dc = gg.NewContext(cols, rows)
 		dc.DrawImage(src, 0, 0)
 
-		if err := drawMarker(dets, frameBuffer, false); err != nil {
+		buff := new(bytes.Buffer)
+		if err := drawMarker(dets, buff, false); err != nil {
 			log.Fatalf("Cannot save the output image %v", err)
 		}
 
@@ -104,7 +105,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Content-Type: image/jpeg\r\n"))
 		w.Write([]byte("Content-Length: " + string(len(data)) + "\r\n\r\n"))
 		//w.Write(frameBuffer.Bytes())
-		w.Write(frameBuffer.Bytes())
+		w.Write(buff.Bytes())
 		w.Write([]byte("\r\n"))
 		w.Write([]byte("--informs\r\n"))
 	}
