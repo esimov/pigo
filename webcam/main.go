@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"image"
-	"image/color"
 	"image/jpeg"
 	"io"
 	"io/ioutil"
@@ -34,9 +32,9 @@ func cam(w http.ResponseWriter, r *http.Request) {
 	}
 	cmd.Start()
 
-	mr := multipart.NewReader(stdout, boundary)
+	mpart := multipart.NewReader(stdout, boundary)
 	for {
-		p, err := mr.NextPart()
+		p, err := mpart.NextPart()
 		if err == io.EOF {
 			log.Println("[DEBUG] EOF")
 			break
@@ -45,6 +43,7 @@ func cam(w http.ResponseWriter, r *http.Request) {
 			log.Println("[ERROR] reading next part", err)
 			return
 		}
+
 		data, err := ioutil.ReadAll(p)
 		if err != nil {
 			log.Println("[ERROR] reading from bytes ", err)
@@ -52,32 +51,13 @@ func cam(w http.ResponseWriter, r *http.Request) {
 		}
 		img, _, _ := image.Decode(bytes.NewReader(data))
 
-		//jpReader := bytes.NewReader(jp)
-		//fmt.Println(jp)
 		frameBuffer := new(bytes.Buffer)
-		bw := bufio.NewWriter(w)
-
-		width, height := img.Bounds().Dx(), img.Bounds().Dy()
-		target := image.NewNRGBA(image.Rect(0, 0, width, height))
-		c := color.NRGBA{R: uint8(0), G: uint8(0), B: uint8(0), A: uint8(255)}
-
-		for y := 0; y < height; y++ {
-			for x := 0; x < width; x += 4 {
-				fmt.Println(y*width + x)
-				fmt.Println("LEN:", len(data))
-				//fmt.Println(data[y*width+x])
-				c.R = uint8(data[y*width+x+0])
-				c.G = uint8(data[y*width+x+1])
-				c.B = uint8(data[y*width+x+2])
-				c.A = uint8(data[y*width+x+3])
-
-				target.SetNRGBA(int(x/4), y, c)
-			}
+		err = jpeg.Encode(frameBuffer, img, nil)
+		if err != nil {
+			log.Println("[ERROR] encoding frame buffer ", err)
+			continue
 		}
 
-		bw.Write(frameBuffer.Bytes())
-		jpeg.Encode(frameBuffer, target, nil)
-		fmt.Println(target)
 		// cParams := pigo.CascadeParams{
 		// 	MinSize:     100,
 		// 	MaxSize:     1000,
@@ -101,6 +81,7 @@ func cam(w http.ResponseWriter, r *http.Request) {
 		// just MJPEG
 		w.Write([]byte("Content-Type: image/jpeg\r\n"))
 		w.Write([]byte("Content-Length: " + string(len(data)) + "\r\n\r\n"))
+		//w.Write(frameBuffer.Bytes())
 		w.Write(frameBuffer.Bytes())
 		w.Write([]byte("\r\n"))
 		w.Write([]byte("--informs\r\n"))
