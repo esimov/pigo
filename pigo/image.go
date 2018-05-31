@@ -20,13 +20,13 @@ func GetImage(input string) (*image.NRGBA, error) {
 	if err != nil {
 		return nil, err
 	}
-	img := imgToNRGBA(src)
+	img := ImgToNRGBA(src)
 
 	return img, nil
 }
 
-// imgToNRGBA converts any image type to *image.NRGBA with min-point at (0, 0).
-func imgToNRGBA(img image.Image) *image.NRGBA {
+// ImgToNRGBA converts any image type to *image.NRGBA with min-point at (0, 0).
+func ImgToNRGBA(img image.Image) *image.NRGBA {
 	srcBounds := img.Bounds()
 	if srcBounds.Min.X == 0 && srcBounds.Min.Y == 0 {
 		if src0, ok := img.(*image.NRGBA); ok {
@@ -82,4 +82,3 @@ func imgToNRGBA(img image.Image) *image.NRGBA {
 	}
 	return dst
 }
-
