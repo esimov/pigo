@@ -16,7 +16,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/esimov/pigo/pigo"
+	"github.com/esimov/pigo/core"
 	"github.com/fogleman/gg"
 )
 
