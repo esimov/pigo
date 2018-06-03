@@ -2,4 +2,5 @@
 *.png
 *.jpg
 *.jpeg
-/packages
+vendor
+packages
