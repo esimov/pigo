@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 import cv2
 import imutils
 from imutils.video import VideoStream
