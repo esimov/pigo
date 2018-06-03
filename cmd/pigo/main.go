@@ -15,7 +15,7 @@ import (
 	"github.com/fogleman/gg"
 )
 
-const Banner = `
+const banner = `
 ┌─┐┬┌─┐┌─┐
 ├─┘││ ┬│ │
 ┴  ┴└─┘└─┘
@@ -45,7 +45,7 @@ var dc *gg.Context
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, fmt.Sprintf(Banner, Version))
+		fmt.Fprintf(os.Stderr, fmt.Sprintf(banner, Version))
 		flag.PrintDefaults()
 	}
 	flag.Parse()

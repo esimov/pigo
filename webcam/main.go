@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"image"
 	"image/color"
@@ -12,6 +13,7 @@ import (
 	"math"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"os/exec"
 
 	"github.com/esimov/pigo/pigo"
@@ -19,10 +21,48 @@ import (
 )
 
 const boundary = "informs"
+const banner = `
+┌─┐┬┌─┐┌─┐
+├─┘││ ┬│ │
+┴  ┴└─┘└─┘
 
+Go (Golang) Face detection library.
+    Version: %s
+
+`
+
+// Version indicates the current build version.
+var Version string
+
+var (
+	// Flags
+	source       = flag.String("in", "", "Source image")
+	destination  = flag.String("out", "", "Destination image")
+	cascadeFile  = flag.String("cf", "", "Cascade binary file")
+	minSize      = flag.Int("min", 20, "Minimum size of face")
+	maxSize      = flag.Int("max", 1000, "Maximum size of face")
+	shiftFactor  = flag.Float64("shift", 0.1, "Shift detection window by percentage")
+	scaleFactor  = flag.Float64("scale", 1.1, "Scale detection window by percentage")
+	iouThreshold = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
+	circleMarker = flag.Bool("circle", false, "Use circle as detection marker")
+)
 var dc *gg.Context
 
 func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, fmt.Sprintf(banner, Version))
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+
+	if len(*cascadeFile) == 0 {
+		log.Fatal("Usage: go run main.go -cf data/facefinder")
+	}
+
+	if *scaleFactor < 1 {
+		log.Fatal("Scale factor must be greater than 1.")
+	}
+
 	http.HandleFunc("/cam", webcam)
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }
@@ -37,7 +77,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 	}
 	cmd.Start()
 
-	cascadeFile, err := ioutil.ReadFile("../data/facefinder")
+	cascadeFile, err := ioutil.ReadFile(*cascadeFile)
 	if err != nil {
 		log.Fatalf("Error reading the cascade file: %v", err)
 	}
@@ -72,10 +112,10 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 		frame := pigo.RgbToGrayscale(src)
 
 		cParams := pigo.CascadeParams{
-			MinSize:     100,
-			MaxSize:     1000,
-			ShiftFactor: 0.1,
-			ScaleFactor: 1.1,
+			MinSize:     *minSize,
+			MaxSize:     *maxSize,
+			ShiftFactor: *shiftFactor,
+			ScaleFactor: *scaleFactor,
 		}
 		cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
 		imgParams := pigo.ImageParams{frame, rows, cols, cols}
@@ -97,11 +137,10 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 		dc.DrawImage(src, 0, 0)
 
 		buff := new(bytes.Buffer)
-		if err := drawMarker(dets, buff, false); err != nil {
-			log.Println("Cannot save the output image %v", err)
-		}
-		buff.Write(frameBuffer.Bytes())
-		// just MJPEG
+		drawMarker(dets, buff, *circleMarker)
+
+		//buff.Write(frameBuffer.Bytes())
+		// Encode as MJPEG
 		w.Write([]byte("Content-Type: image/jpeg\r\n"))
 		w.Write([]byte("Content-Length: " + string(len(data)) + "\r\n\r\n"))
 		w.Write(buff.Bytes())

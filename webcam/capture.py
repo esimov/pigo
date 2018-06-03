@@ -4,12 +4,12 @@ import imutils
 from imutils.video import VideoStream
 import time, sys
 
-
 vs = VideoStream(resolution=(320, 240)).start()
 time.sleep(1.0)
  
 while(True):
     frame = vs.read()
+    frame = imutils.resize(frame, width=720)
     
     #cv2.imshow('frame',frame)
     res = bytearray(cv2.imencode(".jpeg", frame)[1])
