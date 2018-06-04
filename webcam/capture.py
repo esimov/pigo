@@ -9,7 +9,7 @@ time.sleep(1.0)
  
 while(True):
     frame = vs.read()
-    frame = imutils.resize(frame, width=720)
+    frame = imutils.resize(frame, width=640, height=480)
     
     #cv2.imshow('frame',frame)
     res = bytearray(cv2.imencode(".jpeg", frame)[1])
