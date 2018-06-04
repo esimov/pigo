@@ -32,6 +32,8 @@ Next download the project and build the binary file.
 $ go get -u -f github.com/esimov/pigo/cmd/pigo
 $ go install
 ```
+### Binary releases
+Also you can obtain the generated binary files in the [releases](https://github.com/esimov/pigo/releases) folder in case you do not have installed or do not want to install Go.
 
 ## API
 Below is a minimal example of using the face detection API. 
