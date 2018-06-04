@@ -36,7 +36,7 @@ $ go install
 ## API
 Below is a minimal example of using the face detection API. 
 
-First we load and parse the binary classifier, then we need to convert the image to grayscale mode, 
+First we load and parse the binary classifier, then we convert the image to grayscale mode, 
 and finally we run the cascade function which returns a slice containing the the row, the column, the scale and the detection score.
 
 ```Go
@@ -113,4 +113,23 @@ Go (Golang) Face detection library.
 
 ```
 
+### Real time face detection
+
+In case you want to test the library real time face detection capabilities using a webcam there is an example included in the `webcam` folder. Prior to run it you have to have Pyton2 and OpenCV2 installed. In order to run it select the `webcam` folder and type:
+
+```bash
+$ go run main.go -cf "../data/facefinder"
+```
+Then access the `http://localhost:8081/cam` url from a web browser.
+
+
+#### Other implementation
+
+https://github.com/tehnokv/picojs
+
+## License
+
+Copyright © 2018 Endre Simo
+
+This project is under the MIT License. See the LICENSE file for the full license text.
 
