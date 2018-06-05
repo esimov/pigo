@@ -33,7 +33,7 @@ type ImageParams struct {
 	Dim    int
 }
 
-type pigo struct {
+type Pigo struct {
 	treeDepth     uint32
 	treeNum       uint32
 	treeCodes     []int8
@@ -42,12 +42,12 @@ type pigo struct {
 }
 
 // NewPigo instantiate a new pigo struct.
-func NewPigo() *pigo {
-	return &pigo{}
+func NewPigo() *Pigo {
+	return &Pigo{}
 }
 
 // Unpack unpack the binary face classification file.
-func (pg *pigo) Unpack(packet []byte) *pigo {
+func (pg *Pigo) Unpack(packet []byte) *Pigo {
 	var (
 		treeDepth     uint32
 		treeNum       uint32
@@ -114,7 +114,7 @@ func (pg *pigo) Unpack(packet []byte) *pigo {
 			pos += 4
 		}
 	}
-	return &pigo{
+	return &Pigo{
 		treeDepth,
 		treeNum,
 		treeCodes,
@@ -124,7 +124,7 @@ func (pg *pigo) Unpack(packet []byte) *pigo {
 }
 
 // classifyRegion constructs the classification function based on the parsed binary data.
-func (pg *pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
+func (pg *Pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 	var (
 		root  int = 0
 		out   float32
@@ -172,7 +172,7 @@ type Detection struct {
 
 // RunCascade analyze the grayscale converted image pixel data and run the classification function over the detection window.
 // It will return a slice containing the detection row, column, it's center and the detection score (in case this is > than 0.0).
-func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []Detection {
+func (pg *Pigo) RunCascade(img ImageParams, opts CascadeParams) []Detection {
 	var detections []Detection
 	var pixels = img.Pixels
 
@@ -199,7 +199,7 @@ func (pg *pigo) RunCascade(img ImageParams, opts CascadeParams) []Detection {
 
 // ClusterDetections returns the intersection over union of multiple clusters.
 // We need to make this comparision to filter out multiple face detection regions.
-func (pg *pigo) ClusterDetections(detections []Detection, iouThreshold float64) []Detection {
+func (pg *Pigo) ClusterDetections(detections []Detection, iouThreshold float64) []Detection {
 	// Sort detections by their score
 	sort.Sort(det(detections))
 
