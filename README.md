@@ -1,5 +1,10 @@
 # ![pigo](https://user-images.githubusercontent.com/883386/40915591-525ae70a-6805-11e8-8991-5841d1270298.png)
 
+[![Build Status](https://travis-ci.org/esimov/pigo.svg?branch=master)](https://travis-ci.org/esimov/pigo)
+[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/esimov/pigo/core)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat)](./LICENSE)
+[![release](https://img.shields.io/badge/release-v1.0.1-blue.svg)]()
+
 Pigo is a face detection library implemented in Go based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
 
 | Rectangle face marker | Circle face marker
