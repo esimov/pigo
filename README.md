@@ -6,7 +6,8 @@ Pigo is a face detection library implemented in Go based on ***Pixel Intensity C
 |:--:|:--:
 | ![rectangle](https://user-images.githubusercontent.com/883386/40916662-2fbbae1a-6809-11e8-8afd-d4ed40c7d4e9.png) | ![circle](https://user-images.githubusercontent.com/883386/40916683-447088a8-6809-11e8-942f-3112c10bede3.png) |
 
-I've intended to implement this face detection method in Go, since the only existing solution for face detection in the Go ecosystem is using bindings to OpenCV, but installing OpenCV on various platforms is sometimes daunting. 
+## Motivation
+The motivation it stands behind the intention to implement this face detection algorithm in Go was that almost any existing solution in terms of face detection in the Go ecosystem is based on OpenCV, but installing OpenCV on different platforms is sometimes daunting. 
 This library does not require any third party modules to be installed. However in case you wish to try the real time, webcam based face detection you might need to have Python2 and OpenCV installed, but the core API does not require any third party and external modules. 
 
 Since I haven't found any viable existing solution for accessing webcam in Go, Python is used for capturing the webcam and transferring the binary data to Go through `exec.CommandContext` method.
@@ -84,7 +85,7 @@ A command line utility is bundled into the library to facilitate face detection 
 $ pigo -in input.jpg -out out.jpg -cf data/facefinder
 ```
 
-### Supported commands:
+### Supported flags:
 
 ```bash
 $ pigo --help
