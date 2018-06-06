@@ -137,9 +137,12 @@ Then access the `http://localhost:8081/cam` url from a web browser.
 
 https://github.com/tehnokv/picojs
 
+## Author
+Simo Endre [@simo_endre](https://twitter.com/simo_endre)
+
 ## License
 
-Copyright © 2018 Endre Simo
+Copyright © 2018 Simo Endre
 
 This project is under the MIT License. See the LICENSE file for the full license text.
 
