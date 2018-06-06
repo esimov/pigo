@@ -69,6 +69,7 @@ func main() {
 
 func webcam(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "multipart/x-mixed-replace; boundary="+boundary)
+
 	cmd := exec.CommandContext(r.Context(), "./capture.py")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

@@ -33,6 +33,7 @@ type ImageParams struct {
 	Dim    int
 }
 
+// Pigo struct defines the basic binary tree components.
 type Pigo struct {
 	treeDepth     uint32
 	treeNum       uint32
@@ -84,6 +85,7 @@ func (pg *Pigo) Unpack(packet []byte) *Pigo {
 			treeCodes = append(treeCodes, []int8{0, 0, 0, 0}...)
 
 			code := packet[pos : pos+int(4*math.Pow(2, float64(treeDepth))-4)]
+			// Convert unsigned bytecodes to signed ones.
 			signedCode := *(*[]int8)(unsafe.Pointer(&code))
 			treeCodes = append(treeCodes, signedCode...)
 
@@ -163,6 +165,8 @@ func (pg *Pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 	return out - pg.treeThreshold[pg.treeNum-1]
 }
 
+// Detection struct contains the detection results composed of
+// the row, column, scale factor and the detection score.
 type Detection struct {
 	Row   int
 	Col   int
