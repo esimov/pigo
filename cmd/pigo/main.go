@@ -4,11 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"image/color"
+	"image/jpeg"
+	"image/png"
 	"io/ioutil"
 	"log"
 	"math"
 	"os"
-
+	"path/filepath"
 	"time"
 
 	"github.com/esimov/pigo/core"
@@ -51,7 +53,14 @@ func main() {
 	flag.Parse()
 
 	if len(*source) == 0 || len(*destination) == 0 || len(*cascadeFile) == 0 {
-		log.Fatal("Usage: pigo -in input.jpg -out out.jpg -cf data/facefinder")
+		log.Fatal("Usage: pigo -in input.jpg -out out.png -cf data/facefinder")
+	}
+
+	fileTypes := []string{".jpg", ".jpeg", ".png"}
+	ext := filepath.Ext(*destination)
+
+	if !inSlice(ext, fileTypes) {
+		log.Fatalf("Output file type not supported: %v", ext)
 	}
 
 	if *scaleFactor < 1 {
@@ -137,7 +146,20 @@ func output(detections []pigo.Detection, isCircle bool) error {
 			dc.Stroke()
 		}
 	}
-	return dc.SavePNG(*destination)
+	img := dc.Image()
+	output, err := os.OpenFile(*destination, os.O_CREATE|os.O_RDWR, 0755)
+	if err != nil {
+		return err
+	}
+	ext := filepath.Ext(output.Name())
+
+	switch ext {
+	case ".jpg", ".jpeg":
+		return jpeg.Encode(output, img, &jpeg.Options{Quality: 100})
+	case ".png":
+		return png.Encode(output, img)
+	}
+	return nil
 }
 
 type spinner struct {
@@ -166,4 +188,14 @@ func (s *spinner) start(message string) {
 // End process
 func (s *spinner) stop() {
 	s.stopChan <- struct{}{}
+}
+
+// inSlice check if a slice contains the string value.
+func inSlice(ext string, types []string) bool {
+	for _, t := range types {
+		if t == ext {
+			return true
+		}
+	}
+	return false
 }
