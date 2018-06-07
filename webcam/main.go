@@ -124,7 +124,10 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 		pigo := pigo.NewPigo()
 		// Unpack the binary file. This will return the number of cascade trees,
 		// the tree depth, the threshold and the prediction from tree's leaf nodes.
-		classifier := pigo.Unpack(cascadeFile)
+		classifier, err := pigo.Unpack(cascadeFile)
+		if err != nil {
+			log.Fatalf("Error reading the cascade file: %s", err)
+		}
 
 		// Run the classifier over the obtained leaf nodes and return the detection results.
 		// The result contains quadruplets representing the row, column, scale and detection score.
