@@ -63,8 +63,8 @@ if err != nil {
 sampleImg := pigo.RgbToGrayscale(src)
 
 cParams := pigo.CascadeParams{
-	MinSize:     1000,
-	MaxSize:     20,
+	MinSize:     20,
+	MaxSize:     1000,
 	ShiftFactor: 0.1,
 	ScaleFactor: 1.1,
 }
