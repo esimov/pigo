@@ -3,7 +3,6 @@ package pigo
 import (
 	"bytes"
 	"encoding/binary"
-	"log"
 	"math"
 	"sort"
 	"unsafe"
@@ -48,7 +47,7 @@ func NewPigo() *Pigo {
 }
 
 // Unpack unpack the binary face classification file.
-func (pg *Pigo) Unpack(packet []byte) *Pigo {
+func (pg *Pigo) Unpack(packet []byte) (*Pigo, error) {
 	var (
 		treeDepth     uint32
 		treeNum       uint32
@@ -65,7 +64,7 @@ func (pg *Pigo) Unpack(packet []byte) *Pigo {
 	// Read the depth (size) of each tree and write it into the buffer array.
 	_, err := dataView.Write([]byte{packet[pos+0], packet[pos+1], packet[pos+2], packet[pos+3]})
 	if err != nil {
-		log.Fatalf("Error writing tree size into the buffer array: %v", err)
+		return nil, err
 	}
 
 	if dataView.Len() > 0 {
@@ -75,7 +74,7 @@ func (pg *Pigo) Unpack(packet []byte) *Pigo {
 		// Get the number of cascade trees as 32-bit unsigned integer and write it into the buffer array.
 		_, err := dataView.Write([]byte{packet[pos+0], packet[pos+1], packet[pos+2], packet[pos+3]})
 		if err != nil {
-			log.Fatalf("Error writing cascade trees into the buffer array: %v", err)
+			return nil, err
 		}
 
 		treeNum = binary.LittleEndian.Uint32(packet[pos:])
@@ -95,7 +94,7 @@ func (pg *Pigo) Unpack(packet []byte) *Pigo {
 			for i := 0; i < int(math.Pow(2, float64(treeDepth))); i++ {
 				_, err := dataView.Write([]byte{packet[pos+0], packet[pos+1], packet[pos+2], packet[pos+3]})
 				if err != nil {
-					log.Fatalf("Error writing leaf node predictions into the buffer array: %v", err)
+					return nil, err
 				}
 				u32pred := binary.LittleEndian.Uint32(packet[pos:])
 				// Convert uint32 to float32
@@ -107,7 +106,7 @@ func (pg *Pigo) Unpack(packet []byte) *Pigo {
 			// Read tree nodes threshold values.
 			_, err := dataView.Write([]byte{packet[pos+0], packet[pos+1], packet[pos+2], packet[pos+3]})
 			if err != nil {
-				log.Fatalf("Error writing tree nodes threshold value into the buffer array: %v", err)
+				return nil, err
 			}
 			u32thr := binary.LittleEndian.Uint32(packet[pos:])
 			// Convert uint32 to float32
@@ -122,7 +121,7 @@ func (pg *Pigo) Unpack(packet []byte) *Pigo {
 		treeCodes,
 		treePred,
 		treeThreshold,
-	}
+	}, nil
 }
 
 // classifyRegion constructs the classification function based on the parsed binary data.
