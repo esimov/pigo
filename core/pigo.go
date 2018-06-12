@@ -239,7 +239,9 @@ func (pg *Pigo) ClusterDetections(detections []Detection, iouThreshold float64) 
 					n++
 				}
 			}
-			clusters = append(clusters, Detection{r / n, c / n, s / n, q})
+			if n > 0 {
+				clusters = append(clusters, Detection{r / n, c / n, s / n, q})
+			}
 		}
 	}
 	return clusters

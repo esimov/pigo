@@ -91,7 +91,12 @@ func main() {
 		ScaleFactor: *scaleFactor,
 	}
 	cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
-	imgParams := pigo.ImageParams{sampleImg, rows, cols, cols}
+	imgParams := pigo.ImageParams{
+		Pixels: sampleImg,
+		Rows:   rows,
+		Cols:   cols,
+		Dim:    cols,
+	}
 
 	pigo := pigo.NewPigo()
 	// Unpack the binary file. This will return the number of cascade trees,
@@ -119,26 +124,26 @@ func main() {
 	fmt.Printf("\nDone in: \x1b[92m%.2fs\n", time.Since(start).Seconds())
 }
 
-// output mark the face region with the provided marker (rectangle or circle).
-func output(detections []pigo.Detection, isCircle bool) error {
+// output marks the face region with the provided marker (rectangle or circle).
+func output(faces []pigo.Detection, isCircle bool) error {
 	var qThresh float32 = 5.0
 
-	for i := 0; i < len(detections); i++ {
-		if detections[i].Q > qThresh {
+	for _, face := range faces {
+		if face.Q > qThresh {
 			if isCircle {
 				dc.DrawArc(
-					float64(detections[i].Col),
-					float64(detections[i].Row),
-					float64(detections[i].Scale/2),
+					float64(face.Col),
+					float64(face.Row),
+					float64(face.Scale/2),
 					0,
 					2*math.Pi,
 				)
 			} else {
 				dc.DrawRectangle(
-					float64(detections[i].Col-detections[i].Scale/2),
-					float64(detections[i].Row-detections[i].Scale/2),
-					float64(detections[i].Scale),
-					float64(detections[i].Scale),
+					float64(face.Col-face.Scale/2),
+					float64(face.Row-face.Scale/2),
+					float64(face.Scale),
+					float64(face.Scale),
 				)
 			}
 			dc.SetLineWidth(3.0)
@@ -146,6 +151,7 @@ func output(detections []pigo.Detection, isCircle bool) error {
 			dc.Stroke()
 		}
 	}
+
 	img := dc.Image()
 	output, err := os.OpenFile(*destination, os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
