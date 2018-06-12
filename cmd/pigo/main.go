@@ -82,7 +82,8 @@ func main() {
 		log.Fatalf("Cannot open the image file: %v", err)
 	}
 
-	sampleImg := pigo.RgbToGrayscale(src)
+	pixels := pigo.RgbToGrayscale(src)
+	cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
 
 	cParams := pigo.CascadeParams{
 		MinSize:     *minSize,
@@ -90,9 +91,8 @@ func main() {
 		ShiftFactor: *shiftFactor,
 		ScaleFactor: *scaleFactor,
 	}
-	cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
 	imgParams := pigo.ImageParams{
-		Pixels: sampleImg,
+		Pixels: pixels,
 		Rows:   rows,
 		Cols:   cols,
 		Dim:    cols,
