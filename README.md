@@ -60,7 +60,8 @@ if err != nil {
 	log.Fatalf("Cannot open the image file: %v", err)
 }
 
-sampleImg := pigo.RgbToGrayscale(src)
+pixels := pigo.RgbToGrayscale(src)
+cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
 
 cParams := pigo.CascadeParams{
 	MinSize:     20,
@@ -68,8 +69,12 @@ cParams := pigo.CascadeParams{
 	ShiftFactor: 0.1,
 	ScaleFactor: 1.1,
 }
-cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
-imgParams := pigo.ImageParams{sampleImg, rows, cols, cols}
+imgParams := pigo.ImageParams{
+	Pixels: pixels,
+	Rows:   rows,
+	Cols:   cols,
+	Dim:    cols,
+}
 
 pigo := pigo.NewPigo()
 // Unpack the binary file. This will return the number of cascade trees,
