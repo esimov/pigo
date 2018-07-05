@@ -1,13 +1,22 @@
 package pigo
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"image/color/palette"
 	"image/draw"
+	"io/ioutil"
+	"path/filepath"
 	"testing"
 )
+
+func TestGetImage(t *testing.T) {
+	path := filepath.Join("../testdata", "test.png")
+	_, err := ioutil.ReadFile(path)
+	if err != nil {
+		t.Fatalf("unable to read the file: %v", err)
+	}
+}
 
 func TestImgToNRGBA(t *testing.T) {
 	rect := image.Rect(-1, -1, 15, 15)
@@ -54,7 +63,6 @@ func TestImgToNRGBA(t *testing.T) {
 				scan(tc.img, 0, y-r.Min.Y, r.Dx(), y+1-r.Min.Y, buf)
 				wantBuf := readRow(tc.img, y)
 				if !compareBytes(buf, wantBuf, 1) {
-					fmt.Println(tc.img)
 					t.Fatalf("scan horizontal line (y=%d): got %v want %v", y, buf, wantBuf)
 				}
 			}
@@ -69,7 +77,6 @@ func TestImgToNRGBA(t *testing.T) {
 		})
 	}
 }
-
 
 func scan(img image.Image, x1, y1, x2, y2 int, dst []uint8) {
 	switch img := img.(type) {
@@ -219,7 +226,6 @@ func compareBytes(a, b []uint8, delta int) bool {
 	}
 	return true
 }
-
 
 // absint returns the absolute value of i.
 func absint(i int) int {
