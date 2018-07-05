@@ -4,3 +4,4 @@
 *.jpeg
 pigo
 packages
+!/testdata/*.png
