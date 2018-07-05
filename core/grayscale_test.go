@@ -25,7 +25,7 @@ func TestGrayscale(t *testing.T) {
 			b = b >> 8
 
 			if r != g || r != b || g != b {
-				t.Errorf("R, G, B value expected to be equal. Got %v, %v, %v", r, g, b)
+				t.Fatalf("R, G, B value expected to be equal. Got %v, %v, %v", r, g, b)
 			}
 		}
 	}
