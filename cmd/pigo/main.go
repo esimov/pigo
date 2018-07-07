@@ -103,7 +103,7 @@ func main() {
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
 	classifier, err := pigo.Unpack(cascadeFile)
 	if err != nil {
-		log.Fatalf("Error reading the cascade file: %s", err)
+		log.Fatalf("Error unpacking the cascade file: %s", err)
 	}
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.

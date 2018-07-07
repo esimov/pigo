@@ -174,7 +174,7 @@ type Detection struct {
 }
 
 // RunCascade analyze the grayscale converted image pixel data and run the classification function over the detection window.
-// It will return a slice containing the detection row, column, it's center and the detection score (in case this is > than 0.0).
+// It will return a slice containing the detection row, column, it's center and the detection score (in case this is greater than 0.0).
 func (pg *Pigo) RunCascade(img ImageParams, opts CascadeParams) []Detection {
 	var detections []Detection
 	var pixels = img.Pixels
