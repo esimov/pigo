@@ -147,7 +147,5 @@ https://github.com/tehnokv/picojs
 
 ## License
 
-Copyright © 2018 Simo Endre
-
 This project is under the MIT License. See the LICENSE file for the full license text.
 
