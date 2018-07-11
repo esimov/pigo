@@ -5,16 +5,16 @@
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat)](./LICENSE)
 [![release](https://img.shields.io/badge/release-v1.0.1-blue.svg)]()
 
-Pigo is a face detection library implemented in Go based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
+Pigo is a face detection library implemented in [Go](https://golang.org/) based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
 
 | Rectangle face marker | Circle face marker
 |:--:|:--:
 | ![rectangle](https://user-images.githubusercontent.com/883386/40916662-2fbbae1a-6809-11e8-8afd-d4ed40c7d4e9.png) | ![circle](https://user-images.githubusercontent.com/883386/40916683-447088a8-6809-11e8-942f-3112c10bede3.png) |
 
 ### Motivation
-I've intended to implement this face detection method in Go, since the only existing solution for face detection in the Go ecosystem is using bindings to OpenCV, but installing OpenCV on various platforms is sometimes daunting. 
+I've intended to implement this face detection method, since the only existing solution for face detection in the Go ecosystem is using bindings to OpenCV, but installing OpenCV on various platforms is sometimes daunting. 
 
-This library does not require any third party modules to be installed. However in case you wish to try the real time, webcam based face detection you might need to have Python2 and OpenCV installed, but **the core API does not require any third party and external modules**. 
+This library does not require any third party modules to be installed. However in case you wish to try the real time, webcam based face detection you might need to have Python2 and OpenCV installed, but **the core API does not require any third party module or external dependency**. 
 
 Since I haven't found any viable existing solution for accessing webcam in Go, Python is used for capturing the webcam and transferring the binary data to Go through `exec.CommandContext` method.
 
@@ -133,7 +133,7 @@ Go (Golang) Face detection library.
 
 ### Real time face detection
 
-In case you want to test the library real time face detection capabilities using a webcam there is an example included in the `webcam` folder. Prior to run it you need to have Python2 and OpenCV2 installed. In order to run it select the `webcam` folder and type:
+In case you want to test the library real time face detection capabilities using a webcam, there is an example included in the `webcam` folder. Prior to run it you need to have Python2 and OpenCV2 installed. Select the `webcam` folder and type the following command:
 
 ```bash
 $ go run main.go -cf "../data/facefinder"
