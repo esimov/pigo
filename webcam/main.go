@@ -56,7 +56,7 @@ func main() {
 	flag.Parse()
 
 	if len(*cascadeFile) == 0 {
-		log.Fatal("Usage: go run main.go -cf data/facefinder")
+		log.Fatal("Usage: go run main.go -cf ../data/facefinder")
 	}
 
 	if *scaleFactor < 1 {
@@ -135,7 +135,6 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 
 		// Calculate the intersection over union (IoU) of two clusters.
 		dets = classifier.ClusterDetections(dets, 0)
-		fmt.Println(dets)
 
 		dc = gg.NewContext(cols, rows)
 		dc.DrawImage(src, 0, 0)
