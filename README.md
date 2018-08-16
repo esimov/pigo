@@ -22,10 +22,14 @@ Since I haven't found any viable existing solution for accessing webcam in Go, P
 - [x] High processing speed.
 - [x] There is no need for image preprocessing prior to detection.
 - [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure.
-- [x] The face detection is based on pixel intensity comparison encoded in the binary file dat tree structure.
+- [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure.
 
 ### Todo
 - [ ] Object rotation detection.
+
+The algorithm can detect even faces with eyeglasses.
+
+<p align="center"><img align="center" width="640" alt="eyeglass" src="https://user-images.githubusercontent.com/883386/44193375-422a2200-a13b-11e8-9f56-fa8172d5806e.png"></p>
 
 ## Install
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
