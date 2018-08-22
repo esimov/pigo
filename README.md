@@ -27,7 +27,7 @@ Since I haven't found any viable existing solution for accessing webcam in Go, P
 ### Todo
 - [ ] Object rotation detection.
 
-**The API can detect even faces with eyeglasses.**
+**The API can even detect faces with eyeglasses.**
 
 ## Install
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.

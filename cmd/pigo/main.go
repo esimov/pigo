@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"image"
 	"image/color"
 	"image/jpeg"
 	"image/png"
@@ -41,9 +43,25 @@ var (
 	scaleFactor  = flag.Float64("scale", 1.1, "Scale detection window by percentage")
 	iouThreshold = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
 	circleMarker = flag.Bool("circle", false, "Use circle as detection marker")
+	outputAsJSON = flag.Bool("json", false, "Output face box coordinates into a json file")
 )
 
 var dc *gg.Context
+
+// FaceDetector struct contains Pigo face detector general settings.
+type FaceDetector struct {
+	cascadeFile  string
+	minSize      int
+	maxSize      int
+	shiftFactor  float64
+	scaleFactor  float64
+	iouThreshold float64
+}
+
+// DetectionResult contains the coordinates of the detected faces and the base64 converted image.
+type DetectionResult struct {
+	Faces []image.Rectangle
+}
 
 func main() {
 	flag.Usage = func() {
@@ -67,30 +85,67 @@ func main() {
 		log.Fatal("Scale factor must be greater than 1.")
 	}
 
-	cascadeFile, err := ioutil.ReadFile(*cascadeFile)
-	if err != nil {
-		log.Fatalf("Error reading the cascade file: %v", err)
-	}
-
 	// Progress indicator
 	s := new(spinner)
 	s.start("Processing...")
 	start := time.Now()
 
-	src, err := pigo.GetImage(*source)
+	fd := NewFaceDetector(*cascadeFile, *minSize, *maxSize, *shiftFactor, *scaleFactor, *iouThreshold)
+	faces, err := fd.DetectFaces(*source)
 	if err != nil {
-		log.Fatalf("Cannot open the image file: %v", err)
+		log.Fatalf("Detection error: %v", err)
+	}
+
+	_, rects, err := fd.DrawFaces(faces, *circleMarker)
+	if err != nil {
+		log.Fatalf("Error creating the image output: %s", err)
+	}
+
+	resp := DetectionResult{
+		Faces: rects,
+	}
+
+	out, err := json.Marshal(resp)
+	if *outputAsJSON {
+		ioutil.WriteFile("output.json", out, 0644)
+	}
+
+	s.stop()
+	fmt.Printf("\nDone in: \x1b[92m%.2fs\n", time.Since(start).Seconds())
+}
+
+// NewFaceDetector initialises the constructor function.
+func NewFaceDetector(cf string, minSize, maxSize int, shf, scf, iou float64) *FaceDetector {
+	return &FaceDetector{
+		cascadeFile:  cf,
+		minSize:      minSize,
+		maxSize:      maxSize,
+		shiftFactor:  shf,
+		scaleFactor:  scf,
+		iouThreshold: iou,
+	}
+}
+
+// DetectFaces run the detection algorithm over the provided source image.
+func (fd *FaceDetector) DetectFaces(source string) ([]pigo.Detection, error) {
+	src, err := pigo.GetImage(source)
+	if err != nil {
+		return nil, err
 	}
 
 	pixels := pigo.RgbToGrayscale(src)
 	cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
 
+	dc = gg.NewContext(cols, rows)
+	dc.DrawImage(src, 0, 0)
+
 	cParams := pigo.CascadeParams{
-		MinSize:     *minSize,
-		MaxSize:     *maxSize,
-		ShiftFactor: *shiftFactor,
-		ScaleFactor: *scaleFactor,
+		MinSize:     fd.minSize,
+		MaxSize:     fd.maxSize,
+		ShiftFactor: fd.shiftFactor,
+		ScaleFactor: fd.scaleFactor,
 	}
+
 	imgParams := pigo.ImageParams{
 		Pixels: pixels,
 		Rows:   rows,
@@ -98,35 +153,35 @@ func main() {
 		Dim:    cols,
 	}
 
+	cascadeFile, err := ioutil.ReadFile(fd.cascadeFile)
+	if err != nil {
+		return nil, err
+	}
+
 	pigo := pigo.NewPigo()
 	// Unpack the binary file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
 	classifier, err := pigo.Unpack(cascadeFile)
 	if err != nil {
-		log.Fatalf("Error unpacking the cascade file: %s", err)
+		return nil, err
 	}
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
-	dets := classifier.RunCascade(imgParams, cParams)
+	faces := classifier.RunCascade(imgParams, cParams)
 
 	// Calculate the intersection over union (IoU) of two clusters.
-	dets = classifier.ClusterDetections(dets, *iouThreshold)
+	faces = classifier.ClusterDetections(faces, fd.iouThreshold)
 
-	dc = gg.NewContext(cols, rows)
-	dc.DrawImage(src, 0, 0)
-
-	if err := output(dets, *circleMarker); err != nil {
-		log.Fatalf("Cannot save the output image %v", err)
-	}
-
-	s.stop()
-	fmt.Printf("\nDone in: \x1b[92m%.2fs\n", time.Since(start).Seconds())
+	return faces, nil
 }
 
-// output marks the face region with the provided marker (rectangle or circle).
-func output(faces []pigo.Detection, isCircle bool) error {
-	var qThresh float32 = 5.0
+// DrawFaces marks the detected faces with a circle in case isCircle is true, otherwise marks with a rectangle.
+func (fd *FaceDetector) DrawFaces(faces []pigo.Detection, isCircle bool) ([]byte, []image.Rectangle, error) {
+	var (
+		qThresh float32 = 5.0
+		rects   []image.Rectangle
+	)
 
 	for _, face := range faces {
 		if face.Q > qThresh {
@@ -146,7 +201,13 @@ func output(faces []pigo.Detection, isCircle bool) error {
 					float64(face.Scale),
 				)
 			}
-			dc.SetLineWidth(3.0)
+			rects = append(rects, image.Rect(
+				face.Col-face.Scale/2,
+				face.Row-face.Scale/2,
+				face.Scale,
+				face.Scale,
+			))
+			dc.SetLineWidth(2.0)
 			dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 0, B: 0, A: 255}))
 			dc.Stroke()
 		}
@@ -155,17 +216,19 @@ func output(faces []pigo.Detection, isCircle bool) error {
 	img := dc.Image()
 	output, err := os.OpenFile(*destination, os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	ext := filepath.Ext(output.Name())
 
 	switch ext {
 	case ".jpg", ".jpeg":
-		return jpeg.Encode(output, img, &jpeg.Options{Quality: 100})
+		jpeg.Encode(output, img, &jpeg.Options{Quality: 100})
 	case ".png":
-		return png.Encode(output, img)
+		png.Encode(output, img)
 	}
-	return nil
+	rf, err := ioutil.ReadFile(*destination)
+
+	return rf, rects, err
 }
 
 type spinner struct {
