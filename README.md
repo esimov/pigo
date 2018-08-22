@@ -29,6 +29,8 @@ Since I haven't found any viable existing solution for accessing webcam in Go, P
 
 **The API can even detect faces with eyeglasses.**
 
+![output](https://user-images.githubusercontent.com/883386/44484795-67e18a80-a657-11e8-98a1-06811dd7015c.png)
+
 ## Install
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
 
@@ -110,7 +112,7 @@ $ pigo --help
 ┴  ┴└─┘└─┘
 
 Go (Golang) Face detection library.
-    Version: 1.0.1
+    Version: 1.0.3
 
   -cf string
     	Cascade binary file
@@ -120,6 +122,8 @@ Go (Golang) Face detection library.
     	Source image
   -iou float
     	Intersection over union (IoU) threshold (default 0.2)
+  -json
+    	Output face box coordinates into a json file
   -max int
     	Maximum size of face (default 1000)
   -min int
