@@ -2,6 +2,7 @@
 *.png
 *.jpg
 *.jpeg
+*.json
 pigo
 packages
 !/testdata/*.png
