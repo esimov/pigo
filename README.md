@@ -27,7 +27,7 @@ Since I haven't found any viable existing solution for accessing webcam in Go, P
 ### Todo
 - [ ] Object rotation detection.
 
-**The API can even detect faces with eyeglasses.**
+**The API can detect even faces with eyeglasses.**
 
 ![output](https://user-images.githubusercontent.com/883386/44484795-67e18a80-a657-11e8-98a1-06811dd7015c.png)
 
