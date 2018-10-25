@@ -20,7 +20,7 @@ Since I haven't found any viable existing solution for accessing webcam in Go, P
 
 ### Key features
 - [x] High processing speed.
-- [x] There is no need for image preprocessing prior to detection.
+- [x] There is no need for image preprocessing prior detection.
 - [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure.
 - [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure.
 
