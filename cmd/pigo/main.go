@@ -48,8 +48,8 @@ var (
 
 var dc *gg.Context
 
-// FaceDetector struct contains Pigo face detector general settings.
-type FaceDetector struct {
+// faceDetector struct contains Pigo face detector general settings.
+type faceDetector struct {
 	cascadeFile  string
 	minSize      int
 	maxSize      int
@@ -58,9 +58,9 @@ type FaceDetector struct {
 	iouThreshold float64
 }
 
-// DetectionResult contains the coordinates of the detected faces and the base64 converted image.
-type DetectionResult struct {
-	Faces []image.Rectangle
+// detectionResult contains the coordinates of the detected faces and the base64 converted image.
+type detectionResult struct {
+	rects []image.Rectangle
 }
 
 func main() {
@@ -90,19 +90,19 @@ func main() {
 	s.start("Processing...")
 	start := time.Now()
 
-	fd := NewFaceDetector(*cascadeFile, *minSize, *maxSize, *shiftFactor, *scaleFactor, *iouThreshold)
-	faces, err := fd.DetectFaces(*source)
+	fd := newFaceDetector(*cascadeFile, *minSize, *maxSize, *shiftFactor, *scaleFactor, *iouThreshold)
+	faces, err := fd.detectFaces(*source)
 	if err != nil {
 		log.Fatalf("Detection error: %v", err)
 	}
 
-	_, rects, err := fd.DrawFaces(faces, *circleMarker)
+	_, rects, err := fd.drawFaces(faces, *circleMarker)
 	if err != nil {
 		log.Fatalf("Error creating the image output: %s", err)
 	}
 
-	resp := DetectionResult{
-		Faces: rects,
+	resp := detectionResult{
+		rects: rects,
 	}
 
 	out, err := json.Marshal(resp)
@@ -114,9 +114,9 @@ func main() {
 	fmt.Printf("\nDone in: \x1b[92m%.2fs\n", time.Since(start).Seconds())
 }
 
-// NewFaceDetector initialises the constructor function.
-func NewFaceDetector(cf string, minSize, maxSize int, shf, scf, iou float64) *FaceDetector {
-	return &FaceDetector{
+// newFaceDetector initialises the constructor function.
+func newFaceDetector(cf string, minSize, maxSize int, shf, scf, iou float64) *faceDetector {
+	return &faceDetector{
 		cascadeFile:  cf,
 		minSize:      minSize,
 		maxSize:      maxSize,
@@ -126,8 +126,8 @@ func NewFaceDetector(cf string, minSize, maxSize int, shf, scf, iou float64) *Fa
 	}
 }
 
-// DetectFaces run the detection algorithm over the provided source image.
-func (fd *FaceDetector) DetectFaces(source string) ([]pigo.Detection, error) {
+// detectFaces run the detection algorithm over the provided source image.
+func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 	src, err := pigo.GetImage(source)
 	if err != nil {
 		return nil, err
@@ -176,8 +176,8 @@ func (fd *FaceDetector) DetectFaces(source string) ([]pigo.Detection, error) {
 	return faces, nil
 }
 
-// DrawFaces marks the detected faces with a circle in case isCircle is true, otherwise marks with a rectangle.
-func (fd *FaceDetector) DrawFaces(faces []pigo.Detection, isCircle bool) ([]byte, []image.Rectangle, error) {
+// drawFaces marks the detected faces with a circle in case isCircle is true, otherwise marks with a rectangle.
+func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte, []image.Rectangle, error) {
 	var (
 		qThresh float32 = 5.0
 		rects   []image.Rectangle
