@@ -97,7 +97,7 @@ dets = classifier.ClusterDetections(dets, 0.2)
 ```
 
 ## Usage
-A command line utility is bundled into the library to facilitate face detection in static images.
+A command line utility is bundled into the library to detect faces in static images.
 
 ```bash
 $ pigo -in input.jpg -out out.jpg -cf data/facefinder
@@ -145,11 +145,6 @@ In case you want to test the library real time face detection capabilities using
 $ go run main.go -cf "../data/facefinder"
 ```
 Then access the `http://localhost:8081/cam` url from a web browser.
-
-
-#### Other implementation
-
-https://github.com/tehnokv/picojs
 
 ## License
 
