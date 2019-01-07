@@ -78,16 +78,17 @@ pixels := pigo.RgbToGrayscale(src)
 cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
 
 cParams := pigo.CascadeParams{
-	MinSize:     20,
-	MaxSize:     1000,
-	ShiftFactor: 0.1,
-	ScaleFactor: 1.1,
-}
-imgParams := pigo.ImageParams{
-	Pixels: pixels,
-	Rows:   rows,
-	Cols:   cols,
-	Dim:    cols,
+	MinSize:     fd.minSize,
+	MaxSize:     fd.maxSize,
+	ShiftFactor: fd.shiftFactor,
+	ScaleFactor: fd.scaleFactor,
+	
+	ImageParams: pigo.ImageParams{
+		Pixels: pixels,
+		Rows:   rows,
+		Cols:   cols,
+		Dim:    cols,
+	},
 }
 
 pigo := pigo.NewPigo()
@@ -98,9 +99,11 @@ if err != nil {
 	log.Fatalf("Error reading the cascade file: %s", err)
 }
 
+angle := 0.0 // cascade rotation angle. 0.0 is 0 radians and 1.0 is 2*pi radians
+
 // Run the classifier over the obtained leaf nodes and return the detection results.
 // The result contains quadruplets representing the row, column, scale and detection score.
-dets := classifier.RunCascade(imgParams, cParams)
+dets := classifier.RunCascade(cParams, angle)
 
 // Calculate the intersection over union (IoU) of two clusters.
 dets = classifier.ClusterDetections(dets, 0.2)
