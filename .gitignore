@@ -4,5 +4,6 @@
 *.jpeg
 *.json
 pigo
+build
 packages
 !/testdata/*.png
