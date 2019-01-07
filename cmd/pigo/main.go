@@ -61,7 +61,7 @@ type faceDetector struct {
 
 // detectionResult contains the coordinates of the detected faces and the base64 converted image.
 type detectionResult struct {
-	rects []image.Rectangle
+	coords []image.Rectangle
 }
 
 func main() {
@@ -98,15 +98,17 @@ func main() {
 	}
 
 	_, rects, err := fd.drawFaces(faces, *circleMarker)
+
 	if err != nil {
 		log.Fatalf("Error creating the image output: %s", err)
 	}
 
 	resp := detectionResult{
-		rects: rects,
+		coords: rects,
 	}
 
-	out, err := json.Marshal(resp)
+	out, err := json.Marshal(resp.coords)
+	
 	if *outputAsJSON {
 		ioutil.WriteFile("output.json", out, 0644)
 	}
