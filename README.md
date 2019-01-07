@@ -23,13 +23,23 @@ Since I haven't found any viable existing solution for accessing webcam in Go, P
 - [x] There is no need for image preprocessing prior detection.
 - [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure.
 - [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure.
-
-### Todo
-- [ ] Object rotation detection.
+- [x] **Fast detection of in-plane rotated faces.**
 
 **The API can detect even faces with eyeglasses.**
 
 ![output](https://user-images.githubusercontent.com/883386/44484795-67e18a80-a657-11e8-98a1-06811dd7015c.png)
+
+**The API can also detect in plane rotated faces.** For this reason a separate `-angle` parameter have been included in the command line utility. The command below will generate the following result. See the table below for the supported options.
+
+In case the `-angle` flag is set to `0.0` no face detection is performed, otherwise the angle value should be adapted to the provided image.
+
+```bash
+$ pigo -in input.jpg -out output.jpg -cf data/facefinder -angle=0.8 -iou=0.01
+```
+
+| Input file | Output file
+|:--:|:--:
+| ![input](https://user-images.githubusercontent.com/883386/50761018-015db180-1272-11e9-93d9-d3693cae9d66.jpg) | ![output](https://user-images.githubusercontent.com/883386/50761024-03277500-1272-11e9-9c20-2568b87a2344.png) |
 
 ## Install
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
@@ -114,6 +124,8 @@ $ pigo --help
 Go (Golang) Face detection library.
     Version: 1.0.3
 
+  -angle float
+    	0.0 is 0 radians and 1.0 is 2*pi radians
   -cf string
     	Cascade binary file
   -circle
