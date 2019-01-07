@@ -41,6 +41,7 @@ var (
 	maxSize      = flag.Int("max", 1000, "Maximum size of face")
 	shiftFactor  = flag.Float64("shift", 0.1, "Shift detection window by percentage")
 	scaleFactor  = flag.Float64("scale", 1.1, "Scale detection window by percentage")
+	angle        = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
 	iouThreshold = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
 	circleMarker = flag.Bool("circle", false, "Use circle as detection marker")
 	outputAsJSON = flag.Bool("json", false, "Output face box coordinates into a json file")
@@ -144,13 +145,12 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 		MaxSize:     fd.maxSize,
 		ShiftFactor: fd.shiftFactor,
 		ScaleFactor: fd.scaleFactor,
-	}
-
-	imgParams := pigo.ImageParams{
-		Pixels: pixels,
-		Rows:   rows,
-		Cols:   cols,
-		Dim:    cols,
+		ImageParams: pigo.ImageParams{
+			Pixels: pixels,
+			Rows:   rows,
+			Cols:   cols,
+			Dim:    cols,
+		},
 	}
 
 	cascadeFile, err := ioutil.ReadFile(fd.cascadeFile)
@@ -168,7 +168,7 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
-	faces := classifier.RunCascade(imgParams, cParams)
+	faces := classifier.RunCascade(cParams, *angle)
 
 	// Calculate the intersection over union (IoU) of two clusters.
 	faces = classifier.ClusterDetections(faces, fd.iouThreshold)

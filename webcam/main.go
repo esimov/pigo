@@ -43,6 +43,7 @@ var (
 	maxSize      = flag.Int("max", 1000, "Maximum size of face")
 	shiftFactor  = flag.Float64("shift", 0.1, "Shift detection window by percentage")
 	scaleFactor  = flag.Float64("scale", 1.1, "Scale detection window by percentage")
+	angle        = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
 	iouThreshold = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
 	circleMarker = flag.Bool("circle", false, "Use circle as detection marker")
 )
@@ -112,14 +113,20 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 		src := pigo.ImgToNRGBA(img)
 		frame := pigo.RgbToGrayscale(src)
 
+		cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
+
 		cParams := pigo.CascadeParams{
 			MinSize:     *minSize,
 			MaxSize:     *maxSize,
 			ShiftFactor: *shiftFactor,
 			ScaleFactor: *scaleFactor,
+			ImageParams: pigo.ImageParams{
+				Pixels: frame,
+				Rows:   rows,
+				Cols:   cols,
+				Dim:    cols,
+			},
 		}
-		cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
-		imgParams := pigo.ImageParams{frame, rows, cols, cols}
 
 		pigo := pigo.NewPigo()
 		// Unpack the binary file. This will return the number of cascade trees,
@@ -131,7 +138,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 
 		// Run the classifier over the obtained leaf nodes and return the detection results.
 		// The result contains quadruplets representing the row, column, scale and detection score.
-		dets := classifier.RunCascade(imgParams, cParams)
+		dets := classifier.RunCascade(cParams, *angle)
 
 		// Calculate the intersection over union (IoU) of two clusters.
 		dets = classifier.ClusterDetections(dets, 0)
