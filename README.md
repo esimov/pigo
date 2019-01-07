@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/esimov/pigo.svg?branch=master)](https://travis-ci.org/esimov/pigo)
 [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/esimov/pigo/core)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat)](./LICENSE)
-[![release](https://img.shields.io/badge/release-v1.0.3-blue.svg)]()
+[![release](https://img.shields.io/badge/release-v1.1.0-blue.svg)]()
 
 Pigo is a face detection library implemented in [Go](https://golang.org/) based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
 
@@ -125,7 +125,7 @@ $ pigo --help
 ┴  ┴└─┘└─┘
 
 Go (Golang) Face detection library.
-    Version: 1.0.3
+    Version: 1.1.0
 
   -angle float
     	0.0 is 0 radians and 1.0 is 2*pi radians
