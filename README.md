@@ -5,7 +5,7 @@
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat)](./LICENSE)
 [![release](https://img.shields.io/badge/release-v1.1.0-blue.svg)]()
 
-Pigo is a face detection library implemented in [Go](https://golang.org/) based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
+Pigo is a purely Go face detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
 
 | Rectangle face marker | Circle face marker
 |:--:|:--:
