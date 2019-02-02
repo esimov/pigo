@@ -108,7 +108,7 @@ func main() {
 	}
 
 	out, err := json.Marshal(resp.coords)
-	
+
 	if *outputAsJSON {
 		ioutil.WriteFile("output.json", out, 0644)
 	}
@@ -217,6 +217,8 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 
 	img := dc.Image()
 	output, err := os.OpenFile(*destination, os.O_CREATE|os.O_RDWR, 0755)
+	defer output.Close()
+
 	if err != nil {
 		return nil, nil, err
 	}
