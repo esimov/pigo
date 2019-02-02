@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"reflect"
 	"runtime"
 	"unsafe"
 
@@ -33,56 +32,35 @@ func FindFaces(pixels []uint8) uintptr {
 				result[i] = append(result[i], dets[i].Row, dets[i].Col, dets[i].Scale)
 			}
 		}
-		//fmt.Println(dets)
-		fmt.Println(result)
+		fmt.Println(dets)
 
 		if len(result) > 0 {
+			// Since we cannot transfer a 2d array trough an array pointer
+			// we have to transform it into 1d array.
 			det := make([]int, 0, len(result))
 			for _, v := range result {
 				det = append(det, v...)
 			}
+			// Include as a first slice element the number of detected faces.
+			// We need to transfer this value in order to define the Python array buffer length.
 			det = append([]int{len(result), 0, 0}, det...)
 			fmt.Println(det)
 
+			// Convert the slice into an array pointer.
 			s := *(*[]int)(unsafe.Pointer(&det))
 			p := uintptr(unsafe.Pointer(&s[0]))
-			return p
-
-			sh := &reflect.SliceHeader{
-				Data: p,
-				Len:  len(result),
-				Cap:  len(result),
-			}
-
-			data := *(*[][]int)(unsafe.Pointer(sh))
-
-			fmt.Println(data)
 
 			runtime.KeepAlive(result)
-			return uintptr(unsafe.Pointer(&data[0]))
+			// return the pointer address
+			return p
 		}
 	}
 	return 0
 }
 
+// clusterDetection runs Pigo face detector core methods
+// and returns a cluster with the detected faces coordinates.
 func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
-	// cfp := *(*[]byte)(unsafe.Pointer(&cascadeFile))
-	// p := uintptr(unsafe.Pointer(&cfp[0]))
-
-	// size := len(cascadeFile)
-	// var data []byte
-
-	// sh := (*reflect.SliceHeader)(unsafe.Pointer(&data))
-	// sh.Data = p
-	// sh.Len = size
-	// sh.Cap = size
-
-	// fmt.Println(cascadeFile)
-	// fmt.Println(data)
-	// fmt.Println(uintptr(unsafe.Pointer(&cfp[0])))
-	fmt.Println("P:", len(pixels))
-	fmt.Println("DIM:", rows, cols)
-
 	cParams := pigo.CascadeParams{
 		MinSize:     20,
 		MaxSize:     1000,

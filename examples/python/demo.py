@@ -28,50 +28,25 @@ def process_frame(pixs):
 	faces = GoPixelSlice(pixels, len(pixs), len(pixs))
 	pigo.FindFaces.argtypes = [GoPixelSlice]
 	pigo.FindFaces.restype = c_void_p
-	#pigo.FindFaces.restype = POINTER((c_longlong * 3) * MAX_NDETS)
-	#pigo.FindFaces.restype = numpy.ctypeslib.ndpointer(dtype = c_longlong, shape = (MAX_NDETS, 3, ))
 
+	# Call the exported FindFaces function from Go. 
 	ndets = pigo.FindFaces(faces)
 	data_pointer = cast(ndets, POINTER((c_longlong * 3) * MAX_NDETS))
 	
 	if data_pointer :
-		#print(data_pointer.contents)
-		#addr = addressof(data_pointer.contents)
-		#new_array =  cast(addr, POINTER((c_longlong * 3) * MAX_NDETS)).contents
-		new_array = ((c_longlong * 3) * MAX_NDETS).from_address(addressof(data_pointer.contents))
-		# new_array = numpy.ctypeslib.as_array(data_pointer,shape=(8192,))
+		buffarr = ((c_longlong * 3) * MAX_NDETS).from_address(addressof(data_pointer.contents))
+		res = numpy.ndarray(buffer=buffarr, dtype=c_longlong, shape=(MAX_NDETS, 3,))
 
-		# buffer = numpy.core.multiarray.int_asbuffer(addressof(new_array), 3*MAX_NDETS)
-		# a = numpy.frombuffer(buffer, int)
-		# print(a)
-
-		res = numpy.ndarray(buffer=new_array, dtype=c_longlong, shape=(MAX_NDETS, 3,))
+		# The first value of the buffer aray represents the buffer length.
 		dets_len = res[0][0]
-		print(dets_len)
-		res = numpy.delete(res, 0, 0)
-		#print(res)
-		dets = numpy.frombuffer(data_pointer.contents, dtype=numpy.dtype(int))
-		dets = numpy.trim_zeros(dets)
-		#dets = dets.astype(int)
-		#print(dets)
-
+		res = numpy.delete(res, 0, 0) # delete zero values from the buffer array
 		dets = list(res.reshape(-1, 3))[0:dets_len]
 
 		return dets
-		#print(dets)
-	#print(dets)
-	#return list(dets.reshape(-1, 4))[0:dets]
-	
-	#res = pigo.FindFaces(pixels, gray.shape[0], gray.shape[1], cascade)
-	#print(res.dets)
 
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
-w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-print (w,h)
 
 while(True):
 	ret, frame = cap.read()
@@ -81,7 +56,6 @@ while(True):
 		continue
 
 	dets = process_frame(pixs) # pixs needs to be numpy.uint8 array
-	print(dets)
 	if dets is not None:
 		for det in dets:
 			cv2.circle(frame, (int(det[1]), int(det[0])), int(det[2]/2.0), (0, 0, 255), 2)
