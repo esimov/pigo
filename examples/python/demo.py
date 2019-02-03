@@ -39,7 +39,7 @@ def process_frame(pixs):
 
 		# The first value of the buffer aray represents the buffer length.
 		dets_len = res[0][0]
-		res = numpy.delete(res, 0, 0) # delete zero values from the buffer array
+		res = numpy.delete(res, 0, 0) # delete the first element from the array
 		dets = list(res.reshape(-1, 3))[0:dets_len]
 
 		return dets
@@ -52,6 +52,7 @@ while(True):
 	ret, frame = cap.read()
 	pixs = numpy.ascontiguousarray(frame[:, :, 1].reshape((frame.shape[0], frame.shape[1])))
 
+	# Check if camera is intialized by checking if pixel array is not empty.
 	if not numpy.any(pixs):
 		continue
 
