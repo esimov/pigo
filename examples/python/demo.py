@@ -19,9 +19,9 @@ class GoPixelSlice(Structure):
 		("pixels", POINTER(c_ubyte)), ("len", c_longlong), ("cap", c_longlong),
 	]
 
+# Obtain the camera pixels and transfer them to Go trough Ctypes.
 def process_frame(pixs):
 	dets = numpy.zeros(3*MAX_NDETS, dtype=numpy.float32)
-	pixs = pixs.flatten()
 	pixels = cast((c_ubyte * len(pixs))(*pixs), POINTER(c_ubyte))
 	
 	# call FindFaces
@@ -44,13 +44,19 @@ def process_frame(pixs):
 
 		return dets
 
+# initialize the camera
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
+# Changing the camera resolution introduce a short delay in the camera initialization. 
+# For this reason we should delay the object detection process with a few milliseconds.
+time.sleep(0.3)
+
 while(True):
 	ret, frame = cap.read()
 	pixs = numpy.ascontiguousarray(frame[:, :, 1].reshape((frame.shape[0], frame.shape[1])))
+	pixs = pixs.flatten()
 
 	# Verify if camera is intialized by checking if pixel array is not empty.
 	if numpy.any(pixs):
