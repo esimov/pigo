@@ -52,17 +52,15 @@ while(True):
 	ret, frame = cap.read()
 	pixs = numpy.ascontiguousarray(frame[:, :, 1].reshape((frame.shape[0], frame.shape[1])))
 
-	# Check if camera is intialized by checking if pixel array is not empty.
-	if not numpy.any(pixs):
-		continue
-
-	dets = process_frame(pixs) # pixs needs to be numpy.uint8 array
-	if dets is not None:
-		for det in dets:
-			cv2.circle(frame, (int(det[1]), int(det[0])), int(det[2]/2.0), (0, 0, 255), 2)
+	# Verify if camera is intialized by checking if pixel array is not empty.
+	if numpy.any(pixs):
+		dets = process_frame(pixs) # pixs needs to be numpy.uint8 array
+		if dets is not None:
+			for det in dets:
+				cv2.circle(frame, (int(det[1]), int(det[0])), int(det[2]/2.0), (0, 0, 255), 2)
 
 	cv2.imshow('', frame)
-	
+
 	if cv2.waitKey(5) & 0xFF == ord('q'):
 		break
 
