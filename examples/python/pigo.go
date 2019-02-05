@@ -23,37 +23,40 @@ func main() {}
 
 //export FindFaces
 func FindFaces(pixels []uint8) uintptr {
-	if len(pixels) > 0 {
-		dets := clusterDetection(pixels, 480, 640)
-		result := make([][]int, len(dets))
+	pointCh := make(chan uintptr)
 
-		for i := 0; i < len(dets); i++ {
-			if dets[i].Q >= 5.0 {
-				result[i] = append(result[i], dets[i].Row, dets[i].Col, dets[i].Scale)
-			}
+	dets := clusterDetection(pixels, 480, 640)
+	result := make([][]int, len(dets))
+
+	for i := 0; i < len(dets); i++ {
+		if dets[i].Q >= 5.0 {
+			result[i] = append(result[i], dets[i].Row, dets[i].Col, dets[i].Scale)
 		}
-		fmt.Println(dets)
+	}
 
-		if len(result) > 0 {
-			// Since we cannot transfer a 2d array trough an array pointer
-			// we have to transform it into 1d array.
+	if len(result) > 0 {
+		// Since we cannot transfer a 2d array trough an array pointer
+		// we have to transform it into 1d array.
+		go func() {
 			det := make([]int, 0, len(result))
 			for _, v := range result {
 				det = append(det, v...)
 			}
+			fmt.Println(det)
 			// Include as a first slice element the number of detected faces.
 			// We need to transfer this value in order to define the Python array buffer length.
 			det = append([]int{len(result), 0, 0}, det...)
-			fmt.Println(det)
 
 			// Convert the slice into an array pointer.
 			s := *(*[]int)(unsafe.Pointer(&det))
 			p := uintptr(unsafe.Pointer(&s[0]))
 
-			runtime.KeepAlive(result)
+			// Ensure `det` is not freed by GC.
+			runtime.KeepAlive(det)
 			// return the pointer address
-			return p
-		}
+			pointCh <- p
+		}()
+		return <-pointCh
 	}
 	return 0
 }
