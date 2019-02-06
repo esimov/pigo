@@ -21,7 +21,7 @@ class GoPixelSlice(Structure):
 
 # Obtain the camera pixels and transfer them to Go trough Ctypes.
 def process_frame(pixs):
-	dets = numpy.zeros(3*MAX_NDETS, dtype=numpy.float32)
+	dets = numpy.zeros(3 * MAX_NDETS, dtype=numpy.float32)
 	pixels = cast((c_ubyte * len(pixs))(*pixs), POINTER(c_ubyte))
 	
 	# call FindFaces
