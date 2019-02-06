@@ -51,7 +51,7 @@ func FindFaces(pixels []uint8) uintptr {
 			s := *(*[]int)(unsafe.Pointer(&det))
 			p := uintptr(unsafe.Pointer(&s[0]))
 
-			// Ensure `det` is not freed by GC.
+			// Ensure `det` is not freed up by GC prematurely.
 			runtime.KeepAlive(det)
 			// return the pointer address
 			pointCh <- p

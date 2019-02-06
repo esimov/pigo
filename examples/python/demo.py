@@ -51,7 +51,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 # Changing the camera resolution introduce a short delay in the camera initialization. 
 # For this reason we should delay the object detection process with a few milliseconds.
-time.sleep(0.2)
+time.sleep(0.4)
 
 while(True):
 	ret, frame = cap.read()
