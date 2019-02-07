@@ -41,7 +41,7 @@ var (
 	cascadeFile  = flag.String("cf", "", "Cascade binary file")
 	minSize      = flag.Int("min", 20, "Minimum size of face")
 	maxSize      = flag.Int("max", 1000, "Maximum size of face")
-	shiftFactor  = flag.Float64("shift", 0.1, "Shift detection window by percentage")
+	shiftFactor  = flag.Float64("shift", 0.15, "Shift detection window by percentage")
 	scaleFactor  = flag.Float64("scale", 1.1, "Scale detection window by percentage")
 	angle        = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
 	iouThreshold = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
@@ -82,6 +82,14 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 	cascadeFile, err := ioutil.ReadFile(*cascadeFile)
 	if err != nil {
 		log.Fatalf("Error reading the cascade file: %v", err)
+	}
+
+	p := pigo.NewPigo()
+	// Unpack the binary file. This will return the number of cascade trees,
+	// the tree depth, the threshold and the prediction from tree's leaf nodes.
+	classifier, err := p.Unpack(cascadeFile)
+	if err != nil {
+		log.Fatalf("Error reading the cascade file: %s", err)
 	}
 
 	mpart := multipart.NewReader(stdout, boundary)
@@ -126,14 +134,6 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 				Cols:   cols,
 				Dim:    cols,
 			},
-		}
-
-		pigo := pigo.NewPigo()
-		// Unpack the binary file. This will return the number of cascade trees,
-		// the tree depth, the threshold and the prediction from tree's leaf nodes.
-		classifier, err := pigo.Unpack(cascadeFile)
-		if err != nil {
-			log.Fatalf("Error reading the cascade file: %s", err)
 		}
 
 		// Run the classifier over the obtained leaf nodes and return the detection results.
