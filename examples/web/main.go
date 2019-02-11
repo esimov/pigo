@@ -57,7 +57,7 @@ func main() {
 	flag.Parse()
 
 	if len(*cascadeFile) == 0 {
-		log.Fatal("Usage: go run main.go -cf ../data/facefinder")
+		log.Fatal("Usage: go run main.go -cf ../../data/facefinder")
 	}
 
 	if *scaleFactor < 1 {
