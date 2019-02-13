@@ -1,7 +1,7 @@
 from ctypes import *
 
 import subprocess
-import numpy
+import numpy as np
 import os
 import cv2
 import time
@@ -21,7 +21,7 @@ class GoPixelSlice(Structure):
 
 # Obtain the camera pixels and transfer them to Go trough Ctypes.
 def process_frame(pixs):
-	dets = numpy.zeros(3 * MAX_NDETS, dtype=numpy.float32)
+	dets = np.zeros(3 * MAX_NDETS, dtype=np.float32)
 	pixels = cast((c_ubyte * len(pixs))(*pixs), POINTER(c_ubyte))
 	
 	# call FindFaces
@@ -35,11 +35,11 @@ def process_frame(pixs):
 	
 	if data_pointer :
 		buffarr = ((c_longlong * 3) * MAX_NDETS).from_address(addressof(data_pointer.contents))
-		res = numpy.ndarray(buffer=buffarr, dtype=c_longlong, shape=(MAX_NDETS, 3,))
+		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(MAX_NDETS, 3,))
 
 		# The first value of the buffer aray represents the buffer length.
 		dets_len = res[0][0]
-		res = numpy.delete(res, 0, 0) # delete the first element from the array
+		res = np.delete(res, 0, 0) # delete the first element from the array
 		dets = list(res.reshape(-1, 3))[0:dets_len]
 
 		return dets
@@ -55,11 +55,11 @@ time.sleep(0.4)
 
 while(True):
 	ret, frame = cap.read()
-	pixs = numpy.ascontiguousarray(frame[:, :, 1].reshape((frame.shape[0], frame.shape[1])))
+	pixs = np.ascontiguousarray(frame[:, :, 1].reshape((frame.shape[0], frame.shape[1])))
 	pixs = pixs.flatten()
 
 	# Verify if camera is intialized by checking if pixel array is not empty.
-	if numpy.any(pixs):
+	if np.any(pixs):
 		dets = process_frame(pixs) # pixs needs to be numpy.uint8 array
 		if dets is not None:
 			for det in dets:
