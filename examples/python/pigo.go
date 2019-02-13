@@ -3,7 +3,6 @@ package main
 import "C"
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"runtime"
@@ -34,14 +33,13 @@ func FindFaces(pixels []uint8) uintptr {
 		}
 	}
 
-	// Since in Go we cannot transfer a 2d array trough an array pointer
-	// we have to transform it into 1d array.
+	det := make([]int, 0, len(result))
 	go func() {
-		det := make([]int, 0, len(result))
+		// Since in Go we cannot transfer a 2d array trough an array pointer
+		// we have to transform it into 1d array.
 		for _, v := range result {
 			det = append(det, v...)
 		}
-		fmt.Println(det)
 		// Include as a first slice element the number of detected faces.
 		// We need to transfer this value in order to define the Python array buffer length.
 		det = append([]int{len(result), 0, 0}, det...)
