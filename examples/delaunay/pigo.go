@@ -3,7 +3,6 @@ package main
 import "C"
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"io/ioutil"
@@ -12,6 +11,7 @@ import (
 	"unsafe"
 
 	"github.com/esimov/pigo/core"
+	"github.com/esimov/triangle"
 )
 
 var (
@@ -37,37 +37,80 @@ func FindFaces(pixels []uint8) uintptr {
 		rows: 480,
 		cols: 640,
 	}
+
+	proc := &triangle.Processor{
+		BlurRadius:      4,
+		SobelThreshold:  10,
+		PointsThreshold: 20,
+		MaxPoints:       100,
+		Wireframe:       0,
+		Noise:           0,
+		StrokeWidth:     1,
+		IsSolid:         false,
+		Grayscale:       false,
+		OutputToSVG:     false,
+		OutputInWeb:     false,
+	}
+	tri := &triangle.Image{*proc}
+
 	pointCh := make(chan uintptr)
 
 	dets := px.clusterDetection(pixels)
-	img := px.convertPixToImage(pixels)
+	img := px.pixToImage(pixels)
 
+	tFaces := make([][]int, len(dets))
 	result := make([][]int, len(dets))
+	det := make([]int, 0, len(dets))
 
-	for i := 0; i < len(dets); i++ {
-		if dets[i].Q >= 5.0 {
-			result[i] = append(result[i], dets[i].Row, dets[i].Col, dets[i].Scale)
-			rect := image.Rect(
-				dets[i].Col-dets[i].Scale/2,
-				dets[i].Row-dets[i].Scale/2,
-				dets[i].Scale,
-				dets[i].Scale,
-			)
-			subImg := img.(SubImager).SubImage(rect)
-			fmt.Println(subImg.Bounds())
-		}
-	}
+	totalPixDim := 0
 
-	det := make([]int, 0, len(result))
 	go func() {
+		for i := 0; i < len(dets); i++ {
+			if dets[i].Q >= 5.0 {
+				result[i] = append(result[i], dets[i].Row, dets[i].Col, dets[i].Scale)
+				rect := image.Rect(
+					dets[i].Col-dets[i].Scale/2,
+					dets[i].Row-dets[i].Scale/2,
+					dets[i].Scale,
+					dets[i].Scale,
+				)
+
+				subImg := img.(SubImager).SubImage(rect)
+				bounds := subImg.Bounds()
+
+				if bounds.Dx() > 1 && bounds.Dy() > 1 {
+					triRes, _, _, err := tri.Draw(subImg, false, func() {})
+					if err != nil {
+						log.Fatal(err.Error())
+					}
+					triPix := px.imgToPix(triRes)
+					tFaces[i] = append(tFaces[i], triPix...)
+
+					// Prepend the top left coordinates of the detected faces to the delaunay triangles.
+					tFaces[i] = append([]int{len(triPix), bounds.Min.X, bounds.Min.Y}, tFaces[i]...)
+					totalPixDim += len(triPix)
+				}
+			}
+		}
+
 		// Since in Go we cannot transfer a 2d array trough an array pointer
 		// we have to transform it into 1d array.
 		for _, v := range result {
 			det = append(det, v...)
 		}
+
+		// Convert the multidimmensional slice containing the triangulated images to 1d slice.
+		convTri := make([]int, 0, len(result)+totalPixDim)
+		for _, v := range tFaces {
+			convTri = append(convTri, v...)
+		}
+
 		// Include as a first slice element the number of detected faces.
 		// We need to transfer this value in order to define the Python array buffer length.
 		det = append([]int{len(result), 0, 0}, det...)
+
+		// Append the generated triangle slices to detected faces array.
+		det = append(det, convTri...)
 
 		// Convert the slice into an array pointer.
 		s := *(*[]int)(unsafe.Pointer(&det))
@@ -122,7 +165,8 @@ func (px pixs) clusterDetection(pixels []uint8) []pigo.Detection {
 	return dets
 }
 
-func (px pixs) convertPixToImage(pixels []uint8) image.Image {
+// pixToImage converts the pixel array to an image.
+func (px pixs) pixToImage(pixels []uint8) image.Image {
 	width, height := px.cols, px.rows
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	c := color.RGBA{
@@ -142,4 +186,20 @@ func (px pixs) convertPixToImage(pixels []uint8) image.Image {
 		}
 	}
 	return img
+}
+
+// imgToPix converts the image to a pixel array.
+func (px pixs) imgToPix(img image.Image) []int {
+	bounds := img.Bounds()
+	x := bounds.Dx()
+	y := bounds.Dy()
+	pixels := make([]int, 0, x*y*3)
+
+	for i := bounds.Min.X; i < bounds.Max.X; i++ {
+		for j := bounds.Min.Y; j < bounds.Max.Y; j++ {
+			r, g, b, _ := img.At(i, j).RGBA()
+			pixels = append(pixels, int(r>>8), int(g>>8), int(b>>8), 255)
+		}
+	}
+	return pixels
 }

@@ -64,6 +64,7 @@ while(True):
 		dets = process_frame(pixs) # pixs needs to be np.uint8 array
 		if dets is not None:
 			for det in dets:
+				#cv2.floodFill
 				mask = np.zeros((height, width, 3), dtype=np.uint8)
 				mask = cv2.circle(mask, (int(det[1]), int(det[0])), int(det[2]/2.0), np.array([255, 255, 255]), -1)
 				frame = np.where(mask!=np.array([255, 255, 255]), frame, cv2.blur(frame, (30, 30), 0))
