@@ -177,5 +177,7 @@ Endre Simo [@simo_endre](https://twitter.com/simo_endre)
 
 ## License
 
+Copyright © 2018 Endre Simo
+
 This project is under the MIT License. See the LICENSE file for the full license text.
 
