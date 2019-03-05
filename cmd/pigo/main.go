@@ -82,8 +82,8 @@ func main() {
 		log.Fatalf("Output file type not supported: %v", ext)
 	}
 
-	if *scaleFactor < 1 {
-		log.Fatal("Scale factor must be greater than 1.")
+	if *scaleFactor < 1.05 {
+		log.Fatal("Scale factor must be greater than 1.05")
 	}
 
 	// Progress indicator
