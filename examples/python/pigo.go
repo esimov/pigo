@@ -45,7 +45,7 @@ func FindFaces(pixels []uint8) uintptr {
 		det = append([]int{len(result), 0, 0}, det...)
 
 		// Convert the slice into an array pointer.
-		s := *(*[]int)(unsafe.Pointer(&det))
+		s := *(*[]uint8)(unsafe.Pointer(&det))
 		p := uintptr(unsafe.Pointer(&s[0]))
 
 		// Ensure `det` is not freed up by GC prematurely.
@@ -61,7 +61,7 @@ func FindFaces(pixels []uint8) uintptr {
 // and returns a cluster with the detected faces coordinates.
 func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 	cParams := pigo.CascadeParams{
-		MinSize:     20,
+		MinSize:     100,
 		MaxSize:     1000,
 		ShiftFactor: 0.15,
 		ScaleFactor: 1.1,
