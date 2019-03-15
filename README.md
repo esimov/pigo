@@ -173,7 +173,7 @@ Then access the `http://localhost:8081/cam` url from a web browser.
 
 ## Author
 
-Endre Simo [@simo_endre](https://twitter.com/simo_endre)
+* Endre Simo ([@simo_endre](https://twitter.com/simo_endre))
 
 ## License
 
