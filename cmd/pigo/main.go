@@ -32,26 +32,13 @@ Go (Golang) Face detection library.
 // Version indicates the current build version.
 var Version string
 
-var (
-	// Flags
-	source       = flag.String("in", "", "Source image")
-	destination  = flag.String("out", "", "Destination image")
-	cascadeFile  = flag.String("cf", "", "Cascade binary file")
-	minSize      = flag.Int("min", 20, "Minimum size of face")
-	maxSize      = flag.Int("max", 1000, "Maximum size of face")
-	shiftFactor  = flag.Float64("shift", 0.1, "Shift detection window by percentage")
-	scaleFactor  = flag.Float64("scale", 1.1, "Scale detection window by percentage")
-	angle        = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
-	iouThreshold = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
-	circleMarker = flag.Bool("circle", false, "Use circle as detection marker")
-	outputAsJSON = flag.Bool("json", false, "Output face box coordinates into a json file")
-)
-
 var dc *gg.Context
 
 // faceDetector struct contains Pigo face detector general settings.
 type faceDetector struct {
+	angle        float64
 	cascadeFile  string
+	destination  string
 	minSize      int
 	maxSize      int
 	shiftFactor  float64
@@ -65,6 +52,20 @@ type detectionResult struct {
 }
 
 func main() {
+	var (
+		// Flags
+		source       = flag.String("in", "", "Source image")
+		destination  = flag.String("out", "", "Destination image")
+		cascadeFile  = flag.String("cf", "", "Cascade binary file")
+		minSize      = flag.Int("min", 20, "Minimum size of face")
+		maxSize      = flag.Int("max", 1000, "Maximum size of face")
+		shiftFactor  = flag.Float64("shift", 0.1, "Shift detection window by percentage")
+		scaleFactor  = flag.Float64("scale", 1.1, "Scale detection window by percentage")
+		angle        = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
+		iouThreshold = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
+		circleMarker = flag.Bool("circle", false, "Use circle as detection marker")
+		outputAsJSON = flag.Bool("json", false, "Output face box coordinates into a json file")
+	)
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, fmt.Sprintf(banner, Version))
 		flag.PrintDefaults()
@@ -91,7 +92,7 @@ func main() {
 	s.start("Processing...")
 	start := time.Now()
 
-	fd := newFaceDetector(*cascadeFile, *minSize, *maxSize, *shiftFactor, *scaleFactor, *iouThreshold)
+	fd := newFaceDetector(*destination, *cascadeFile, *minSize, *maxSize, *shiftFactor, *scaleFactor, *iouThreshold, *angle)
 	faces, err := fd.detectFaces(*source)
 	if err != nil {
 		log.Fatalf("Detection error: %v", err)
@@ -118,8 +119,10 @@ func main() {
 }
 
 // newFaceDetector initialises the constructor function.
-func newFaceDetector(cf string, minSize, maxSize int, shf, scf, iou float64) *faceDetector {
+func newFaceDetector(destination, cf string, minSize, maxSize int, shf, scf, iou, angle float64) *faceDetector {
 	return &faceDetector{
+		angle:        angle,
+		destination:  destination,
 		cascadeFile:  cf,
 		minSize:      minSize,
 		maxSize:      maxSize,
@@ -170,7 +173,7 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
-	faces := classifier.RunCascade(cParams, *angle)
+	faces := classifier.RunCascade(cParams, fd.angle)
 
 	// Calculate the intersection over union (IoU) of two clusters.
 	faces = classifier.ClusterDetections(faces, fd.iouThreshold)
@@ -216,7 +219,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 	}
 
 	img := dc.Image()
-	output, err := os.OpenFile(*destination, os.O_CREATE|os.O_RDWR, 0755)
+	output, err := os.OpenFile(fd.destination, os.O_CREATE|os.O_RDWR, 0755)
 	defer output.Close()
 
 	if err != nil {
@@ -230,7 +233,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 	case ".png":
 		png.Encode(output, img)
 	}
-	rf, err := ioutil.ReadFile(*destination)
+	rf, err := ioutil.ReadFile(fd.destination)
 
 	return rf, rects, err
 }
