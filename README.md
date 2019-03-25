@@ -19,11 +19,12 @@ This library does not require any third party modules to be installed. However i
 Since I haven't found any viable existing solution for accessing webcam in Go, Python is used for capturing the webcam and transferring the binary data to Go through `exec.CommandContext` method.
 
 ### Key features
-- [x] High processing speed.
-- [x] There is no need for image preprocessing prior detection.
-- [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure.
-- [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure.
-- [x] **Fast detection of in-plane rotated faces.**
+- [x] No needs for OpenCV or any 3rd party modules to be installed
+- [x] High processing speed
+- [x] There is no need for image preprocessing prior detection
+- [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure
+- [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure
+- [x] **Fast detection of in-plane rotated faces**
 
 **The API can detect even faces with eyeglasses.**
 
