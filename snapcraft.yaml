@@ -1,0 +1,21 @@
+name: pigo
+version: '1.1.0'
+summary: Pure Go face detection library
+description: |
+  Pure Go face detection library
+grade: stable
+confinement: strict
+base: core18
+parts:
+  caire:
+    plugin: go
+    source: https://github.com/esimov/pigo.git
+    go-importpath: github.com/esimov/pigo
+    build-packages:
+      - build-essential
+apps:
+  caire:
+    command: bin/caire
+    plugs:
+      - home
+      - x11
