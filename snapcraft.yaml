@@ -13,14 +13,14 @@ grade: stable
 confinement: strict
 base: core18
 parts:
-  caire:
+  pigo:
     plugin: go
     source: https://github.com/esimov/pigo.git
     go-importpath: github.com/esimov/pigo
     build-packages:
       - build-essential
 apps:
-  caire:
+  pigo:
     command: bin/pigo
     plugs:
       - home
