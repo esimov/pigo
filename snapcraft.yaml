@@ -2,7 +2,13 @@ name: pigo
 version: '1.1.0'
 summary: Pure Go face detection library
 description: |
-  Pure Go face detection library
+  Key features:
+   - Does not require OpenCV or any 3rd party modules to be installed
+   - High processing speed
+   - There is no need for image preprocessing prior detection
+   - There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure
+   - The face detection is based on pixel intensity comparison encoded in the binary file tree structure
+   - Fast detection of in-plane rotated faces
 grade: stable
 confinement: strict
 base: core18
@@ -15,7 +21,7 @@ parts:
       - build-essential
 apps:
   caire:
-    command: bin/caire
+    command: bin/pigo
     plugs:
       - home
       - x11
