@@ -1,6 +1,4 @@
-<p align="center"><img src="https://user-images.githubusercontent.com/883386/55632144-54d49280-57c2-11e9-8ee6-4fc068aa7e59.png" width=250/></p>
-
-##
+<h1 align="center"><img src="https://user-images.githubusercontent.com/883386/55632144-54d49280-57c2-11e9-8ee6-4fc068aa7e59.png" width=250/></h1>
 
 [![Build Status](https://travis-ci.org/esimov/pigo.svg?branch=master)](https://travis-ci.org/esimov/pigo)
 [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/esimov/pigo/core)
