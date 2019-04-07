@@ -12,6 +12,12 @@ go:
   - 1.8
   - tip
 
+matrix:
+  allow_failures:
+      - go: tip
+      - go: 1.11.x
+  fast_finish: true
+
 env:
   - GOOS=linux
   - GOOS=darwin
