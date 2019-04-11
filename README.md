@@ -181,5 +181,4 @@ Then access the `http://localhost:8081/cam` url from a web browser.
 
 Copyright © 2018 Endre Simo
 
-This project is under the MIT License. See the LICENSE file for the full license text.
-
+This software is distributed under the MIT license. See the LICENSE file for the full license text.
