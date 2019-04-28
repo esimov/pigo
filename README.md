@@ -18,8 +18,6 @@ I've intended to implement this face detection method, since the only existing s
 
 This library does not require any third party modules to be installed. However in case you wish to try the real time, webcam based face detection you might need to have Python2 and OpenCV installed, but **the core API does not require any third party module or external dependency**. 
 
-Since I haven't found any viable existing solution for accessing webcam in Go, Python is used for capturing the webcam and transferring the binary data to Go through `exec.CommandContext` method.
-
 ### Key features
 - [x] Does not require OpenCV or any 3rd party modules to be installed
 - [x] High processing speed
@@ -43,7 +41,7 @@ $ pigo -in input.jpg -out output.jpg -cf data/facefinder -angle=0.8 -iou=0.01
 | ![input](https://user-images.githubusercontent.com/883386/50761018-015db180-1272-11e9-93d9-d3693cae9d66.jpg) | ![output](https://user-images.githubusercontent.com/883386/50761024-03277500-1272-11e9-9c20-2568b87a2344.png) |
 
 
-In case the `-angle` flag is set to `0.0` no face detection is performed, otherwise the angle value should be adapted to the provided image.
+In case of in plane rotated faces the angle value should be adapted to the provided image.
 
 ## Install
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
