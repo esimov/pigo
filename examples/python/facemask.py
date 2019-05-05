@@ -56,8 +56,7 @@ time.sleep(0.4)
 
 while(True):
 	ret, frame = cap.read()
-	pixs = np.ascontiguousarray(frame[:, :, 1].reshape((frame.shape[0], frame.shape[1])))
-	pixs = pixs.flatten()
+	pixs = np.ascontiguousarray(frame[:, :, 1]).flatten()
 
 	# Verify if camera is intialized by checking if pixel array is not empty.
 	if np.any(pixs):
