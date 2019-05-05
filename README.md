@@ -1,9 +1,11 @@
-# ![pigo](https://user-images.githubusercontent.com/883386/40915591-525ae70a-6805-11e8-8991-5841d1270298.png)
+<h1 align="center"><img alt="pigo-logo" src="https://user-images.githubusercontent.com/883386/55795932-8787cf00-5ad1-11e9-8c3e-8211ba9427d8.png" height=240/></h1>
 
 [![Build Status](https://travis-ci.org/esimov/pigo.svg?branch=master)](https://travis-ci.org/esimov/pigo)
 [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/esimov/pigo/core)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat)](./LICENSE)
 [![release](https://img.shields.io/badge/release-v1.1.0-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.1.0)
+[![snapcraft](https://img.shields.io/badge/snapcraft-v1.1.0-green.svg)](https://snapcraft.io/pigo)
+[![Snap Status](https://build.snapcraft.io/badge/esimov/pigo.svg)](https://build.snapcraft.io/user/esimov/pigo)
 
 Pigo is a purely Go face detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
 
@@ -16,14 +18,13 @@ I've intended to implement this face detection method, since the only existing s
 
 This library does not require any third party modules to be installed. However in case you wish to try the real time, webcam based face detection you might need to have Python2 and OpenCV installed, but **the core API does not require any third party module or external dependency**. 
 
-Since I haven't found any viable existing solution for accessing webcam in Go, Python is used for capturing the webcam and transferring the binary data to Go through `exec.CommandContext` method.
-
 ### Key features
-- [x] High processing speed.
-- [x] There is no need for image preprocessing prior detection.
-- [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure.
-- [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure.
-- [x] **Fast detection of in-plane rotated faces.**
+- [x] Does not require OpenCV or any 3rd party modules to be installed
+- [x] High processing speed
+- [x] There is no need for image preprocessing prior detection
+- [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure
+- [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure
+- [x] **Fast detection of in-plane rotated faces**
 
 **The API can detect even faces with eyeglasses.**
 
@@ -40,7 +41,7 @@ $ pigo -in input.jpg -out output.jpg -cf data/facefinder -angle=0.8 -iou=0.01
 | ![input](https://user-images.githubusercontent.com/883386/50761018-015db180-1272-11e9-93d9-d3693cae9d66.jpg) | ![output](https://user-images.githubusercontent.com/883386/50761024-03277500-1272-11e9-9c20-2568b87a2344.png) |
 
 
-In case the `-angle` flag is set to `0.0` no face detection is performed, otherwise the angle value should be adapted to the provided image.
+In case of in plane rotated faces the angle value should be adapted to the provided image.
 
 ## Install
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
@@ -173,11 +174,10 @@ Then access the `http://localhost:8081/cam` url from a web browser.
 
 ## Author
 
-Endre Simo [@simo_endre](https://twitter.com/simo_endre)
+* Endre Simo ([@simo_endre](https://twitter.com/simo_endre))
 
 ## License
 
 Copyright © 2018 Endre Simo
 
-This project is under the MIT License. See the LICENSE file for the full license text.
-
+This software is distributed under the MIT license. See the LICENSE file for the full license text.
