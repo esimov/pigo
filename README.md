@@ -1,10 +1,11 @@
-<h1 align="center"><img src="https://user-images.githubusercontent.com/883386/55667533-201a1700-5866-11e9-9d24-650087f6744a.jpg" width=250/></h1>
+<h1 align="center"><img alt="pigo-logo" src="https://user-images.githubusercontent.com/883386/55795932-8787cf00-5ad1-11e9-8c3e-8211ba9427d8.png" height=240/></h1>
 
 [![Build Status](https://travis-ci.org/esimov/pigo.svg?branch=master)](https://travis-ci.org/esimov/pigo)
 [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/esimov/pigo/core)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat)](./LICENSE)
 [![release](https://img.shields.io/badge/release-v1.1.0-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.1.0)
 [![snapcraft](https://img.shields.io/badge/snapcraft-v1.1.0-green.svg)](https://snapcraft.io/pigo)
+[![Snap Status](https://build.snapcraft.io/badge/esimov/pigo.svg)](https://build.snapcraft.io/user/esimov/pigo)
 
 Pigo is a purely Go face detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
 
@@ -16,8 +17,6 @@ Pigo is a purely Go face detection library based on ***Pixel Intensity Compariso
 I've intended to implement this face detection method, since the only existing solution for face detection in the Go ecosystem is using bindings to OpenCV, but installing OpenCV on various platforms is sometimes daunting. 
 
 This library does not require any third party modules to be installed. However in case you wish to try the real time, webcam based face detection you might need to have Python2 and OpenCV installed, but **the core API does not require any third party module or external dependency**. 
-
-Since I haven't found any viable existing solution for accessing webcam in Go, Python is used for capturing the webcam and transferring the binary data to Go through `exec.CommandContext` method.
 
 ### Key features
 - [x] Does not require OpenCV or any 3rd party modules to be installed
@@ -42,7 +41,7 @@ $ pigo -in input.jpg -out output.jpg -cf data/facefinder -angle=0.8 -iou=0.01
 | ![input](https://user-images.githubusercontent.com/883386/50761018-015db180-1272-11e9-93d9-d3693cae9d66.jpg) | ![output](https://user-images.githubusercontent.com/883386/50761024-03277500-1272-11e9-9c20-2568b87a2344.png) |
 
 
-In case the `-angle` flag is set to `0.0` no face detection is performed, otherwise the angle value should be adapted to the provided image.
+In case of in plane rotated faces the angle value should be adapted to the provided image.
 
 ## Install
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
@@ -181,5 +180,4 @@ Then access the `http://localhost:8081/cam` url from a web browser.
 
 Copyright © 2018 Endre Simo
 
-This project is under the MIT License. See the LICENSE file for the full license text.
-
+This software is distributed under the MIT license. See the LICENSE file for the full license text.
