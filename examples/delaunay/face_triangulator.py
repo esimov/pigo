@@ -33,26 +33,17 @@ def process_frame(pixs):
 	data_pointer = cast(ndets, POINTER((c_longlong) * max_buff_len))
 	
 	if data_pointer :
-		triangles = []
 		buffarr = ((c_longlong) * sizeof(data_pointer.contents)).from_address(addressof(data_pointer.contents))
 		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(1, sizeof(data_pointer.contents),))
 		res_flat = res.flatten()
+		triangles = []
 
 		for i in range(res_flat[0]):
-			start = (i+1)*(res_flat[1+3])
-			end = (i+1)*(res_flat[1+3]) + start
-			#print(start, ":", end)
-			idx_start = np.where(res_flat == start)
-			idx_end = np.where(res_flat == end)
-			#idx_start = list(res_flat).index(start)
-			#idx_end = list(res_flat).index(end)
-			#print(idx_start)
-			#triangles.append(res_flat[start+2:end])
-			
 			triangles.append(res_flat[2:res_flat[1]])
 		return triangles
-		
+
 width, height = 640, 480
+
 # initialize the camera
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
@@ -64,9 +55,9 @@ time.sleep(0.4)
 
 while(True):
 	ret, frame = cap.read()
-	bpixs = np.ascontiguousarray(frame[:, :, 0]).flatten()
-	gpixs = np.ascontiguousarray(frame[:, :, 1]).flatten()
-	rpixs = np.ascontiguousarray(frame[:, :, 2]).flatten()
+	bpixs = np.ascontiguousarray(frame[:, :, 0]).flatten() #Blue
+	gpixs = np.ascontiguousarray(frame[:, :, 1]).flatten() #Green
+	rpixs = np.ascontiguousarray(frame[:, :, 2]).flatten() #Red
 	
 	pixs = np.concatenate((rpixs, gpixs, bpixs), axis=None)
 
@@ -79,25 +70,20 @@ while(True):
 				x, y = np.transpose(coords)
 				if pixs.ndim > 1:
 					continue
-
 				rpxs = frame[:, :, 0][x:x+triangle[2], y:y+triangle[2]]
 				gpxs = frame[:, :, 1][x:x+triangle[2], y:y+triangle[2]]
 				bpxs = frame[:, :, 2][x:x+triangle[2], y:y+triangle[2]]
 
-				print(len(rpxs), len(gpxs), len(bpxs))
 				tpxs = rpxs.flatten()
-				print(len(rpxs.flatten()), len(gpxs.flatten()), len(bpxs.flatten()))
-				#print(tpxs.size)
 				btpxs = np.array(triangle[0:tpxs.size])
 				gtpxs = np.array(triangle[tpxs.size:2*tpxs.size])
 				rtpxs = np.array(triangle[2*tpxs.size:3*tpxs.size])
-				print(len(btpxs), len(gtpxs), len(rtpxs))
 
-				for x in range(len(rpxs)-1):
-					for y in range(len(rpxs[x])-1):
+				for x in range(len(rpxs)):
+					for y in range(len(rpxs[x])):
 						bpxs[x,y] = btpxs[x + (y * triangle[2])]
 						gpxs[x,y] = gtpxs[x + (y * triangle[2])]
-						#rpxs[x,y] = rtpxs[x + (y * triangle[2])]
+						rpxs[x,y] = gtpxs[x + (y * triangle[2])]
 
 	cv2.imshow('', frame)
 

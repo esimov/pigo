@@ -3,11 +3,9 @@ package main
 import "C"
 
 import (
-	"fmt"
 	"image"
 	"io/ioutil"
 	"log"
-	"os"
 	"runtime"
 	"unsafe"
 
@@ -40,11 +38,11 @@ func FindFaces(pixels []uint8) uintptr {
 	}
 
 	proc := &triangle.Processor{
-		BlurRadius:      2,
-		SobelThreshold:  80,
-		PointsThreshold: 2,
-		MaxPoints:       40,
-		Wireframe:       0,
+		BlurRadius:      1,
+		SobelThreshold:  2,
+		PointsThreshold: 5,
+		MaxPoints:       50,
+		Wireframe:       1,
 		Noise:           0,
 		StrokeWidth:     1,
 		IsSolid:         false,
@@ -62,64 +60,59 @@ func FindFaces(pixels []uint8) uintptr {
 		tFaces := make([][]int, len(dets))
 		totalPixDim := 0
 
-		if len(dets) > 0 {
-			for i := 0; i < len(dets); i++ {
-				if dets[i].Q >= 5.0 {
-					rect := image.Rect(
-						dets[i].Col-dets[i].Scale/2,
-						dets[i].Row-dets[i].Scale/2,
-						dets[i].Col+dets[i].Scale/2,
-						dets[i].Row+dets[i].Scale/2,
-					)
-					subImg := img.(SubImager).SubImage(rect)
-					bounds := subImg.Bounds()
+		for i := 0; i < len(dets); i++ {
+			if dets[i].Q >= 5.0 {
+				rect := image.Rect(
+					dets[i].Col-dets[i].Scale/2,
+					dets[i].Row-dets[i].Scale/2,
+					dets[i].Col+dets[i].Scale/2,
+					dets[i].Row+dets[i].Scale/2,
+				)
+				subImg := img.(SubImager).SubImage(rect)
+				bounds := subImg.Bounds()
 
-					if bounds.Dx() > 1 && bounds.Dy() > 1 {
-						output, err := os.OpenFile("output.png", os.O_CREATE|os.O_RDWR, 0755)
-						defer output.Close()
-						res, _, _, err := tri.Draw(subImg, output, func() {})
-						if err != nil {
-							log.Fatal(err.Error())
-						}
-
-						triPix := px.imgToPix(res)
-						tFaces[i] = append(tFaces[i], triPix...)
-
-						// Prepend the box size and the top left coordinates of the detected faces to the delaunay triangles.
-						tFaces[i] = append([]int{
-							len(triPix),
-							dets[i].Col - dets[i].Scale/2,
-							dets[i].Row - dets[i].Scale/2,
-							dets[i].Scale,
-						}, tFaces[i]...)
-
-						totalPixDim += len(triPix)
+				if bounds.Dx() > 1 && bounds.Dy() > 1 {
+					res, _, _, err := tri.Draw(subImg, nil, func() {})
+					if err != nil {
+						log.Fatal(err.Error())
 					}
+
+					triPix := px.imgToPix(res)
+					tFaces[i] = append(tFaces[i], triPix...)
+
+					// Prepend the box size and the top left coordinates of the detected faces to the delaunay triangles.
+					tFaces[i] = append([]int{
+						len(triPix),
+						dets[i].Col - dets[i].Scale/2,
+						dets[i].Row - dets[i].Scale/2,
+						dets[i].Scale,
+					}, tFaces[i]...)
+
+					totalPixDim += len(triPix)
 				}
 			}
-			result := make([]int, 0, len(dets))
-
-			// Convert the multidimmensional slice containing the triangulated images to 1d slice.
-			convTri := make([]int, 0, len(result)*totalPixDim)
-			for _, face := range tFaces {
-				convTri = append(convTri, face...)
-			}
-			// Include as a first slice element the number of detected faces.
-			// We need to transfer this value in order to define the Python array buffer length.
-			result = append([]int{len(dets)}, result...)
-
-			// Append the generated triangle slices to the detected faces array.
-			result = append(result, convTri...)
-			fmt.Println("TRI LEN:", len(result))
-			// Convert the slice into an array pointer.
-			s := *(*[]uint8)(unsafe.Pointer(&result))
-			p := uintptr(unsafe.Pointer(&s[0]))
-
-			// Ensure `result` is not freed up by GC prematurely.
-			runtime.KeepAlive(result)
-
-			pointCh <- p
 		}
+		result := make([]int, 0, len(dets))
+
+		// Convert the multidimmensional slice containing the triangulated images to 1d slice.
+		convTri := make([]int, 0, len(result)*totalPixDim)
+		for _, face := range tFaces {
+			convTri = append(convTri, face...)
+		}
+		// Include as a first slice element the number of detected faces.
+		// We need to transfer this value in order to define the Python array buffer length.
+		result = append([]int{len(dets)}, result...)
+
+		// Append the generated triangle slices to the detected faces array.
+		result = append(result, convTri...)
+		// Convert the slice into an array pointer.
+		s := *(*[]uint8)(unsafe.Pointer(&result))
+		p := uintptr(unsafe.Pointer(&s[0]))
+
+		// Ensure `result` is not freed up by GC prematurely.
+		runtime.KeepAlive(result)
+
+		pointCh <- p
 	}()
 	// return the pointer address
 	return <-pointCh
@@ -129,8 +122,8 @@ func FindFaces(pixels []uint8) uintptr {
 // and returns a cluster with the detected faces coordinates.
 func (px pixs) clusterDetection(pixels []uint8) []pigo.Detection {
 	cParams := pigo.CascadeParams{
-		MinSize:     20,
-		MaxSize:     1000,
+		MinSize:     200,
+		MaxSize:     600,
 		ShiftFactor: 0.15,
 		ScaleFactor: 1.1,
 		ImageParams: pigo.ImageParams{
@@ -173,7 +166,7 @@ func (px pixs) pixToImage(pixels []uint8) image.Image {
 		img.Pix[x+0] = uint8(pixels[x+0])
 		img.Pix[x+1] = uint8(pixels[x+1])
 		img.Pix[x+2] = uint8(pixels[x+2])
-		img.Pix[x+3] = 255
+		img.Pix[x+3] = uint8(pixels[x+3])
 	}
 	return img
 }
