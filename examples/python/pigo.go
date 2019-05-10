@@ -62,7 +62,7 @@ func FindFaces(pixels []uint8) uintptr {
 func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 	cParams := pigo.CascadeParams{
 		MinSize:     100,
-		MaxSize:     1000,
+		MaxSize:     600,
 		ShiftFactor: 0.15,
 		ScaleFactor: 1.1,
 		ImageParams: pigo.ImageParams{
