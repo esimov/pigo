@@ -4,6 +4,7 @@ import "C"
 
 import (
 	"image"
+	"image/color"
 	"io/ioutil"
 	"log"
 	"runtime"
@@ -40,12 +41,12 @@ func FindFaces(pixels []uint8) uintptr {
 	proc := &triangle.Processor{
 		BlurRadius:      1,
 		SobelThreshold:  2,
-		PointsThreshold: 5,
-		MaxPoints:       50,
+		PointsThreshold: 2,
+		MaxPoints:       180,
 		Wireframe:       1,
 		Noise:           0,
-		StrokeWidth:     1,
-		IsSolid:         false,
+		StrokeWidth:     2,
+		IsSolid:         true,
 		Grayscale:       false,
 		OutputToSVG:     false,
 		OutputInWeb:     false,
@@ -54,9 +55,10 @@ func FindFaces(pixels []uint8) uintptr {
 
 	pointCh := make(chan uintptr)
 	go func() {
-		dets := px.clusterDetection(pixels)
 		img := px.pixToImage(pixels)
+		grayscale := pigo.RgbToGrayscale(img.(*image.NRGBA))
 
+		dets := px.clusterDetection(grayscale)
 		tFaces := make([][]int, len(dets))
 		totalPixDim := 0
 
@@ -76,7 +78,6 @@ func FindFaces(pixels []uint8) uintptr {
 					if err != nil {
 						log.Fatal(err.Error())
 					}
-
 					triPix := px.imgToPix(res)
 					tFaces[i] = append(tFaces[i], triPix...)
 
@@ -105,6 +106,7 @@ func FindFaces(pixels []uint8) uintptr {
 
 		// Append the generated triangle slices to the detected faces array.
 		result = append(result, convTri...)
+
 		// Convert the slice into an array pointer.
 		s := *(*[]uint8)(unsafe.Pointer(&result))
 		p := uintptr(unsafe.Pointer(&s[0]))
@@ -161,12 +163,22 @@ func (px pixs) clusterDetection(pixels []uint8) []pigo.Detection {
 // pixToImage converts the pixel array to an image.
 func (px pixs) pixToImage(pixels []uint8) image.Image {
 	width, height := px.cols, px.rows
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	for x := 0; x < len(pixels); x += 4 {
-		img.Pix[x+0] = uint8(pixels[x+0])
-		img.Pix[x+1] = uint8(pixels[x+1])
-		img.Pix[x+2] = uint8(pixels[x+2])
-		img.Pix[x+3] = uint8(pixels[x+3])
+	img := image.NewNRGBA(image.Rect(0, 0, width, height))
+	c := color.NRGBA{
+		R: uint8(0),
+		G: uint8(0),
+		B: uint8(0),
+		A: uint8(255),
+	}
+
+	for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
+		for x := img.Bounds().Min.X; x < img.Bounds().Max.X*3; x += 3 {
+			c.R = uint8(pixels[x+(y*width*3)+0])
+			c.G = uint8(pixels[x+(y*width*3)+1])
+			c.B = uint8(pixels[x+(y*width*3)+2])
+
+			img.SetNRGBA(int(x/3), y, c)
+		}
 	}
 	return img
 }

@@ -10,7 +10,7 @@ os.system('go build -o pigo.so -buildmode=c-shared pigo.go')
 pigo = cdll.LoadLibrary('./pigo.so')
 os.system('rm pigo.so')
 
-max_buff_len = 32000
+max_buff_len = 25000
 
 # define class MapGoMethod to map to:
 # C type struct { void *data; GoInt len; GoInt cap; }
