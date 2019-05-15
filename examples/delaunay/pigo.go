@@ -42,7 +42,7 @@ func FindFaces(pixels []uint8) uintptr {
 		BlurRadius:      1,
 		SobelThreshold:  2,
 		PointsThreshold: 2,
-		MaxPoints:       180,
+		MaxPoints:       200,
 		Wireframe:       0,
 		Noise:           0,
 		StrokeWidth:     2,
@@ -191,8 +191,8 @@ func (px pixs) imgToPix(img image.Image) []int {
 	gs := make([]int, 0, bounds.Max.X*bounds.Max.Y)
 	bs := make([]int, 0, bounds.Max.X*bounds.Max.Y)
 
-	for j := bounds.Min.Y; j < bounds.Max.Y; j++ {
-		for i := bounds.Min.X; i < bounds.Max.X; i++ {
+	for i := bounds.Min.X; i < bounds.Max.X; i++ {
+		for j := bounds.Min.Y; j < bounds.Max.Y; j++ {
 			r, g, b, _ := img.At(i, j).RGBA()
 			rs = append(rs, int(r>>8))
 			gs = append(gs, int(g>>8))
