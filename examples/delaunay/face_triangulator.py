@@ -59,7 +59,7 @@ while(True):
 	gpixs = np.ascontiguousarray(frame[:, :, 1]).flatten() #Green
 	rpixs = np.ascontiguousarray(frame[:, :, 2]).flatten() #Red
 	
-	pixs = np.concatenate((rpixs, gpixs, bpixs), axis=None)
+	pixs = np.array(frame[:,:,::-1]).reshape(-1)
 
 	# Verify if camera is intialized by checking if pixel array is not empty.
 	if np.any(pixs):

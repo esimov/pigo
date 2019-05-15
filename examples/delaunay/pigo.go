@@ -43,7 +43,7 @@ func FindFaces(pixels []uint8) uintptr {
 		SobelThreshold:  2,
 		PointsThreshold: 2,
 		MaxPoints:       180,
-		Wireframe:       1,
+		Wireframe:       0,
 		Noise:           0,
 		StrokeWidth:     2,
 		IsSolid:         true,
