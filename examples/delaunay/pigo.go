@@ -173,9 +173,9 @@ func (px pixs) pixToImage(pixels []uint8) image.Image {
 
 	for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
 		for x := img.Bounds().Min.X; x < img.Bounds().Max.X*3; x += 3 {
-			c.R = uint8(pixels[x+(y*width*3)+0])
-			c.G = uint8(pixels[x+(y*width*3)+1])
-			c.B = uint8(pixels[x+(y*width*3)+2])
+			c.R = uint8(pixels[x+y*width*3])
+			c.G = uint8(pixels[x+y*width*3+1])
+			c.B = uint8(pixels[x+y*width*3+2])
 
 			img.SetNRGBA(int(x/3), y, c)
 		}
