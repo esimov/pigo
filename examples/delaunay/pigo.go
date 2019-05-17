@@ -45,7 +45,7 @@ func FindFaces(pixels []uint8) uintptr {
 		MaxPoints:       200,
 		Wireframe:       0,
 		Noise:           0,
-		StrokeWidth:     2,
+		StrokeWidth:     1,
 		IsSolid:         true,
 		Grayscale:       false,
 		OutputToSVG:     false,
@@ -124,7 +124,7 @@ func FindFaces(pixels []uint8) uintptr {
 // and returns a cluster with the detected faces coordinates.
 func (px pixs) clusterDetection(pixels []uint8) []pigo.Detection {
 	cParams := pigo.CascadeParams{
-		MinSize:     250,
+		MinSize:     100,
 		MaxSize:     600,
 		ShiftFactor: 0.15,
 		ScaleFactor: 1.1,

@@ -66,6 +66,7 @@ while(True):
 				x, y = np.transpose(coords)
 				if pixs.ndim > 1:
 					continue
+
 				# Retrieving frame region based on the coordinate values
 				rpxs = frame[:, :, 0][x:x+triangle[2], y:y+triangle[2]]
 				gpxs = frame[:, :, 1][x:x+triangle[2], y:y+triangle[2]]
@@ -76,9 +77,9 @@ while(True):
 				btpxs = np.array(triangle[:tpxs.size])
 				gtpxs = np.array(triangle[tpxs.size:2*tpxs.size])
 				rtpxs = np.array(triangle[2*tpxs.size:3*tpxs.size])
-
-				for x in range(len(rpxs)):
-					for y in range(len(rpxs[x])):
+	
+				for x in range(0, len(rpxs)-1):
+					for y in range(0, len(rpxs[x])-1):
 						bpxs[x,y] = btpxs[x + (y * triangle[2])]
 						gpxs[x,y] = gtpxs[x + (y * triangle[2])]
 						rpxs[x,y] = gtpxs[x + (y * triangle[2])]
