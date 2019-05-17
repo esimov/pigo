@@ -55,10 +55,6 @@ time.sleep(0.4)
 
 while(True):
 	ret, frame = cap.read()
-	bpixs = np.ascontiguousarray(frame[:, :, 0]).flatten() #Blue
-	gpixs = np.ascontiguousarray(frame[:, :, 1]).flatten() #Green
-	rpixs = np.ascontiguousarray(frame[:, :, 2]).flatten() #Red
-	
 	pixs = np.array(frame[:,:,::-1]).reshape(-1)
 
 	# Verify if camera is intialized by checking if pixel array is not empty.
@@ -70,12 +66,14 @@ while(True):
 				x, y = np.transpose(coords)
 				if pixs.ndim > 1:
 					continue
+				# Retrieving frame region based on the coordinate values
 				rpxs = frame[:, :, 0][x:x+triangle[2], y:y+triangle[2]]
 				gpxs = frame[:, :, 1][x:x+triangle[2], y:y+triangle[2]]
 				bpxs = frame[:, :, 2][x:x+triangle[2], y:y+triangle[2]]
 
 				tpxs = rpxs.flatten()
-				btpxs = np.array(triangle[0:tpxs.size])
+				# Replace the frame pixel values with the generated triangle image pixels
+				btpxs = np.array(triangle[:tpxs.size])
 				gtpxs = np.array(triangle[tpxs.size:2*tpxs.size])
 				rtpxs = np.array(triangle[2*tpxs.size:3*tpxs.size])
 
