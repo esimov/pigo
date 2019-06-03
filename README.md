@@ -160,7 +160,7 @@ Go (Golang) Face detection library.
 
 ### Real time face detection
 
-In case you wish to test the library real time face detection capabilities using a webcam, the `examples` folder contains a Python and a web version. Prior running it you need to have Python2 and OpenCV2 installed.
+In case you wish to test the library real time face detection capabilities using a webcam, the `examples` folder contains a  Web and a few Python examples. Prior running it you need to have Python2 and OpenCV2 installed.
 
 To run the Python version:
 ```bash
