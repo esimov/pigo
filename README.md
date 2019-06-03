@@ -59,6 +59,10 @@ $ go install
 ### Binary releases
 Also you can obtain the generated binary files in the [releases](https://github.com/esimov/pigo/releases) folder in case you do not have installed or do not want to install Go.
 
+The library can be accessed as a snapcraft function too.
+
+<a href="https://snapcraft.io/pigo"><img src="https://raw.githubusercontent.com/snapcore/snap-store-badges/master/EN/%5BEN%5D-snap-store-white-uneditable.png" alt="snapcraft caire"></a>
+
 ## API
 Below is a minimal example of using the face detection API. 
 
