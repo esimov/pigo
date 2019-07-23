@@ -7,7 +7,7 @@
 [![snapcraft](https://img.shields.io/badge/snapcraft-v1.1.0-green.svg)](https://snapcraft.io/pigo)
 [![Snap Status](https://build.snapcraft.io/badge/esimov/pigo.svg)](https://build.snapcraft.io/user/esimov/pigo)
 
-Pigo is a purely Go face detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
+Pigo is a pure Go face detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
 
 | Rectangle face marker | Circle face marker
 |:--:|:--:
@@ -58,6 +58,10 @@ $ go install
 ```
 ### Binary releases
 Also you can obtain the generated binary files in the [releases](https://github.com/esimov/pigo/releases) folder in case you do not have installed or do not want to install Go.
+
+The library can be accessed as a snapcraft function too.
+
+<a href="https://snapcraft.io/pigo"><img src="https://raw.githubusercontent.com/snapcore/snap-store-badges/master/EN/%5BEN%5D-snap-store-white-uneditable.png" alt="snapcraft caire"></a>
 
 ## API
 Below is a minimal example of using the face detection API. 
@@ -156,7 +160,7 @@ Go (Golang) Face detection library.
 
 ### Real time face detection
 
-In case you wish to test the library real time face detection capabilities using a webcam, the `examples` folder contains a Python and a web version. Prior running it you need to have Python2 and OpenCV2 installed.
+In case you wish to test the library real time face detection capabilities using a webcam, the `examples` folder contains a  Web and a few Python examples. Prior running it you need to have Python2 and OpenCV2 installed.
 
 To run the Python version:
 ```bash
