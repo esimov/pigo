@@ -1,4 +1,4 @@
-package pigo
+package pigo_test
 
 import (
 	"image"

@@ -1,4 +1,4 @@
-package pigo
+package pigo_test
 
 import (
 	"image"
@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	ImgWidth = 10
+	ImgWidth  = 10
 	ImgHeight = 10
 )
 
