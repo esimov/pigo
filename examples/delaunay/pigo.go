@@ -95,7 +95,7 @@ func FindFaces(pixels []uint8) uintptr {
 		}
 		result := make([]int, 0, len(dets))
 
-		// Convert the multidimmensional slice containing the triangulated images to 1d slice.
+		// Convert the multidimensional slice containing the triangulated images to 1d slice.
 		convTri := make([]int, 0, len(result)*totalPixDim)
 		for _, face := range tFaces {
 			convTri = append(convTri, face...)

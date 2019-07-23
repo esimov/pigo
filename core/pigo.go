@@ -264,7 +264,7 @@ func (pg *Pigo) RunCascade(cp CascadeParams, angle float64) []Detection {
 }
 
 // ClusterDetections returns the intersection over union of multiple clusters.
-// We need to make this comparision to filter out multiple face detection regions.
+// We need to make this comparison to filter out multiple face detection regions.
 func (pg *Pigo) ClusterDetections(detections []Detection, iouThreshold float64) []Detection {
 	// Sort detections by their score
 	sort.Sort(det(detections))
@@ -292,7 +292,7 @@ func (pg *Pigo) ClusterDetections(detections []Detection, iouThreshold float64) 
 				q          float32
 			)
 			for j := 0; j < len(detections); j++ {
-				// Check if the comparision result is below a certain threshold.
+				// Check if the comparison result is below a certain threshold.
 				if calcIoU(detections[i], detections[j]) > iouThreshold {
 					assignments[j] = true
 					r += detections[j].Row
