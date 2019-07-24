@@ -63,18 +63,6 @@ The library can be accessed as a snapcraft function too.
 
 <a href="https://snapcraft.io/pigo"><img src="https://raw.githubusercontent.com/snapcore/snap-store-badges/master/EN/%5BEN%5D-snap-store-white-uneditable.png" alt="snapcraft caire"></a>
 
-### Benchmark results
-
-Below are the benchmark results obtained running Pigo against [GoCV](https://github.com/hybridgroup/gocv) using the same settings.
-
-```
-BenchmarkGoCV-4   	       3	 382104939 ns/op
-BenchmarkPIGO-4   	      10	 102096206 ns/op
-PASS
-ok  	github.com/esimov/pigo-gocv-benchmark	3.732s
-```
-The code used for the above test can be found under the following link: https://github.com/esimov/pigo-gocv-benchmark
-
 ## API
 Below is a minimal example of using the face detection API. 
 
@@ -169,6 +157,19 @@ Go (Golang) Face detection library.
     	Shift detection window by percentage (default 0.1)
 
 ```
+
+## Benchmark results
+
+Below are the benchmark results obtained running Pigo against [GoCV](https://github.com/hybridgroup/gocv) using the same settings.
+
+```
+BenchmarkGoCV-4   	       3	 382104939 ns/op
+BenchmarkPIGO-4   	      10	 102096206 ns/op
+PASS
+ok  	github.com/esimov/pigo-gocv-benchmark	3.732s
+```
+The code used for the above test can be found under the following link: https://github.com/esimov/pigo-gocv-benchmark
+
 
 ### Real time face detection
 
