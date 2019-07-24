@@ -65,7 +65,7 @@ The library can be accessed as a snapcraft function too.
 
 ### Benchmark results
 
-Below are the benchmark results obtained running Pigo against [GoCV](https://github.com/hybridgroup/gocv) and using the same settings.
+Below are the benchmark results obtained running Pigo against [GoCV](https://github.com/hybridgroup/gocv) using the same settings.
 
 ```
 BenchmarkGoCV-4   	       3	 382104939 ns/op
@@ -73,7 +73,7 @@ BenchmarkPIGO-4   	      10	 102096206 ns/op
 PASS
 ok  	github.com/esimov/pigo-gocv-benchmark	3.732s
 ```
-The code for the above test can be found on the following lik: https://github.com/esimov/pigo-gocv-benchmark
+The code used for the above test can be found under the following link: https://github.com/esimov/pigo-gocv-benchmark
 
 ## API
 Below is a minimal example of using the face detection API. 
