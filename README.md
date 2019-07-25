@@ -158,19 +158,6 @@ Go (Golang) Face detection library.
 
 ```
 
-## Benchmark results
-
-Below are the benchmark results obtained running Pigo against [GoCV](https://github.com/hybridgroup/gocv) using the same settings.
-
-```
-BenchmarkGoCV-4   	       3	 382104939 ns/op
-BenchmarkPIGO-4   	      10	 102096206 ns/op
-PASS
-ok  	github.com/esimov/pigo-gocv-benchmark	3.732s
-```
-The code used for the above test can be found under the following link: https://github.com/esimov/pigo-gocv-benchmark
-
-
 ### Real time face detection
 
 In case you wish to test the library real time face detection capabilities using a webcam, the `examples` folder contains a  Web and a few Python examples. Prior running it you need to have Python2 and OpenCV2 installed.
@@ -188,6 +175,17 @@ $ go run main.go -cf "../../data/facefinder"
 
 Then access the `http://localhost:8081/cam` url from a web browser.
 
+## Benchmark results
+
+Below are the benchmark results obtained running Pigo against [GoCV](https://github.com/hybridgroup/gocv) using the same conditions.
+
+```
+BenchmarkGoCV-4   	       3	 382104939 ns/op
+BenchmarkPIGO-4   	      10	 102096206 ns/op
+PASS
+ok  	github.com/esimov/pigo-gocv-benchmark	3.732s
+```
+The code used for the above test can be found under the following link: https://github.com/esimov/pigo-gocv-benchmark
 
 ## Author
 
