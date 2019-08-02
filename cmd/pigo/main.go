@@ -50,6 +50,7 @@ type faceDetector struct {
 	iouThreshold  float64
 	doPuploc      bool
 	puplocCascade string
+	markDetEyes   bool
 }
 
 // detectionResult contains the coordinates of the detected faces and the base64 converted image.
@@ -72,6 +73,7 @@ func main() {
 		circleMarker  = flag.Bool("circle", false, "Use circle as detection marker")
 		doPuploc      = flag.Bool("pl", false, "Pupils localization")
 		puplocCascade = flag.String("plc", "", "Pupil localization cascade file")
+		markDetEyes   = flag.Bool("rect", true, "Mark detected eyes")
 		outputAsJSON  = flag.Bool("json", false, "Output face box coordinates into a json file")
 	)
 
@@ -116,6 +118,7 @@ func main() {
 		iouThreshold:  *iouThreshold,
 		doPuploc:      *doPuploc,
 		puplocCascade: *puplocCascade,
+		markDetEyes:   *markDetEyes,
 	}
 	faces, err := fd.detectFaces(*source)
 	if err != nil {
@@ -246,8 +249,8 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 			if fd.doPuploc && face.Scale > 50 {
 				// left eye
 				puploc = &pigo.Puploc{
-					Row:      face.Row - int(0.09*float32(face.Scale)),
-					Col:      face.Col - int(0.17*float32(face.Scale)),
+					Row:      face.Row - int(0.075*float32(face.Scale)),
+					Col:      face.Col - int(0.175*float32(face.Scale)),
 					Scale:    float32(face.Scale) * 0.25,
 					Perturbs: perturb,
 				}
@@ -257,19 +260,30 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 					dc.DrawArc(
 						float64(det.Col),
 						float64(det.Row),
-						float64(det.Scale),
+						float64(det.Scale*0.5),
 						0,
 						2*math.Pi,
 					)
-					dc.SetLineWidth(1.0)
-					dc.SetFillStyle(gg.NewSolidPattern(color.RGBA{R: 0, G: 255, B: 0, A: 255}))
+					dc.SetFillStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 255, B: 255, A: 255}))
 					dc.Fill()
+
+					if fd.markDetEyes {
+						dc.DrawRectangle(
+							float64(det.Col)-float64(det.Scale*1.5),
+							float64(det.Row)-float64(det.Scale*1.5),
+							float64(det.Scale*3),
+							float64(det.Scale*3),
+						)
+						dc.SetLineWidth(2.0)
+						dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 255, B: 0, A: 255}))
+						dc.Stroke()
+					}
 				}
 
 				// right eye
 				puploc = &pigo.Puploc{
-					Row:      face.Row - int(0.09*float32(face.Scale)),
-					Col:      face.Col + int(0.18*float32(face.Scale)),
+					Row:      face.Row - int(0.075*float32(face.Scale)),
+					Col:      face.Col + int(0.185*float32(face.Scale)),
 					Scale:    float32(face.Scale) * 0.25,
 					Perturbs: perturb,
 				}
@@ -279,13 +293,24 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 					dc.DrawArc(
 						float64(det.Col),
 						float64(det.Row),
-						float64(det.Scale),
+						float64(det.Scale*0.5),
 						0,
 						2*math.Pi,
 					)
-					dc.SetLineWidth(1.0)
-					dc.SetFillStyle(gg.NewSolidPattern(color.RGBA{R: 0, G: 255, B: 0, A: 255}))
+					dc.SetFillStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 255, B: 255, A: 255}))
 					dc.Fill()
+
+					if fd.markDetEyes {
+						dc.DrawRectangle(
+							float64(det.Col)-float64(det.Scale*1.5),
+							float64(det.Row)-float64(det.Scale*1.5),
+							float64(det.Scale*3),
+							float64(det.Scale*3),
+						)
+						dc.SetLineWidth(2.0)
+						dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 255, B: 0, A: 255}))
+						dc.Stroke()
+					}
 				}
 			}
 		}
