@@ -187,9 +187,9 @@ func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams) *Puploc {
 
 	// get the median value of the sorted perturbation results
 	return &Puploc{
-		Row:   rows[int(math.Round(float64(pl.Perturbs)/2))],
-		Col:   cols[int(math.Round(float64(pl.Perturbs)/2))],
-		Scale: float32(scale[int(math.Round(float64(pl.Perturbs)/2))]),
+		Row:   rows[int(round(float64(pl.Perturbs)/2))],
+		Col:   cols[int(round(float64(pl.Perturbs)/2))],
+		Scale: float32(scale[int(round(float64(pl.Perturbs)/2))]),
 	}
 }
 
@@ -207,6 +207,15 @@ func max(val1, val2 int) int {
 		return val1
 	}
 	return val2
+}
+
+// round returns the nearest integer, rounding ties away from zero.
+func round(x float64) float64 {
+	t := math.Trunc(x)
+	if math.Abs(x-t) >= 0.5 {
+		return t + math.Copysign(1, x)
+	}
+	return t
 }
 
 // Implement custom sorting function on detection values.
