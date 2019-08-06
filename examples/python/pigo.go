@@ -8,13 +8,12 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/esimov/pigo/core"
+	pigo "github.com/esimov/pigo/core"
 )
 
 var (
 	cascade    []byte
 	err        error
-	p          *pigo.Pigo
 	classifier *pigo.Pigo
 )
 
@@ -76,14 +75,15 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 	if len(cascade) == 0 {
 		cascade, err = ioutil.ReadFile("../../data/facefinder")
 		if err != nil {
-			log.Fatalf("Error reading the cascade file: %v", err)
+			log.Fatalf("Error reading the cascade file: %s", err)
 		}
+		p := pigo.NewPigo()
 
 		// Unpack the binary file. This will return the number of cascade trees,
 		// the tree depth, the threshold and the prediction from tree's leaf nodes.
 		classifier, err = p.Unpack(cascade)
 		if err != nil {
-			log.Fatalf("Error reading the cascade file: %s", err)
+			log.Fatalf("Error unpacking the cascade file: %s", err)
 		}
 	}
 
