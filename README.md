@@ -26,6 +26,10 @@ This library does not require any third party modules to be installed. However i
 - [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure
 - [x] **Fast detection of in-plane rotated faces**
 
+#### TODO
+- [ ] Pupil/eyes detection
+- [ ] Facial landmarks
+
 **The API can detect even faces with eyeglasses.**
 
 ![output](https://user-images.githubusercontent.com/883386/44484795-67e18a80-a657-11e8-98a1-06811dd7015c.png)
