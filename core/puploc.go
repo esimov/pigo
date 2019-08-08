@@ -21,12 +21,12 @@ type Puploc struct {
 // PuplocCascade is a general struct for storing
 // the cascade tree values encoded into the binary file.
 type PuplocCascade struct {
-	Stages    uint32
-	Scales    float32
-	Trees     uint32
-	TreeDepth uint32
-	TreeCodes []int8
-	TreePreds []float32
+	stages    uint32
+	scales    float32
+	trees     uint32
+	treeDepth uint32
+	treeCodes []int8
+	treePreds []float32
 }
 
 // UnpackCascade unpacks the pupil localization cascade file.
@@ -89,8 +89,6 @@ func (plc *PuplocCascade) UnpackCascade(packet []byte) (*PuplocCascade, error) {
 		for s := 0; s < int(stages); s++ {
 			// Traverse the branches of each stage
 			for t := 0; t < int(trees); t++ {
-				treeCodes = append(treeCodes, []int8{0, 0, 0, 0}...)
-
 				code := packet[pos : pos+int(4*math.Pow(2, float64(treeDepth))-4)]
 				// Convert unsigned bytecodes to signed ones.
 				i8code := *(*[]int8)(unsafe.Pointer(&code))
@@ -118,31 +116,31 @@ func (plc *PuplocCascade) UnpackCascade(packet []byte) (*PuplocCascade, error) {
 	}
 
 	return &PuplocCascade{
-		Stages:    stages,
-		Scales:    scales,
-		Trees:     trees,
-		TreeDepth: treeDepth,
-		TreeCodes: treeCodes,
-		TreePreds: treePreds,
+		stages:    stages,
+		scales:    scales,
+		trees:     trees,
+		treeDepth: treeDepth,
+		treeCodes: treeCodes,
+		treePreds: treePreds,
 	}, nil
 }
 
 // RunDetector runs the pupil localization function.
 func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams) *Puploc {
-	localization := func(r, c, s int, pixels []uint8, nrows, ncols, dim int) []int {
+	localization := func(r, c, s float32, pixels []uint8, rows, cols, dim int) []float32 {
 		root := 0
-		pTree := int(math.Pow(2, float64(plc.TreeDepth)))
+		pTree := int(math.Pow(2, float64(plc.treeDepth)))
 
-		for i := 0; i < int(plc.Stages); i++ {
+		for i := 0; i < int(plc.stages); i++ {
 			var dr, dc float32 = 0.0, 0.0
 
-			for j := 0; j < int(plc.Trees); j++ {
+			for j := 0; j < int(plc.trees); j++ {
 				idx := 0
-				for k := 0; k < int(plc.TreeDepth); k++ {
-					r1 := min(nrows-1, max(0, (256*r+int(plc.TreeCodes[root+4*idx+0])*s)>>8))
-					c1 := min(ncols-1, max(0, (256*r+int(plc.TreeCodes[root+4*idx+1])*s)>>8))
-					r2 := min(nrows-1, max(0, (256*r+int(plc.TreeCodes[root+4*idx+2])*s)>>8))
-					c2 := min(ncols-1, max(0, (256*r+int(plc.TreeCodes[root+4*idx+3])*s)>>8))
+				for k := 0; k < int(plc.treeDepth); k++ {
+					r1 := min(rows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+0])*int(round(float64(s))))>>8))
+					c1 := min(cols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+1])*int(round(float64(s))))>>8))
+					r2 := min(rows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+2])*int(round(float64(s))))>>8))
+					c2 := min(cols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+3])*int(round(float64(s))))>>8))
 
 					bintest := func(r1, r2 uint8) uint8 {
 						if r1 > r2 {
@@ -152,28 +150,28 @@ func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams) *Puploc {
 					}
 					idx = 2*idx + 1 + int(bintest(pixels[r1*dim+c1], pixels[r2*dim+c2]))
 				}
-				lutIdx := 2 * (int(plc.Trees)*pTree*i + pTree*j + idx - (pTree - 1))
+				lutIdx := 2 * (int(plc.trees)*pTree*i + pTree*j + idx - (pTree - 1))
 
-				dr += plc.TreePreds[lutIdx+0]
-				dc += plc.TreePreds[lutIdx+1]
+				dr += plc.treePreds[lutIdx+0]
+				dc += plc.treePreds[lutIdx+1]
 
 				root += 4*pTree - 4
 			}
 
-			r += int(dr) * s
-			c += int(dc) * s
-			s = int(float32(s) * plc.Scales)
+			r += dr * s
+			c += dc * s
+			s *= plc.scales
 		}
-		return []int{r, c, s}
+		return []float32{r, c, s}
 	}
-	rows, cols, scale := []int{}, []int{}, []int{}
+	rows, cols, scale := []float32{}, []float32{}, []float32{}
 
 	for i := 0; i < pl.Perturbs; i++ {
-		st := float32(pl.Scale) * (0.25 + rand.Float32())
 		rt := float32(pl.Row) + float32(pl.Scale)*0.15*(0.5-rand.Float32())
 		ct := float32(pl.Col) + float32(pl.Scale)*0.15*(0.5-rand.Float32())
+		st := float32(pl.Scale) * (0.25 + rand.Float32())
 
-		res := localization(int(rt), int(ct), int(st), img.Pixels, img.Rows, img.Cols, img.Dim)
+		res := localization(rt, ct, st, img.Pixels, img.Rows, img.Cols, img.Dim)
 
 		rows = append(rows, res[0])
 		cols = append(cols, res[1])
@@ -181,15 +179,15 @@ func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams) *Puploc {
 	}
 
 	// sorting the perturbations in ascendent order
-	sort.Sort(plocDet(rows))
-	sort.Sort(plocDet(cols))
-	sort.Sort(plocDet(scale))
+	sort.Sort(plocSort(rows))
+	sort.Sort(plocSort(cols))
+	sort.Sort(plocSort(scale))
 
 	// get the median value of the sorted perturbation results
 	return &Puploc{
-		Row:   rows[int(round(float64(pl.Perturbs)/2))],
-		Col:   cols[int(round(float64(pl.Perturbs)/2))],
-		Scale: float32(scale[int(round(float64(pl.Perturbs)/2))]),
+		Row:   int(rows[int(round(float64(pl.Perturbs)/2))]),
+		Col:   int(cols[int(round(float64(pl.Perturbs)/2))]),
+		Scale: scale[int(round(float64(pl.Perturbs)/2))],
 	}
 }
 
@@ -219,11 +217,11 @@ func round(x float64) float64 {
 }
 
 // Implement custom sorting function on detection values.
-type plocDet []int
+type plocSort []float32
 
-func (q plocDet) Len() int      { return len(q) }
-func (q plocDet) Swap(i, j int) { q[i], q[j] = q[j], q[i] }
-func (q plocDet) Less(i, j int) bool {
+func (q plocSort) Len() int      { return len(q) }
+func (q plocSort) Swap(i, j int) { q[i], q[j] = q[j], q[i] }
+func (q plocSort) Less(i, j int) bool {
 	if q[i] < q[j] {
 		return true
 	}
