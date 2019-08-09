@@ -24,7 +24,7 @@ This library does not require any third party modules to be installed. However i
 - [x] There is no need for image preprocessing prior detection
 - [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure
 - [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure
-- [x] **Fast detection of in-plane rotated faces**
+- [x] Fast detection of in-plane rotated faces
 - [x] Pupil/eyes detection
 
 #### TODO
@@ -130,12 +130,13 @@ $ pigo -in input.jpg -out out.jpg -cf cascade/facefinder
 
 ```bash
 $ pigo --help
+
 ┌─┐┬┌─┐┌─┐
 ├─┘││ ┬│ │
 ┴  ┴└─┘└─┘
 
 Go (Golang) Face detection library.
-    Version: 1.1.0
+    Version: 1.2.0
 
   -angle float
     	0.0 is 0 radians and 1.0 is 2*pi radians
@@ -155,12 +156,24 @@ Go (Golang) Face detection library.
     	Minimum size of face (default 20)
   -out string
     	Destination image
+  -pl
+    	Pupils localization
+  -plc string
+    	Pupil localization cascade file
+  -rect
+    	Mark detected eyes (default true)
   -scale float
     	Scale detection window by percentage (default 1.1)
   -shift float
     	Shift detection window by percentage (default 0.1)
 
 ```
+
+### Pupils / eyes localization capabilities
+
+Starting from **v1.2.0** Pigo includes pupils/eyes localization capabilites. Check the examples folder for a realtime demo.
+
+![puploc](https://user-images.githubusercontent.com/883386/62783562-5c37df80-bac5-11e9-9156-ff3503dc5ab6.png)
 
 ### Real time face detection
 
