@@ -16,7 +16,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/esimov/pigo/core"
+	pigo "github.com/esimov/pigo/core"
 	"github.com/fogleman/gg"
 )
 
@@ -57,7 +57,7 @@ func main() {
 	flag.Parse()
 
 	if len(*cascadeFile) == 0 {
-		log.Fatal("Usage: go run main.go -cf ../../data/facefinder")
+		log.Fatal("Usage: go run main.go -cf ../../cascade/facefinder")
 	}
 
 	if *scaleFactor < 1 {

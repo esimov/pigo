@@ -174,7 +174,7 @@ $ python2 demo.py
 To run the web version:
 
 ```bash
-$ go run main.go -cf "../../data/facefinder"
+$ go run main.go -cf "../../cascade/facefinder"
 ```
 
 Then access the `http://localhost:8081/cam` url from a web browser.

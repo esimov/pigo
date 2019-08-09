@@ -13,7 +13,7 @@ var pigoCascadeFile []byte
 
 func init() {
 	var err error
-	pigoCascadeFile, err = ioutil.ReadFile("../data/facefinder")
+	pigoCascadeFile, err = ioutil.ReadFile("../cascade/facefinder")
 	if err != nil {
 		log.Fatalf("Error reading the cascade file: %v", err)
 	}

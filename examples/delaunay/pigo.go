@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/esimov/pigo/core"
+	pigo "github.com/esimov/pigo/core"
 	"github.com/esimov/triangle"
 )
 
@@ -137,7 +137,7 @@ func (px pixs) clusterDetection(pixels []uint8) []pigo.Detection {
 	}
 
 	if len(cascade) == 0 {
-		cascade, err = ioutil.ReadFile("../../data/facefinder")
+		cascade, err = ioutil.ReadFile("../../cascade/facefinder")
 		if err != nil {
 			log.Fatalf("Error reading the cascade file: %v", err)
 		}
