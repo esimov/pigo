@@ -173,7 +173,7 @@ Go (Golang) Face detection library.
 
 Starting from **v1.2.0** Pigo includes pupils/eyes localization capabilites. Check the examples folder for a realtime demo.
 
-![puploc](https://user-images.githubusercontent.com/883386/62783562-5c37df80-bac5-11e9-9156-ff3503dc5ab6.png)
+![puploc](https://user-images.githubusercontent.com/883386/62784340-f5b3c100-bac6-11e9-865e-a2b4b9520b08.png)
 
 ### Real time face detection
 
