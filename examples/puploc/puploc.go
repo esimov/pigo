@@ -30,18 +30,17 @@ func FindFaces(pixels []uint8) uintptr {
 	dets := make([][]int, len(results))
 
 	for i := 0; i < len(results); i++ {
-		dets[i] = append(dets[i], results[i].Row, results[i].Col, results[i].Scale, int(results[i].Q))
-
+		dets[i] = append(dets[i], results[i].Row, results[i].Col, results[i].Scale, int(results[i].Q), 1)
 		// left eye
 		puploc := &pigo.Puploc{
 			Row:      results[i].Row - int(0.085*float32(results[i].Scale)),
 			Col:      results[i].Col - int(0.185*float32(results[i].Scale)),
 			Scale:    float32(results[i].Scale) * 0.4,
-			Perturbs: 100,
+			Perturbs: 50,
 		}
 		det := puplocClassifier.RunDetector(*puploc, *imageParams)
 		if det.Row > 0 && det.Col > 0 {
-			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q))
+			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q), 0)
 		}
 
 		// right eye
@@ -49,12 +48,12 @@ func FindFaces(pixels []uint8) uintptr {
 			Row:      results[i].Row - int(0.085*float32(results[i].Scale)),
 			Col:      results[i].Col + int(0.185*float32(results[i].Scale)),
 			Scale:    float32(results[i].Scale) * 0.4,
-			Perturbs: 100,
+			Perturbs: 50,
 		}
 
 		det = puplocClassifier.RunDetector(*puploc, *imageParams)
 		if det.Row > 0 && det.Col > 0 {
-			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q))
+			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q), 0)
 		}
 	}
 
@@ -68,7 +67,7 @@ func FindFaces(pixels []uint8) uintptr {
 
 		// Include as a first slice element the number of detected faces.
 		// We need to transfer this value in order to define the Python array buffer length.
-		coords = append([]int{len(dets), 0, 0, 0}, coords...)
+		coords = append([]int{len(dets), 0, 0, 0, 0}, coords...)
 
 		// Convert the slice into an array pointer.
 		s := *(*[]uint8)(unsafe.Pointer(&coords))
@@ -93,7 +92,7 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 		Dim:    cols,
 	}
 	cParams := pigo.CascadeParams{
-		MinSize:     100,
+		MinSize:     60,
 		MaxSize:     600,
 		ShiftFactor: 0.1,
 		ScaleFactor: 1.1,
@@ -133,7 +132,7 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 	dets := faceClassifier.RunCascade(cParams, 0.0)
 
 	// Calculate the intersection over union (IoU) of two clusters.
-	dets = faceClassifier.ClusterDetections(dets, 0.05)
+	dets = faceClassifier.ClusterDetections(dets, 0.0)
 
 	return dets
 }

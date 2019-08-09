@@ -36,7 +36,7 @@ def process_frame(pixs):
 	
 	if data_pointer :
 		buffarr = ((c_longlong * ARRAY_DIM) * MAX_NDETS).from_address(addressof(data_pointer.contents))
-		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(MAX_NDETS, 4,))
+		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(MAX_NDETS, 5,))
 
 		# The first value of the buffer aray represents the buffer length.
 		dets_len = res[0][0]
@@ -44,7 +44,7 @@ def process_frame(pixs):
 
 		# We have to consider the pupil pair added into the list.
 		# That's why we are multiplying the detection length with 3.
-		dets = list(res.reshape(-1, 4))[0:dets_len*3]
+		dets = list(res.reshape(-1, 5))[0:dets_len*3]
 		return dets
 
 # initialize the camera
@@ -69,21 +69,21 @@ while(True):
 		dets = process_frame(pixs) # pixs needs to be numpy.uint8 array
 
 		if dets is not None:
-			for det in dets[0:1]:
+			# We know that the detected faces are taking place in the first positions of the multidimensional array.
+			for det in dets:
 				if det[3] > 50:
-					cv2.circle(frame, (int(det[1]), int(det[0])), int(det[2]/2.0), (0, 0, 255), 2)
+					if det[4] == 1: # 1 == face; 0 == pupil
+						cv2.circle(frame, (int(det[1]), int(det[0])), int(det[2]/2.0), (0, 0, 255), 2)
+					else:
+						if showPupil:
+							cv2.circle(frame, (int(det[1]), int(det[0])), 4, (0, 0, 255), -1, 8, 0)
+						if showEyes:
+							cv2.rectangle(frame, 
+								(int(det[1])-int(det[2]), int(det[0])-int(det[2])), 
+								(int(det[1])+int(det[2]), int(det[0])+int(det[2])), 
+								(0, 255, 0), 2
+							)
 
-			for det in dets[1:]:
-				if det[3] > 50:
-					if showPupil:
-						cv2.circle(frame, (int(det[1]), int(det[0])), 4, (0, 0, 255), -1, 8, 0)
-					if showEyes:
-						cv2.rectangle(frame, 
-							(int(det[1])-int(det[2]), int(det[0])-int(det[2])), 
-							(int(det[1])+int(det[2]), int(det[0])+int(det[2])), 
-							(0, 255, 0), 2
-						)
-			
 	cv2.imshow('', frame)
 
 	key = cv2.waitKey(1)
