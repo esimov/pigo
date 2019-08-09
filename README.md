@@ -25,9 +25,9 @@ This library does not require any third party modules to be installed. However i
 - [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure
 - [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure
 - [x] **Fast detection of in-plane rotated faces**
+- [x] Pupil/eyes detection
 
 #### TODO
-- [ ] Pupil/eyes detection
 - [ ] Facial landmarks
 
 **The API can detect even faces with eyeglasses.**
@@ -37,7 +37,7 @@ This library does not require any third party modules to be installed. However i
 **The API can also detect in plane rotated faces.** For this reason a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
 ```bash
-$ pigo -in input.jpg -out output.jpg -cf data/facefinder -angle=0.8 -iou=0.01
+$ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
 ```
 
 | Input file | Output file
@@ -123,7 +123,7 @@ dets = classifier.ClusterDetections(dets, 0.2)
 A command line utility is bundled into the library to detect faces in static images.
 
 ```bash
-$ pigo -in input.jpg -out out.jpg -cf data/facefinder
+$ pigo -in input.jpg -out out.jpg -cf cascade/facefinder
 ```
 
 ### Supported flags:
