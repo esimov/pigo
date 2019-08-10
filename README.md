@@ -179,7 +179,8 @@ Starting from **v1.2.0** Pigo includes pupils/eyes localization capabilites. Che
 
 In case you wish to test the library real time face detection capabilities using a webcam, the `examples` folder contains a  Web and a few Python examples. Prior running it you need to have Python2 and OpenCV2 installed.
 
-To run the Python version:
+Select one of the few samples provided in the `examples` folder and simply run the python file from there. Each of them will execute the exported Go binary file as a shared object. This is also a proof of concept how Pigo can be integrated into different programming languages. I have provided examples only for Python, since this was the only viable way to access the webcam, Go suffering badly from a comprehensive and widely supported library for webcam access.
+
 ```bash
 $ python2 demo.py
 ```
