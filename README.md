@@ -25,7 +25,7 @@ This library does not require any third party modules to be installed. However i
 - [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure
 - [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure
 - [x] Fast detection of in-plane rotated faces
-- [x] Pupil/eyes detection
+- [x] Pupils/eyes detection
 
 #### TODO
 - [ ] Facial landmarks
