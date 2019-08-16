@@ -7,3 +7,4 @@ pigo
 build
 packages
 !/testdata/*.png
+!/examples/**/*.png
