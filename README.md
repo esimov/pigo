@@ -24,10 +24,10 @@ This library does not require any third party modules to be installed. However i
 - [x] There is no need for image preprocessing prior detection
 - [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure
 - [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure
-- [x] **Fast detection of in-plane rotated faces**
+- [x] Fast detection of in-plane rotated faces
+- [x] Pupils/eyes detection
 
 #### TODO
-- [ ] Pupil/eyes detection
 - [ ] Facial landmarks
 
 **The API can detect even faces with eyeglasses.**
@@ -37,7 +37,7 @@ This library does not require any third party modules to be installed. However i
 **The API can also detect in plane rotated faces.** For this reason a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
 ```bash
-$ pigo -in input.jpg -out output.jpg -cf data/facefinder -angle=0.8 -iou=0.01
+$ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
 ```
 
 | Input file | Output file
@@ -123,19 +123,20 @@ dets = classifier.ClusterDetections(dets, 0.2)
 A command line utility is bundled into the library to detect faces in static images.
 
 ```bash
-$ pigo -in input.jpg -out out.jpg -cf data/facefinder
+$ pigo -in input.jpg -out out.jpg -cf cascade/facefinder
 ```
 
 ### Supported flags:
 
 ```bash
 $ pigo --help
+
 ┌─┐┬┌─┐┌─┐
 ├─┘││ ┬│ │
 ┴  ┴└─┘└─┘
 
 Go (Golang) Face detection library.
-    Version: 1.1.0
+    Version: 1.2.0
 
   -angle float
     	0.0 is 0 radians and 1.0 is 2*pi radians
@@ -155,6 +156,12 @@ Go (Golang) Face detection library.
     	Minimum size of face (default 20)
   -out string
     	Destination image
+  -pl
+    	Pupils localization
+  -plc string
+    	Pupil localization cascade file
+  -rect
+    	Mark detected eyes (default true)
   -scale float
     	Scale detection window by percentage (default 1.1)
   -shift float
@@ -162,11 +169,18 @@ Go (Golang) Face detection library.
 
 ```
 
+### Pupils / eyes localization capabilities
+
+Starting from **v1.2.0** Pigo includes pupils/eyes localization capabilites. Check the examples folder for a realtime demo.
+
+![puploc](https://user-images.githubusercontent.com/883386/62784340-f5b3c100-bac6-11e9-865e-a2b4b9520b08.png)
+
 ### Real time face detection
 
 In case you wish to test the library real time face detection capabilities using a webcam, the `examples` folder contains a  Web and a few Python examples. Prior running it you need to have Python2 and OpenCV2 installed.
 
-To run the Python version:
+Select one of the few samples provided in the `examples` folder and simply run the python file from there. Each of them will execute the exported Go binary file as a shared object. This is also a proof of concept how Pigo can be integrated into different programming languages. I have provided examples only for Python, since this was the only viable way to access the webcam, Go suffering badly from a comprehensive and widely supported library for webcam access.
+
 ```bash
 $ python2 demo.py
 ```
