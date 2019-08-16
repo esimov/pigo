@@ -143,7 +143,7 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 	dets := faceClassifier.RunCascade(cParams, 0.0)
 
 	// Calculate the intersection over union (IoU) of two clusters.
-	dets = faceClassifier.ClusterDetections(dets, 0.15)
+	dets = faceClassifier.ClusterDetections(dets, 0.05)
 
 	return dets
 }
