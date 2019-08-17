@@ -14,11 +14,10 @@ MAX_NDETS = 2024
 ARRAY_DIM = 6
 px, py = None, None
 
-show_pupil = False
-show_face = True
+show_face = False
 
 base_dir = "images"
-source_imgs = ["sunglasses.png", "neon-yellow.png", "neon-disco.png"]
+source_imgs = ["sunglasses.png", "neon-yellow.png", "neon-green.png", "carnival.png", "neon-disco.png"]
 img_idx = 0
 
 # define class GoPixelSlice to map to:
@@ -86,9 +85,6 @@ while(True):
 				if q > 50:
 					if angle == 0:
 						px, py = col, row
-						if show_pupil:
-							cv2.circle(frame, (int(col), int(row)), 4, (0, 0, 255), -1, 8, 0)
-					
 					elif angle > 0:
 						if show_face:
 							cv2.rectangle(frame, (col-scale/2, row-scale/2), (col+scale/2, row+scale/2), (0, 0, 255), 2)
@@ -149,8 +145,6 @@ while(True):
 		img_idx += 1
 		if img_idx > len(source_imgs)-1:
 			img_idx = 0
-	elif key & 0xFF == ord('r'):
-		show_pupil = not show_pupil
 
 cap.release()
 cv2.destroyAllWindows()
