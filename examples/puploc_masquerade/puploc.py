@@ -17,7 +17,7 @@ px, py = None, None
 show_face = False
 
 base_dir = "images"
-source_imgs = ["sunglasses.png", "neon-yellow.png", "neon-green.png", "carnival.png", "neon-disco.png"]
+source_imgs = ["sunglasses.png", "neon-yellow.png", "neon-green.png", "carnival.png", "carnival2.png", "neon-disco.png"]
 img_idx = 0
 
 # define class GoPixelSlice to map to:
