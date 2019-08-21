@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/esimov/pigo/core"
+	pigo "github.com/esimov/pigo/core"
 	"github.com/fogleman/gg"
 )
 
@@ -243,7 +243,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 				face.Scale,
 			))
 			dc.SetLineWidth(2.0)
-			dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 0, G: 255, B: 0, A: 255}))
+			dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 0, B: 0, A: 255}))
 			dc.Stroke()
 
 			if fd.doPuploc && face.Scale > 50 {
