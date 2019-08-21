@@ -71,7 +71,7 @@ func main() {
 		angle         = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
 		iouThreshold  = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
 		circleMarker  = flag.Bool("circle", false, "Use circle as detection marker")
-		doPuploc      = flag.Bool("pl", false, "Pupils localization")
+		doPuploc      = flag.Bool("pl", false, "Pupils/eyes localization")
 		puplocCascade = flag.String("plc", "", "Pupil localization cascade file")
 		markDetEyes   = flag.Bool("rect", true, "Mark detected eyes")
 		outputAsJSON  = flag.Bool("json", false, "Output face box coordinates into a json file")
