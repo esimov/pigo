@@ -145,6 +145,10 @@ while(True):
 		img_idx += 1
 		if img_idx > len(source_imgs)-1:
 			img_idx = 0
+	elif key & 0xFF == ord('r'):
+		img_idx -= 1
+		if img_idx < 0:
+			img_idx = len(source_imgs)-1
 
 cap.release()
 cv2.destroyAllWindows()
