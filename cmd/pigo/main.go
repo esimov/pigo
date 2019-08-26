@@ -84,7 +84,7 @@ func main() {
 	flag.Parse()
 
 	if len(*source) == 0 || len(*destination) == 0 || len(*cascadeFile) == 0 {
-		log.Fatal("Usage: pigo -in input.jpg -out out.png -cf data/facefinder")
+		log.Fatal("Usage: pigo -in input.jpg -out out.png -cf cascade/facefinder")
 	}
 
 	if *doPuploc && len(*puplocCascade) == 0 {
