@@ -13,7 +13,7 @@ os.system('rm blinkdet.so')
 MAX_NDETS = 2024
 ARRAY_DIM = 6
 # Number of consecutive frames the eye must be below the threshold
-EYE_CLOSED_CONSEC_FRAMES = 8
+EYE_CLOSED_CONSEC_FRAMES = 6
 
 # define class GoPixelSlice to map to:
 # C type struct { void *data; GoInt len; GoInt cap; }
@@ -58,10 +58,10 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 # For this reason we should delay the object detection process with a few milliseconds.
 time.sleep(0.4)
 
-showPupil = True
-showEyes = False
-counter = 0
-posFaceY = 0
+show_pupil = True
+show_eyes = False
+face_posy = 0
+count_left, count_right = 0, 0
 
 while(True):
 	ret, frame = cap.read()
@@ -76,14 +76,17 @@ while(True):
 			# We know that the detected faces are taking place in the first positions of the multidimensional array.
 			for det in dets:
 				if det[4] == 1: # 1 == face; 0 == pupil
-					posFaceY = det[1]
+					face_posy = det[1]
 					cv2.rectangle(frame, 
 							(int(det[1])-int(det[2]/2), int(det[0])-int(det[2]/2)), 
 							(int(det[1])+int(det[2]/2), int(det[0])+int(det[2]/2)), 
 							(0, 0, 255), 2
 						)
 				else:
-					if showPupil:
+					if show_pupil:
+						count_left += 1
+						count_right += 1
+
 						x1, x2 = int(det[0])-int(det[2]*1.2), int(det[0])+int(det[2]*1.2)
 						y1, y2 = int(det[1])-int(det[2]*1.2), int(det[1])+int(det[2]*1.2)
 						subimg = frame[x1:x2, y1:y2]						
@@ -94,7 +97,7 @@ while(True):
 
 							if img_blur is not None:
 								max_radius = int(det[2]*0.45)
-								circles = cv2.HoughCircles(img_blur, cv2.HOUGH_GRADIENT, 1, int(det[2]*0.3), 
+								circles = cv2.HoughCircles(img_blur, cv2.HOUGH_GRADIENT, 1, int(det[2]*0.45), 
 									param1=60, param2=21, minRadius=4, maxRadius=max_radius)
 								
 								if circles is not None:
@@ -102,23 +105,25 @@ while(True):
 									for i in circles[0, :]:
 										if i[2] < max_radius and i[2] > 0:										
 											# Draw outer circle																					
-											cv2.circle(frame, (int(det[1]), int(det[0])), i[2], (0, 255, 0), 2)										
+											cv2.circle(frame, (int(det[1]), int(det[0])), i[2], (0, 255, 0), 2)
 											# Draw inner circle
 											cv2.circle(frame, (int(det[1]), int(det[0])), 2, (255, 0, 255), 3)
 								else:
-									counter += 1
-									if counter > EYE_CLOSED_CONSEC_FRAMES:
-										if posFaceY < y1:
-											cv2.putText(frame, "Left blink!", (10, 30),
-												cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-										else:
-											cv2.putText(frame, "Right blink!", (frame.shape[1]-150, 30),
-												cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-										counter = 0
+									if face_posy < y1:
+										count_left = 0
+									else:
+										count_right = 0								
+						
+						if count_left < EYE_CLOSED_CONSEC_FRAMES:						
+							cv2.putText(frame, "Left blink!", (10, 30),
+								cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+						elif count_right < EYE_CLOSED_CONSEC_FRAMES:
+							cv2.putText(frame, "Right blink!", (frame.shape[1]-150, 30),
+								cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 																							
 						cv2.circle(frame, (int(det[1]), int(det[0])), 4, (0, 0, 255), -1, 8, 0)
 
-					if showEyes:
+					if show_eyes:
 						cv2.rectangle(frame, 
 							(int(det[1])-int(det[2]), int(det[0])-int(det[2])), 
 							(int(det[1])+int(det[2]), int(det[0])+int(det[2])), 
@@ -131,9 +136,9 @@ while(True):
 	if key & 0xFF == ord('q'):
 		break
 	elif key & 0xFF == ord('w'):
-		showPupil = not showPupil
+		show_pupil = not show_pupil
 	elif key & 0xFF == ord('e'):
-		showEyes = not showEyes
+		show_eyes = not show_eyes
 
 cap.release()
 cv2.destroyAllWindows()
