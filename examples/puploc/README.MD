@@ -12,6 +12,6 @@ $ python2 puploc.py
 ```
 
 ### Keys:
-* <kbd>w</kbd> - Toggle pupils localization
-* <kbd>e</kbd> - Toggle eyes localization
-* <kbd>q</kbd> - Quit
+<kbd>w</kbd> - Toggle pupils localization<br/>
+<kbd>e</kbd> - Toggle eyes localization<br/>
+<kbd>q</kbd> - Quit
