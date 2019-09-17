@@ -89,7 +89,7 @@ func (pg *Pigo) Unpack(packet []byte) (*Pigo, error) {
 			signedCode := *(*[]int8)(unsafe.Pointer(&code))
 			treeCodes = append(treeCodes, signedCode...)
 
-			pos = pos + int(4*math.Pow(2, float64(treeDepth))-4)
+			pos += int(4*math.Pow(2, float64(treeDepth)) - 4)
 
 			// Read prediction from tree's leaf nodes.
 			for i := 0; i < int(math.Pow(2, float64(treeDepth))); i++ {
@@ -128,7 +128,7 @@ func (pg *Pigo) Unpack(packet []byte) (*Pigo, error) {
 // classifyRegion constructs the classification function based on the parsed binary data.
 func (pg *Pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 	var (
-		root  int = 0
+		root  int
 		out   float32
 		pTree = int(math.Pow(2, float64(pg.treeDepth)))
 	)
@@ -140,27 +140,23 @@ func (pg *Pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 		var idx = 1
 
 		for j := 0; j < int(pg.treeDepth); j++ {
-			var pix = 0
 			x1 := ((r+int(pg.treeCodes[root+4*idx+0])*s)>>8)*dim + ((c + int(pg.treeCodes[root+4*idx+1])*s) >> 8)
 			x2 := ((r+int(pg.treeCodes[root+4*idx+2])*s)>>8)*dim + ((c + int(pg.treeCodes[root+4*idx+3])*s) >> 8)
 
-			px1 := pixels[x1]
-			px2 := pixels[x2]
-
-			if px1 <= px2 {
-				pix = 1
-			} else {
-				pix = 0
+			bintest := func(px1, px2 uint8) int {
+				if px1 <= px2 {
+					return 1
+				}
+				return 0
 			}
-			idx = 2*idx + pix
+			idx = 2*idx + bintest(pixels[x1], pixels[x2])
 		}
 		out += pg.treePred[pTree*i+idx-pTree]
 
 		if out <= pg.treeThreshold[i] {
 			return -1.0
-		} else {
-			root += 4 * pTree
 		}
+		root += 4 * pTree
 	}
 	return out - pg.treeThreshold[pg.treeNum-1]
 }
@@ -168,14 +164,14 @@ func (pg *Pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 // classifyRotatedRegion applies the face classification function over a rotated image based on the parsed binary data.
 func (pg *Pigo) classifyRotatedRegion(r, c, s int, a float64, nrows, ncols int, pixels []uint8, dim int) float32 {
 	var (
-		root  int = 0
+		root  int
 		out   float32
 		pTree = int(math.Pow(2, float64(pg.treeDepth)))
 	)
 
 	r = r * 65536
 	c = c * 65536
-	
+
 	if (r+46341*s)/65536 >= nrows || (r-46341*s)/65536 < 0 || (c+46341*s)/65536 >= ncols || (c-46341*s)/65536 < 0 {
 		return -1
 	}
@@ -190,30 +186,26 @@ func (pg *Pigo) classifyRotatedRegion(r, c, s int, a float64, nrows, ncols int, 
 		var idx = 1
 
 		for j := 0; j < int(pg.treeDepth); j++ {
-			var pix = 0
 			r1 := abs(r+qcos*int(pg.treeCodes[root+4*idx+0])-qsin*int(pg.treeCodes[root+4*idx+1])) >> 16
 			c1 := abs(c+qsin*int(pg.treeCodes[root+4*idx+0])+qcos*int(pg.treeCodes[root+4*idx+1])) >> 16
 
 			r2 := abs(r+qcos*int(pg.treeCodes[root+4*idx+2])-qsin*int(pg.treeCodes[root+4*idx+3])) >> 16
 			c2 := abs(c+qsin*int(pg.treeCodes[root+4*idx+2])+qcos*int(pg.treeCodes[root+4*idx+3])) >> 16
 
-			px1 := pixels[r1*dim+c1]
-			px2 := pixels[r2*dim+c2]
-
-			if px1 <= px2 {
-				pix = 1
-			} else {
-				pix = 0
+			bintest := func(px1, px2 uint8) int {
+				if px1 <= px2 {
+					return 1
+				}
+				return 0
 			}
-			idx = 2*idx + pix
+			idx = 2*idx + bintest(pixels[r1*dim+c1], pixels[r2*dim+c2])
 		}
 		out += pg.treePred[pTree*i+idx-pTree]
 
 		if out <= pg.treeThreshold[i] {
 			return -1.0
-		} else {
-			root += 4 * pTree
 		}
+		root += 4 * pTree
 	}
 	return out - pg.treeThreshold[pg.treeNum-1]
 }
