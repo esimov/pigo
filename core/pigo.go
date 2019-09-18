@@ -128,9 +128,9 @@ func (pg *Pigo) Unpack(packet []byte) (*Pigo, error) {
 // classifyRegion constructs the classification function based on the parsed binary data.
 func (pg *Pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 	var (
-		root  int
-		out   float32
-		pTree = int(math.Pow(2, float64(pg.treeDepth)))
+		root      int
+		out       float32
+		treeDepth = int(math.Pow(2, float64(pg.treeDepth)))
 	)
 
 	r = r * 256
@@ -151,12 +151,12 @@ func (pg *Pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 			}
 			idx = 2*idx + bintest(pixels[x1], pixels[x2])
 		}
-		out += pg.treePred[pTree*i+idx-pTree]
+		out += pg.treePred[treeDepth*i+idx-treeDepth]
 
 		if out <= pg.treeThreshold[i] {
 			return -1.0
 		}
-		root += 4 * pTree
+		root += 4 * treeDepth
 	}
 	return out - pg.treeThreshold[pg.treeNum-1]
 }
@@ -164,9 +164,9 @@ func (pg *Pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 // classifyRotatedRegion applies the face classification function over a rotated image based on the parsed binary data.
 func (pg *Pigo) classifyRotatedRegion(r, c, s int, a float64, nrows, ncols int, pixels []uint8, dim int) float32 {
 	var (
-		root  int
-		out   float32
-		pTree = int(math.Pow(2, float64(pg.treeDepth)))
+		root      int
+		out       float32
+		treeDepth = int(math.Pow(2, float64(pg.treeDepth)))
 	)
 
 	r = r * 65536
@@ -200,12 +200,12 @@ func (pg *Pigo) classifyRotatedRegion(r, c, s int, a float64, nrows, ncols int, 
 			}
 			idx = 2*idx + bintest(pixels[r1*dim+c1], pixels[r2*dim+c2])
 		}
-		out += pg.treePred[pTree*i+idx-pTree]
+		out += pg.treePred[treeDepth*i+idx-treeDepth]
 
 		if out <= pg.treeThreshold[i] {
 			return -1.0
 		}
-		root += 4 * pTree
+		root += 4 * treeDepth
 	}
 	return out - pg.treeThreshold[pg.treeNum-1]
 }
