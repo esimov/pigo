@@ -137,7 +137,7 @@ func (pg *Pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 	c = c * 256
 
 	for i := 0; i < int(pg.treeNum); i++ {
-		var idx = 1
+		idx := 1
 
 		for j := 0; j < int(pg.treeDepth); j++ {
 			x1 := ((r+int(pg.treeCodes[root+4*idx+0])*s)>>8)*dim + ((c + int(pg.treeCodes[root+4*idx+1])*s) >> 8)

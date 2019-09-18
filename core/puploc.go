@@ -89,15 +89,17 @@ func (plc *PuplocCascade) UnpackCascade(packet []byte) (*PuplocCascade, error) {
 		for s := 0; s < int(stages); s++ {
 			// Traverse the branches of each stage
 			for t := 0; t < int(trees); t++ {
-				code := packet[pos : pos+int(4*math.Pow(2, float64(treeDepth))-4)]
+				depth := int(math.Pow(2, float64(treeDepth)))
+
+				code := packet[pos : pos+4*depth-4]
 				// Convert unsigned bytecodes to signed ones.
 				i8code := *(*[]int8)(unsafe.Pointer(&code))
 				treeCodes = append(treeCodes, i8code...)
 
-				pos = pos + int(4*math.Pow(2, float64(treeDepth))-4)
+				pos += 4*depth - 4
 
 				// Read prediction from tree's leaf nodes.
-				for i := 0; i < int(math.Pow(2, float64(treeDepth))); i++ {
+				for i := 0; i < depth; i++ {
 					for l := 0; l < 2; l++ {
 						_, err := dataView.Write([]byte{packet[pos+0], packet[pos+1], packet[pos+2], packet[pos+3]})
 						if err != nil {
@@ -114,7 +116,6 @@ func (plc *PuplocCascade) UnpackCascade(packet []byte) (*PuplocCascade, error) {
 
 		}
 	}
-
 	return &PuplocCascade{
 		stages:    stages,
 		scales:    scales,
@@ -129,7 +130,7 @@ func (plc *PuplocCascade) UnpackCascade(packet []byte) (*PuplocCascade, error) {
 func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams) *Puploc {
 	localization := func(r, c, s float32, pixels []uint8, rows, cols, dim int) []float32 {
 		root := 0
-		pTree := int(math.Pow(2, float64(plc.treeDepth)))
+		treeDepth := int(math.Pow(2, float64(plc.treeDepth)))
 
 		for i := 0; i < int(plc.stages); i++ {
 			var dr, dc float32 = 0.0, 0.0
@@ -137,25 +138,25 @@ func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams) *Puploc {
 			for j := 0; j < int(plc.trees); j++ {
 				idx := 0
 				for k := 0; k < int(plc.treeDepth); k++ {
-					r1 := min(rows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+0])*int(round(float64(s))))>>8))
-					c1 := min(cols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+1])*int(round(float64(s))))>>8))
-					r2 := min(rows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+2])*int(round(float64(s))))>>8))
-					c2 := min(cols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+3])*int(round(float64(s))))>>8))
+					r1 := min(rows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+0])*int(s))>>8))
+					c1 := min(cols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+1])*int(s))>>8))
+					r2 := min(rows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+2])*int(s))>>8))
+					c2 := min(cols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+3])*int(s))>>8))
 
-					bintest := func(r1, r2 uint8) uint8 {
-						if r1 > r2 {
+					bintest := func(p1, p2 uint8) uint8 {
+						if p1 > p2 {
 							return 1
 						}
 						return 0
 					}
 					idx = 2*idx + 1 + int(bintest(pixels[r1*dim+c1], pixels[r2*dim+c2]))
 				}
-				lutIdx := 2 * (int(plc.trees)*pTree*i + pTree*j + idx - (pTree - 1))
+				lutIdx := 2 * (int(plc.trees)*treeDepth*i + treeDepth*j + idx - (treeDepth - 1))
 
 				dr += plc.treePreds[lutIdx+0]
 				dc += plc.treePreds[lutIdx+1]
 
-				root += 4*pTree - 4
+				root += 4*treeDepth - 4
 			}
 
 			r += dr * s
@@ -178,16 +179,16 @@ func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams) *Puploc {
 		scale = append(scale, res[2])
 	}
 
-	// sorting the perturbations in ascendent order
+	// Sorting the perturbations in ascendent order
 	sort.Sort(plocSort(rows))
 	sort.Sort(plocSort(cols))
 	sort.Sort(plocSort(scale))
 
-	// get the median value of the sorted perturbation results
+	// Get the median value of the sorted perturbation results
 	return &Puploc{
-		Row:   int(rows[int(round(float64(pl.Perturbs)/2))]),
-		Col:   int(cols[int(round(float64(pl.Perturbs)/2))]),
-		Scale: scale[int(round(float64(pl.Perturbs)/2))],
+		Row:   int(rows[int(pl.Perturbs)/2]),
+		Col:   int(cols[int(pl.Perturbs)/2]),
+		Scale: scale[int(pl.Perturbs)/2],
 	}
 }
 
@@ -205,15 +206,6 @@ func max(val1, val2 int) int {
 		return val1
 	}
 	return val2
-}
-
-// round returns the nearest integer, rounding ties away from zero.
-func round(x float64) float64 {
-	t := math.Trunc(x)
-	if math.Abs(x-t) >= 0.5 {
-		return t + math.Copysign(1, x)
-	}
-	return t
 }
 
 // Implement custom sorting function on detection values.
