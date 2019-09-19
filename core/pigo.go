@@ -169,13 +169,6 @@ func (pg *Pigo) classifyRotatedRegion(r, c, s int, a float64, nrows, ncols int, 
 		treeDepth = int(math.Pow(2, float64(pg.treeDepth)))
 	)
 
-	r = r * 65536
-	c = c * 65536
-
-	if (r+46341*s)/65536 >= nrows || (r-46341*s)/65536 < 0 || (c+46341*s)/65536 >= ncols || (c-46341*s)/65536 < 0 {
-		return -1
-	}
-
 	qCosTable := []int{256, 251, 236, 212, 181, 142, 97, 49, 0, -49, -97, -142, -181, -212, -236, -251, -256, -251, -236, -212, -181, -142, -97, -49, 0, 49, 97, 142, 181, 212, 236, 251, 256}
 	qSinTable := []int{0, 49, 97, 142, 181, 212, 236, 251, 256, 251, 236, 212, 181, 142, 97, 49, 0, -49, -97, -142, -181, -212, -236, -251, -256, -251, -236, -212, -181, -142, -97, -49, 0}
 
@@ -186,11 +179,11 @@ func (pg *Pigo) classifyRotatedRegion(r, c, s int, a float64, nrows, ncols int, 
 		var idx = 1
 
 		for j := 0; j < int(pg.treeDepth); j++ {
-			r1 := abs(r+qcos*int(pg.treeCodes[root+4*idx+0])-qsin*int(pg.treeCodes[root+4*idx+1])) >> 16
-			c1 := abs(c+qsin*int(pg.treeCodes[root+4*idx+0])+qcos*int(pg.treeCodes[root+4*idx+1])) >> 16
+			r1 := abs(min(nrows-1, max(0, 65536*r+qcos*int(pg.treeCodes[root+4*idx+0])-qsin*int(pg.treeCodes[root+4*idx+1]))>>16))
+			c1 := abs(min(nrows-1, max(0, 65536*c+qsin*int(pg.treeCodes[root+4*idx+0])+qcos*int(pg.treeCodes[root+4*idx+1]))>>16))
 
-			r2 := abs(r+qcos*int(pg.treeCodes[root+4*idx+2])-qsin*int(pg.treeCodes[root+4*idx+3])) >> 16
-			c2 := abs(c+qsin*int(pg.treeCodes[root+4*idx+2])+qcos*int(pg.treeCodes[root+4*idx+3])) >> 16
+			r2 := abs(min(nrows-1, max(0, 65536*r+qcos*int(pg.treeCodes[root+4*idx+2])-qsin*int(pg.treeCodes[root+4*idx+3]))>>16))
+			c2 := abs(min(nrows-1, max(0, 65536*c+qsin*int(pg.treeCodes[root+4*idx+2])+qcos*int(pg.treeCodes[root+4*idx+3]))>>16))
 
 			bintest := func(px1, px2 uint8) int {
 				if px1 <= px2 {
@@ -317,9 +310,35 @@ func (q det) Less(i, j int) bool {
 	return q[i].Q < q[j].Q
 }
 
+// abs returns the absolute value of the provided number
 func abs(x int) int {
 	if x < 0 {
 		return -x
 	}
 	return x
+}
+
+// min returns the minum value between two numbers
+func min(val1, val2 int) int {
+	if val1 < val2 {
+		return val1
+	}
+	return val2
+}
+
+// max returns the maximum value between two numbers
+func max(val1, val2 int) int {
+	if val1 > val2 {
+		return val1
+	}
+	return val2
+}
+
+// round returns the nearest integer, rounding ties away from zero.
+func round(x float64) float64 {
+	t := math.Trunc(x)
+	if math.Abs(x-t) >= 0.5 {
+		return t + math.Copysign(1, x)
+	}
+	return t
 }

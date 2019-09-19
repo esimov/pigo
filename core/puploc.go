@@ -126,53 +126,109 @@ func (plc *PuplocCascade) UnpackCascade(packet []byte) (*PuplocCascade, error) {
 	}, nil
 }
 
-// RunDetector runs the pupil localization function.
-func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams) *Puploc {
-	localization := func(r, c, s float32, pixels []uint8, rows, cols, dim int) []float32 {
-		root := 0
-		treeDepth := int(math.Pow(2, float64(plc.treeDepth)))
+// classifyRegion applies the face classification function over an image.
+func (plc *PuplocCascade) classifyRegion(r, c, s float32, nrows, ncols int, pixels []uint8, dim int) []float32 {
+	root := 0
+	treeDepth := int(math.Pow(2, float64(plc.treeDepth)))
 
-		for i := 0; i < int(plc.stages); i++ {
-			var dr, dc float32 = 0.0, 0.0
+	for i := 0; i < int(plc.stages); i++ {
+		var dr, dc float32 = 0.0, 0.0
 
-			for j := 0; j < int(plc.trees); j++ {
-				idx := 0
-				for k := 0; k < int(plc.treeDepth); k++ {
-					r1 := min(rows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+0])*int(s))>>8))
-					c1 := min(cols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+1])*int(s))>>8))
-					r2 := min(rows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+2])*int(s))>>8))
-					c2 := min(cols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+3])*int(s))>>8))
+		for j := 0; j < int(plc.trees); j++ {
+			idx := 0
+			for k := 0; k < int(plc.treeDepth); k++ {
+				r1 := min(nrows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+0])*int(s))>>8))
+				c1 := min(ncols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+1])*int(s))>>8))
+				r2 := min(nrows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+2])*int(s))>>8))
+				c2 := min(ncols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+3])*int(s))>>8))
 
-					bintest := func(p1, p2 uint8) uint8 {
-						if p1 > p2 {
-							return 1
-						}
-						return 0
+				bintest := func(p1, p2 uint8) uint8 {
+					if p1 > p2 {
+						return 1
 					}
-					idx = 2*idx + 1 + int(bintest(pixels[r1*dim+c1], pixels[r2*dim+c2]))
+					return 0
 				}
-				lutIdx := 2 * (int(plc.trees)*treeDepth*i + treeDepth*j + idx - (treeDepth - 1))
-
-				dr += plc.treePreds[lutIdx+0]
-				dc += plc.treePreds[lutIdx+1]
-
-				root += 4*treeDepth - 4
+				idx = 2*idx + 1 + int(bintest(pixels[r1*dim+c1], pixels[r2*dim+c2]))
 			}
+			lutIdx := 2 * (int(plc.trees)*treeDepth*i + treeDepth*j + idx - (treeDepth - 1))
 
-			r += dr * s
-			c += dc * s
-			s *= plc.scales
+			dr += plc.treePreds[lutIdx+0]
+			dc += plc.treePreds[lutIdx+1]
+
+			root += 4*treeDepth - 4
 		}
-		return []float32{r, c, s}
+
+		r += dr * s
+		c += dc * s
+		s *= plc.scales
 	}
+	return []float32{r, c, s}
+}
+
+// classifyRotatedRegion applies the face classification function over a rotated image.
+func (plc *PuplocCascade) classifyRotatedRegion(r, c, s float32, a float64, nrows, ncols int, pixels []uint8, dim int) []float32 {
+	root := 0
+	treeDepth := int(math.Pow(2, float64(plc.treeDepth)))
+
+	qCosTable := []float32{256, 251, 236, 212, 181, 142, 97, 49, 0, -49, -97, -142, -181, -212, -236, -251, -256, -251, -236, -212, -181, -142, -97, -49, 0, 49, 97, 142, 181, 212, 236, 251, 256}
+	qSinTable := []float32{0, 49, 97, 142, 181, 212, 236, 251, 256, 251, 236, 212, 181, 142, 97, 49, 0, -49, -97, -142, -181, -212, -236, -251, -256, -251, -236, -212, -181, -142, -97, -49, 0}
+
+	qsin := s * qSinTable[int(32.0*a)] //s*(256.0*math.Sin(2*math.Pi*a))
+	qcos := s * qCosTable[int(32.0*a)] //s*(256.0*math.Cos(2*math.Pi*a))
+
+	for i := 0; i < int(plc.stages); i++ {
+		var dr, dc float32 = 0.0, 0.0
+
+		for j := 0; j < int(plc.trees); j++ {
+			idx := 0
+			for k := 0; k < int(plc.treeDepth); k++ {
+				r1 := min(nrows-1, max(0, 65536*int(r)+int(qcos)*int(plc.treeCodes[root+4*idx+0])-int(qsin)*int(plc.treeCodes[root+4*idx+1]))>>16)
+				c1 := min(ncols-1, max(0, 65536*int(c)+int(qsin)*int(plc.treeCodes[root+4*idx+0])+int(qcos)*int(plc.treeCodes[root+4*idx+1]))>>16)
+
+				r2 := min(nrows-1, max(0, 65536*int(r)+int(qcos)*int(plc.treeCodes[root+4*idx+2])-int(qsin)*int(plc.treeCodes[root+4*idx+3]))>>16)
+				c2 := min(ncols-1, max(0, 65536*int(c)+int(qsin)*int(plc.treeCodes[root+4*idx+2])+int(qcos)*int(plc.treeCodes[root+4*idx+3]))>>16)
+
+				bintest := func(px1, px2 uint8) int {
+					if px1 <= px2 {
+						return 1
+					}
+					return 0
+				}
+				idx = 2*idx + 1 + bintest(pixels[r1*dim+c1], pixels[r2*dim+c2])
+			}
+			lutIdx := 2 * (int(plc.trees)*treeDepth*i + treeDepth*j + idx - (treeDepth - 1))
+
+			dr += plc.treePreds[lutIdx+0]
+			dc += plc.treePreds[lutIdx+1]
+
+			root += 4*treeDepth - 4
+		}
+
+		r += dr * s
+		c += dc * s
+		s *= plc.scales
+	}
+	return []float32{r, c, s}
+}
+
+// RunDetector runs the pupil localization function.
+func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams, angle float64) *Puploc {
 	rows, cols, scale := []float32{}, []float32{}, []float32{}
+	res := []float32{}
 
 	for i := 0; i < pl.Perturbs; i++ {
-		rt := float32(pl.Row) + float32(pl.Scale)*0.15*(0.5-rand.Float32())
-		ct := float32(pl.Col) + float32(pl.Scale)*0.15*(0.5-rand.Float32())
-		st := float32(pl.Scale) * (0.25 + rand.Float32())
+		row := float32(pl.Row) + float32(pl.Scale)*0.15*(0.5-rand.Float32())
+		col := float32(pl.Col) + float32(pl.Scale)*0.15*(0.5-rand.Float32())
+		sc := float32(pl.Scale) * (0.25 + rand.Float32())
 
-		res := localization(rt, ct, st, img.Pixels, img.Rows, img.Cols, img.Dim)
+		if angle > 0.0 {
+			if angle > 1.0 {
+				angle = 1.0
+			}
+			res = plc.classifyRotatedRegion(row, col, sc, angle, img.Rows, img.Cols, img.Pixels, img.Dim)
+		} else {
+			res = plc.classifyRegion(row, col, sc, img.Rows, img.Cols, img.Pixels, img.Dim)
+		}
 
 		rows = append(rows, res[0])
 		cols = append(cols, res[1])
@@ -190,22 +246,6 @@ func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams) *Puploc {
 		Col:   int(cols[int(pl.Perturbs)/2]),
 		Scale: scale[int(pl.Perturbs)/2],
 	}
-}
-
-// min returns the minum value between two numbers
-func min(val1, val2 int) int {
-	if val1 < val2 {
-		return val1
-	}
-	return val2
-}
-
-// max returns the maximum value between two numbers
-func max(val1, val2 int) int {
-	if val1 > val2 {
-		return val1
-	}
-	return val2
 }
 
 // Implement custom sorting function on detection values.

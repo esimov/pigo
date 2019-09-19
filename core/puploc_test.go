@@ -87,7 +87,7 @@ func BenchmarkPuploc(b *testing.B) {
 					Scale:    float32(face.Scale) * 0.25,
 					Perturbs: 50,
 				}
-				plc.RunDetector(*puploc, imgParams)
+				plc.RunDetector(*puploc, imgParams, 0.0)
 
 				// right eye
 				puploc = &pigo.Puploc{
@@ -96,7 +96,7 @@ func BenchmarkPuploc(b *testing.B) {
 					Scale:    float32(face.Scale) * 0.25,
 					Perturbs: 50,
 				}
-				plc.RunDetector(*puploc, imgParams)
+				plc.RunDetector(*puploc, imgParams, 0.0)
 			}
 		}
 	}

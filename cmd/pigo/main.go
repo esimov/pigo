@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/disintegration/imaging"
 	pigo "github.com/esimov/pigo/core"
 	"github.com/fogleman/gg"
 )
@@ -36,6 +37,7 @@ var (
 	dc        *gg.Context
 	plc       *pigo.PuplocCascade
 	imgParams *pigo.ImageParams
+	fd        *faceDetector
 )
 
 // faceDetector struct contains Pigo face detector general settings.
@@ -107,7 +109,7 @@ func main() {
 	s.start("Processing...")
 	start := time.Now()
 
-	fd := &faceDetector{
+	fd = &faceDetector{
 		angle:         *angle,
 		destination:   *destination,
 		cascadeFile:   *cascadeFile,
@@ -247,6 +249,16 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 			dc.Stroke()
 
 			if fd.doPuploc && face.Scale > 50 {
+				rect := image.Rect(
+					face.Col-face.Scale/2,
+					face.Row-face.Scale/2,
+					face.Col+face.Scale/2,
+					face.Row+face.Scale/2,
+				)
+				rows, cols := rect.Max.X-rect.Min.X, rect.Max.Y-rect.Min.Y
+				ctx := gg.NewContext(rows, cols)
+				faceZone := ctx.Image()
+
 				// left eye
 				puploc = &pigo.Puploc{
 					Row:      face.Row - int(0.075*float32(face.Scale)),
@@ -254,29 +266,25 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 					Scale:    float32(face.Scale) * 0.25,
 					Perturbs: perturb,
 				}
-
-				det := plc.RunDetector(*puploc, *imgParams)
+				det := plc.RunDetector(*puploc, *imgParams, fd.angle)
 				if det.Row > 0 && det.Col > 0 {
-					dc.DrawArc(
-						float64(det.Col),
-						float64(det.Row),
-						float64(det.Scale*0.5),
-						0,
-						2*math.Pi,
-					)
-					dc.SetFillStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 255, B: 255, A: 255}))
-					dc.Fill()
-
-					if fd.markDetEyes {
-						dc.DrawRectangle(
-							float64(det.Col)-float64(det.Scale*1.5),
-							float64(det.Row)-float64(det.Scale*1.5),
-							float64(det.Scale*3),
-							float64(det.Scale*3),
+					if fd.angle > 0 {
+						drawDetections(ctx,
+							float64(cols/2-(face.Col-det.Col)),
+							float64(rows/2-(face.Row-det.Row)),
+							float64(det.Scale),
 						)
-						dc.SetLineWidth(2.0)
-						dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 255, B: 0, A: 255}))
-						dc.Stroke()
+						angle := (fd.angle * 180) / math.Pi
+						rotated := imaging.Rotate(faceZone, 2*angle, color.Transparent)
+						final := imaging.FlipH(rotated)
+
+						dc.DrawImage(final, face.Col-face.Scale/2, face.Row-face.Scale/2)
+					} else {
+						drawDetections(dc,
+							float64(det.Col),
+							float64(det.Row),
+							float64(det.Scale),
+						)
 					}
 				}
 
@@ -288,28 +296,26 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 					Perturbs: perturb,
 				}
 
-				det = plc.RunDetector(*puploc, *imgParams)
+				det = plc.RunDetector(*puploc, *imgParams, fd.angle)
 				if det.Row > 0 && det.Col > 0 {
-					dc.DrawArc(
-						float64(det.Col),
-						float64(det.Row),
-						float64(det.Scale*0.5),
-						0,
-						2*math.Pi,
-					)
-					dc.SetFillStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 255, B: 255, A: 255}))
-					dc.Fill()
-
-					if fd.markDetEyes {
-						dc.DrawRectangle(
-							float64(det.Col)-float64(det.Scale*1.5),
-							float64(det.Row)-float64(det.Scale*1.5),
-							float64(det.Scale*3),
-							float64(det.Scale*3),
+					if fd.angle > 0 {
+						drawDetections(ctx,
+							float64(cols/2-(face.Col-det.Col)),
+							float64(rows/2-(face.Row-det.Row)),
+							float64(det.Scale),
 						)
-						dc.SetLineWidth(2.0)
-						dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 255, B: 0, A: 255}))
-						dc.Stroke()
+						// convert radians to angle
+						angle := (fd.angle * 180) / math.Pi
+						rotated := imaging.Rotate(faceZone, 2*angle, color.Transparent)
+						final := imaging.FlipH(rotated)
+
+						dc.DrawImage(final, face.Col-face.Scale/2, face.Row-face.Scale/2)
+					} else {
+						drawDetections(dc,
+							float64(det.Col),
+							float64(det.Row),
+							float64(det.Scale),
+						)
 					}
 				}
 			}
@@ -372,4 +378,18 @@ func inSlice(ext string, types []string) bool {
 		}
 	}
 	return false
+}
+
+// drawDetections helper function to draw the detection marks
+func drawDetections(ctx *gg.Context, x, y, r float64) {
+	ctx.DrawArc(x, y, r*0.5, 0, 2*math.Pi)
+	ctx.SetFillStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 0, B: 0, A: 255}))
+	ctx.Fill()
+
+	if fd.markDetEyes {
+		ctx.DrawRectangle(x-(r*1.5), y-(r*1.5), r*3, r*3)
+		ctx.SetLineWidth(2.0)
+		ctx.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 255, B: 0, A: 255}))
+		ctx.Stroke()
+	}
 }
