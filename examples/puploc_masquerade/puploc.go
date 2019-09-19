@@ -42,7 +42,7 @@ func FindFaces(pixels []uint8) uintptr {
 			Scale:    float32(results[i].Scale) * 0.4,
 			Perturbs: 50,
 		}
-		det := puplocClassifier.RunDetector(*puploc, *imageParams)
+		det := puplocClassifier.RunDetector(*puploc, *imageParams, 0.0)
 		if det.Row > 0 && det.Col > 0 {
 			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q), 0)
 		}
@@ -56,7 +56,7 @@ func FindFaces(pixels []uint8) uintptr {
 			Perturbs: 50,
 		}
 
-		det = puplocClassifier.RunDetector(*puploc, *imageParams)
+		det = puplocClassifier.RunDetector(*puploc, *imageParams, 0.0)
 		if det.Row > 0 && det.Col > 0 {
 			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q), 0)
 		}
