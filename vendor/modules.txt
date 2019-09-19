@@ -1,0 +1,16 @@
+# github.com/disintegration/imaging v1.6.1
+github.com/disintegration/imaging
+# github.com/esimov/triangle v1.0.4
+github.com/esimov/triangle
+# github.com/fogleman/gg v1.0.0
+github.com/fogleman/gg
+# github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
+github.com/golang/freetype/raster
+github.com/golang/freetype/truetype
+# golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81
+golang.org/x/image/bmp
+golang.org/x/image/tiff
+golang.org/x/image/font
+golang.org/x/image/font/basicfont
+golang.org/x/image/math/fixed
+golang.org/x/image/tiff/lzw
