@@ -137,10 +137,10 @@ func (plc *PuplocCascade) classifyRegion(r, c, s float32, nrows, ncols int, pixe
 		for j := 0; j < int(plc.trees); j++ {
 			idx := 0
 			for k := 0; k < int(plc.treeDepth); k++ {
-				r1 := min(nrows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+0])*int(s))>>8))
-				c1 := min(ncols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+1])*int(s))>>8))
-				r2 := min(nrows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+2])*int(s))>>8))
-				c2 := min(ncols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+3])*int(s))>>8))
+				r1 := min(nrows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+0])*int(round(float64(s))))>>8))
+				c1 := min(ncols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+1])*int(round(float64(s))))>>8))
+				r2 := min(nrows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+2])*int(round(float64(s))))>>8))
+				c2 := min(ncols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+3])*int(round(float64(s))))>>8))
 
 				bintest := func(p1, p2 uint8) uint8 {
 					if p1 > p2 {
@@ -242,9 +242,9 @@ func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams, angle float64)
 
 	// Get the median value of the sorted perturbation results
 	return &Puploc{
-		Row:   int(rows[int(pl.Perturbs)/2]),
-		Col:   int(cols[int(pl.Perturbs)/2]),
-		Scale: scale[int(pl.Perturbs)/2],
+		Row:   int(rows[int(round(float64(pl.Perturbs)/2))]),
+		Col:   int(cols[int(round(float64(pl.Perturbs)/2))]),
+		Scale: scale[int(round(float64(pl.Perturbs)/2))],
 	}
 }
 
