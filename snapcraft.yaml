@@ -1,5 +1,5 @@
 name: pigo
-version: '1.1.0'
+version: '1.2.1'
 summary: Pure Go face detection library
 description: |
   Key features:
@@ -9,6 +9,7 @@ description: |
    - There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure
    - The face detection is based on pixel intensity comparison encoded in the binary file tree structure
    - Fast detection of in-plane rotated faces
+   - Pupils/eyes detection
 grade: stable
 confinement: strict
 base: core18
