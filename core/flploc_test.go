@@ -74,3 +74,59 @@ func TestFlploc_LandmarkPointsFinderShouldReturnDetectionPoints(t *testing.T) {
 		t.Fatalf("should have been detected facial landmark points: %s", err)
 	}
 }
+
+func BenchmarkFlploc(b *testing.B) {
+	pg := pigo.NewPigo()
+	// Unpack the binary file. This will return the number of cascade trees,
+	// the tree depth, the threshold and the prediction from tree's leaf nodes.
+	classifier, err := pg.Unpack(pigoCascade)
+	if err != nil {
+		b.Fatalf("error reading the cascade file: %s", err)
+	}
+
+	pl := pigo.PuplocCascade{}
+	plc, err := pl.UnpackCascade(puplocCascade)
+	if err != nil {
+		b.Fatalf("error reading the cascade file: %s", err)
+	}
+
+	var faces []pigo.Detection
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		pixs := pigo.RgbToGrayscale(srcImg)
+		cParams.Pixels = pixs
+		// Run the classifier over the obtained leaf nodes and return the detection results.
+		// The result contains quadruplets representing the row, column, scale and detection score.
+		faces = classifier.RunCascade(*cParams, 0.0)
+		// Calculate the intersection over union (IoU) of two clusters.
+		faces = classifier.ClusterDetections(faces, 0.1)
+
+		for _, face := range faces {
+			if face.Scale > 50 {
+				// left eye
+				puploc := &pigo.Puploc{
+					Row:      face.Row - int(0.075*float32(face.Scale)),
+					Col:      face.Col - int(0.175*float32(face.Scale)),
+					Scale:    float32(face.Scale) * 0.25,
+					Perturbs: 50,
+				}
+				leftEye := plc.RunDetector(*puploc, *imgParams, 0.0, false)
+
+				// right eye
+				puploc = &pigo.Puploc{
+					Row:      face.Row - int(0.075*float32(face.Scale)),
+					Col:      face.Col + int(0.185*float32(face.Scale)),
+					Scale:    float32(face.Scale) * 0.25,
+					Perturbs: 50,
+				}
+				rightEye := plc.RunDetector(*puploc, *imgParams, 0.0, false)
+
+				plc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, "left")
+
+			}
+		}
+	}
+	_ = faces
+}

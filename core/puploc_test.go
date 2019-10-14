@@ -34,14 +34,6 @@ func TestPuploc_UnpackCascadeFileShouldNotBeNil(t *testing.T) {
 	}
 }
 
-func TestPuploc_InputImageShouldBeGrayscale(t *testing.T) {
-	// Since an image converted grayscale has only one channel,we should assume
-	// that the grayscale image array length is the source image length / 4.
-	if len(imgParams.Pixels) != len(srcImg.Pix)/4 {
-		t.Fatalf("the source image should be converted to grayscale")
-	}
-}
-
 func TestPuploc_Detector_ShouldDetectEyes(t *testing.T) {
 	p := pigo.NewPigo()
 	// Unpack the binary file. This will return the number of cascade trees,
