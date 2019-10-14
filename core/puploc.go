@@ -29,6 +29,11 @@ type PuplocCascade struct {
 	treePreds []float32
 }
 
+// NewPuplocCascade initializes the PuplocCascade constructor method.
+func NewPuplocCascade() *PuplocCascade {
+	return &PuplocCascade{}
+}
+
 // UnpackCascade unpacks the pupil localization cascade file.
 func (plc *PuplocCascade) UnpackCascade(packet []byte) (*PuplocCascade, error) {
 	var (
@@ -127,7 +132,9 @@ func (plc *PuplocCascade) UnpackCascade(packet []byte) (*PuplocCascade, error) {
 }
 
 // classifyRegion applies the face classification function over an image.
-func (plc *PuplocCascade) classifyRegion(r, c, s float32, nrows, ncols int, pixels []uint8, dim int) []float32 {
+func (plc *PuplocCascade) classifyRegion(r, c, s float32, nrows, ncols int, pixels []uint8, dim int, flipV bool) []float32 {
+	var c1, c2 int
+
 	root := 0
 	treeDepth := int(math.Pow(2, float64(plc.treeDepth)))
 
@@ -138,10 +145,17 @@ func (plc *PuplocCascade) classifyRegion(r, c, s float32, nrows, ncols int, pixe
 			idx := 0
 			for k := 0; k < int(plc.treeDepth); k++ {
 				r1 := min(nrows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+0])*int(round(float64(s))))>>8))
-				c1 := min(ncols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+1])*int(round(float64(s))))>>8))
 				r2 := min(nrows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+2])*int(round(float64(s))))>>8))
-				c2 := min(ncols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+3])*int(round(float64(s))))>>8))
 
+				// flipV means that we wish to flip the column coordinates sign in the tree nodes.
+				// This is required when we are running the facial landmark detector over the right side of the detected eyes.
+				if flipV {
+					c1 = min(ncols-1, max(0, (256*int(c)+int(-plc.treeCodes[root+4*idx+1])*int(round(float64(s))))>>8))
+					c2 = min(ncols-1, max(0, (256*int(c)+int(-plc.treeCodes[root+4*idx+3])*int(round(float64(s))))>>8))
+				} else {
+					c1 = min(ncols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+1])*int(round(float64(s))))>>8))
+					c2 = min(ncols-1, max(0, (256*int(c)+int(plc.treeCodes[root+4*idx+3])*int(round(float64(s))))>>8))
+				}
 				bintest := func(p1, p2 uint8) uint8 {
 					if p1 > p2 {
 						return 1
@@ -153,8 +167,11 @@ func (plc *PuplocCascade) classifyRegion(r, c, s float32, nrows, ncols int, pixe
 			lutIdx := 2 * (int(plc.trees)*treeDepth*i + treeDepth*j + idx - (treeDepth - 1))
 
 			dr += plc.treePreds[lutIdx+0]
-			dc += plc.treePreds[lutIdx+1]
-
+			if flipV {
+				dc += -plc.treePreds[lutIdx+1]
+			} else {
+				dc += plc.treePreds[lutIdx+1]
+			}
 			root += 4*treeDepth - 4
 		}
 
@@ -166,7 +183,9 @@ func (plc *PuplocCascade) classifyRegion(r, c, s float32, nrows, ncols int, pixe
 }
 
 // classifyRotatedRegion applies the face classification function over a rotated image.
-func (plc *PuplocCascade) classifyRotatedRegion(r, c, s float32, a float64, nrows, ncols int, pixels []uint8, dim int) []float32 {
+func (plc *PuplocCascade) classifyRotatedRegion(r, c, s float32, a float64, nrows, ncols int, pixels []uint8, dim int, flipV bool) []float32 {
+	var row1, col1, row2, col2 int
+
 	root := 0
 	treeDepth := int(math.Pow(2, float64(plc.treeDepth)))
 
@@ -182,11 +201,23 @@ func (plc *PuplocCascade) classifyRotatedRegion(r, c, s float32, a float64, nrow
 		for j := 0; j < int(plc.trees); j++ {
 			idx := 0
 			for k := 0; k < int(plc.treeDepth); k++ {
-				r1 := min(nrows-1, max(0, 65536*int(r)+int(qcos)*int(plc.treeCodes[root+4*idx+0])-int(qsin)*int(plc.treeCodes[root+4*idx+1]))>>16)
-				c1 := min(ncols-1, max(0, 65536*int(c)+int(qsin)*int(plc.treeCodes[root+4*idx+0])+int(qcos)*int(plc.treeCodes[root+4*idx+1]))>>16)
+				row1 = int(plc.treeCodes[root+4*idx+0])
+				row2 = int(plc.treeCodes[root+4*idx+2])
 
-				r2 := min(nrows-1, max(0, 65536*int(r)+int(qcos)*int(plc.treeCodes[root+4*idx+2])-int(qsin)*int(plc.treeCodes[root+4*idx+3]))>>16)
-				c2 := min(ncols-1, max(0, 65536*int(c)+int(qsin)*int(plc.treeCodes[root+4*idx+2])+int(qcos)*int(plc.treeCodes[root+4*idx+3]))>>16)
+				// flipV means that we wish to flip the column coordinates sign in the tree nodes.
+				// This is required when we are running the facial landmark detector over the right side of the detected eyes.
+				if flipV {
+					col1 = int(-plc.treeCodes[root+4*idx+1])
+					col2 = int(-plc.treeCodes[root+4*idx+3])
+				} else {
+					col1 = int(plc.treeCodes[root+4*idx+1])
+					col2 = int(plc.treeCodes[root+4*idx+3])
+				}
+
+				r1 := min(nrows-1, max(0, 65536*int(r)+int(qcos)*row1-int(qsin)*col1)>>16)
+				c1 := min(ncols-1, max(0, 65536*int(c)+int(qsin)*row1+int(qcos)*col1)>>16)
+				r2 := min(nrows-1, max(0, 65536*int(r)+int(qcos)*row2-int(qsin)*col2)>>16)
+				c2 := min(ncols-1, max(0, 65536*int(c)+int(qsin)*row2+int(qcos)*col2)>>16)
 
 				bintest := func(px1, px2 uint8) int {
 					if px1 <= px2 {
@@ -199,8 +230,11 @@ func (plc *PuplocCascade) classifyRotatedRegion(r, c, s float32, a float64, nrow
 			lutIdx := 2 * (int(plc.trees)*treeDepth*i + treeDepth*j + idx - (treeDepth - 1))
 
 			dr += plc.treePreds[lutIdx+0]
-			dc += plc.treePreds[lutIdx+1]
-
+			if flipV {
+				dc += -plc.treePreds[lutIdx+1]
+			} else {
+				dc += plc.treePreds[lutIdx+1]
+			}
 			root += 4*treeDepth - 4
 		}
 
@@ -212,22 +246,22 @@ func (plc *PuplocCascade) classifyRotatedRegion(r, c, s float32, a float64, nrow
 }
 
 // RunDetector runs the pupil localization function.
-func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams, angle float64) *Puploc {
+func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams, angle float64, flipV bool) *Puploc {
 	rows, cols, scale := []float32{}, []float32{}, []float32{}
 	res := []float32{}
 
 	for i := 0; i < pl.Perturbs; i++ {
 		row := float32(pl.Row) + float32(pl.Scale)*0.15*(0.5-rand.Float32())
 		col := float32(pl.Col) + float32(pl.Scale)*0.15*(0.5-rand.Float32())
-		sc := float32(pl.Scale) * (0.25 + rand.Float32())
+		sc := float32(pl.Scale) * (0.925 + 0.15*rand.Float32())
 
 		if angle > 0.0 {
 			if angle > 1.0 {
 				angle = 1.0
 			}
-			res = plc.classifyRotatedRegion(row, col, sc, angle, img.Rows, img.Cols, img.Pixels, img.Dim)
+			res = plc.classifyRotatedRegion(row, col, sc, angle, img.Rows, img.Cols, img.Pixels, img.Dim, flipV)
 		} else {
-			res = plc.classifyRegion(row, col, sc, img.Rows, img.Cols, img.Pixels, img.Dim)
+			res = plc.classifyRegion(row, col, sc, img.Rows, img.Cols, img.Pixels, img.Dim, flipV)
 		}
 
 		rows = append(rows, res[0])

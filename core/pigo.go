@@ -42,7 +42,7 @@ type Pigo struct {
 	treeThreshold []float32
 }
 
-// NewPigo instantiate a new pigo struct.
+// NewPigo initializes the Pigo constructor method.
 func NewPigo() *Pigo {
 	return &Pigo{}
 }
