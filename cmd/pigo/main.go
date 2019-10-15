@@ -286,7 +286,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 				puploc = &pigo.Puploc{
 					Row:      face.Row - int(0.075*float32(face.Scale)),
 					Col:      face.Col - int(0.175*float32(face.Scale)),
-					Scale:    float32(face.Scale) * 0.15,
+					Scale:    float32(face.Scale) * 0.25,
 					Perturbs: perturb,
 				}
 				leftEye := plc.RunDetector(*puploc, *imgParams, fd.angle, false)
@@ -319,7 +319,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 				puploc = &pigo.Puploc{
 					Row:      face.Row - int(0.075*float32(face.Scale)),
 					Col:      face.Col + int(0.185*float32(face.Scale)),
-					Scale:    float32(face.Scale) * 0.15,
+					Scale:    float32(face.Scale) * 0.25,
 					Perturbs: perturb,
 				}
 
@@ -357,7 +357,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 								drawDetections(dc,
 									float64(flp.Col),
 									float64(flp.Row),
-									float64(flp.Scale*0.15),
+									float64(flp.Scale*0.5),
 									color.RGBA{R: 0, G: 0, B: 255, A: 255},
 									false,
 								)
@@ -368,7 +368,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 								drawDetections(dc,
 									float64(flp.Col),
 									float64(flp.Row),
-									float64(flp.Scale*0.15),
+									float64(flp.Scale*0.5),
 									color.RGBA{R: 0, G: 0, B: 255, A: 255},
 									false,
 								)
@@ -383,7 +383,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 								drawDetections(dc,
 									float64(flp.Col),
 									float64(flp.Row),
-									float64(flp.Scale*0.15),
+									float64(flp.Scale*0.5),
 									color.RGBA{R: 0, G: 0, B: 255, A: 255},
 									false,
 								)
@@ -395,7 +395,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 						drawDetections(dc,
 							float64(flp.Col),
 							float64(flp.Row),
-							float64(flp.Scale*0.15),
+							float64(flp.Scale*0.5),
 							color.RGBA{R: 0, G: 0, B: 255, A: 255},
 							false,
 						)
@@ -465,7 +465,7 @@ func inSlice(item string, slice []string) bool {
 
 // drawDetections helper function to draw the detection marks
 func drawDetections(ctx *gg.Context, x, y, r float64, c color.RGBA, markDet bool) {
-	ctx.DrawArc(x, y, r*0.5, 0, 2*math.Pi)
+	ctx.DrawArc(x, y, r*0.15, 0, 2*math.Pi)
 	ctx.SetFillStyle(gg.NewSolidPattern(c))
 	ctx.Fill()
 
