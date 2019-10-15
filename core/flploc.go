@@ -24,7 +24,7 @@ func (plc *PuplocCascade) UnpackFlp(cf string) (*PuplocCascade, error) {
 }
 
 // FindLandmarkPoints detects the facial landmark points based on the pupil localization results.
-func (plc *PuplocCascade) FindLandmarkPoints(leftEye, rightEye *Puploc, img ImageParams, perturb int, position string) *Puploc {
+func (plc *PuplocCascade) FindLandmarkPoints(leftEye, rightEye *Puploc, img ImageParams, perturb int, flipV bool) *Puploc {
 	var flploc *Puploc
 	dist1 := (leftEye.Row - rightEye.Row) * (leftEye.Row - rightEye.Row)
 	dist2 := (leftEye.Col - rightEye.Col) * (leftEye.Col - rightEye.Col)
@@ -41,7 +41,7 @@ func (plc *PuplocCascade) FindLandmarkPoints(leftEye, rightEye *Puploc, img Imag
 		Perturbs: perturb,
 	}
 
-	if position == "right" {
+	if flipV {
 		return plc.RunDetector(*flploc, img, 0.0, true)
 	}
 	return plc.RunDetector(*flploc, img, 0.0, false)
