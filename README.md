@@ -3,8 +3,8 @@
 [![Build Status](https://travis-ci.org/esimov/pigo.svg?branch=master)](https://travis-ci.org/esimov/pigo)
 [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/esimov/pigo/core)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat)](./LICENSE)
-[![release](https://img.shields.io/badge/release-v1.2.1-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.2.1)
-[![snapcraft](https://img.shields.io/badge/snapcraft-v1.2.1-green.svg)](https://snapcraft.io/pigo)
+[![release](https://img.shields.io/badge/release-v1.3.0-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.3.0)
+[![snapcraft](https://img.shields.io/badge/snapcraft-v1.3.0-green.svg)](https://snapcraft.io/pigo)
 [![Snap Status](https://build.snapcraft.io/badge/esimov/pigo.svg)](https://build.snapcraft.io/user/esimov/pigo)
 
 Pigo is a pure Go face detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
@@ -145,7 +145,7 @@ $ pigo --help
 ┴  ┴└─┘└─┘
 
 Go (Golang) Face detection library.
-    Version: 1.2.0
+    Version: 1.3.0
 
   -angle float
     	0.0 is 0 radians and 1.0 is 2*pi radians
@@ -153,12 +153,18 @@ Go (Golang) Face detection library.
     	Cascade binary file
   -circle
     	Use circle as detection marker
+  -flp
+    	Use facial landmark points localization
+  -flpdir string
+    	The facial landmark points base directory
   -in string
     	Source image
   -iou float
     	Intersection over union (IoU) threshold (default 0.2)
   -json
     	Output face box coordinates into a json file
+  -mark
+    	Mark detected eyes (default true)
   -max int
     	Maximum size of face (default 1000)
   -min int
@@ -166,11 +172,9 @@ Go (Golang) Face detection library.
   -out string
     	Destination image
   -pl
-    	Pupils localization
+    	Pupils/eyes localization
   -plc string
     	Pupil localization cascade file
-  -rect
-    	Mark detected eyes (default true)
   -scale float
     	Scale detection window by percentage (default 1.1)
   -shift float
