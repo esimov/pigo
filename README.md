@@ -27,7 +27,7 @@ This library does not require any third party modules to be installed. However i
 - [x] Fast detection of in-plane rotated faces
 - [x] The library can detect even faces with eyeglasses 
 - [x] [Pupils/eyes localization](#pupils--eyes-localization)
-- [x] [Facial landmarks](#facial-landmark-points-detection)
+- [x] [Facial landmark points detection](#facial-landmark-points-detection)
 
 **The library can also detect in plane rotated faces.** For this reason a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
