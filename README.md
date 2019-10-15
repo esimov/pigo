@@ -25,10 +25,8 @@ This library does not require any third party modules to be installed. However i
 - [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure
 - [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure
 - [x] Fast detection of in-plane rotated faces
-- [x] Pupils/eyes detection
-
-#### TODO
-- [ ] Facial landmarks
+- [x] [Pupils/eyes localization](#pupils--eyes-localization)
+- [x] [Facial landmarks]()
 
 **The API can detect even faces with eyeglasses.**
 
@@ -47,6 +45,20 @@ $ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
 
 In case of in plane rotated faces the angle value should be adapted to the provided image.
 
+### Pupils / eyes localization 
+
+Starting from **v1.2.0** Pigo includes pupils/eyes localization capabilites. The implementation is based on [Eye pupil localization with an ensemble of randomized trees](https://www.sciencedirect.com/science/article/abs/pii/S0031320313003294).
+
+Check the examples folder for a realtime demo.
+
+![puploc](https://user-images.githubusercontent.com/883386/62784340-f5b3c100-bac6-11e9-865e-a2b4b9520b08.png)
+
+### Facial landmark points detection
+
+**v1.3.0** marks a new milestone in the library evolution, since it's capable of facial landmark points detection. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
+
+![flp_example](https://user-images.githubusercontent.com/883386/66802771-3b0cc880-ef26-11e9-9ee3-7e9e981ef3f7.png)
+
 ## Install
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
 
@@ -61,7 +73,7 @@ $ go get -u -f github.com/esimov/pigo/cmd/pigo
 $ go install
 ```
 ### Binary releases
-Also you can obtain the generated binary files in the [releases](https://github.com/esimov/pigo/releases) folder in case you do not have installed or do not want to install Go.
+In case you do not have installed or do not wish to install Go, you can obtain the binary file from the [releases](https://github.com/esimov/pigo/releases) folder.
 
 The library can be accessed as a snapcraft function too.
 
@@ -169,13 +181,7 @@ Go (Golang) Face detection library.
 
 ```
 
-### Pupils / eyes localization capabilities
-
-Starting from **v1.2.0** Pigo includes pupils/eyes localization capabilites. Check the examples folder for a realtime demo.
-
-![puploc](https://user-images.githubusercontent.com/883386/62784340-f5b3c100-bac6-11e9-865e-a2b4b9520b08.png)
-
-### Real time face detection
+## Real time face detection
 
 In case you wish to test the library real time face detection capabilities using a webcam, the `examples` folder contains a  Web and a few Python examples. Prior running it you need to have Python2 and OpenCV2 installed.
 
