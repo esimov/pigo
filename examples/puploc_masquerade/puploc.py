@@ -11,7 +11,7 @@ pigo = cdll.LoadLibrary('./puploc.so')
 os.system('rm puploc.so')
 
 MAX_NDETS = 2024
-ARRAY_DIM = 6
+ARRAY_DIM = 5
 px, py = None, None
 
 show_face = False
@@ -50,7 +50,7 @@ def process_frame(pixs):
 	
 	if data_pointer :
 		buffarr = ((c_longlong * ARRAY_DIM) * MAX_NDETS).from_address(addressof(data_pointer.contents))
-		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(MAX_NDETS, 5,))
+		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(MAX_NDETS, ARRAY_DIM,))
 
 		# The first value of the buffer aray represents the buffer length.
 		dets_len = res[0][0]
@@ -58,7 +58,7 @@ def process_frame(pixs):
 
 		# We have to consider the pupil pair added into the list.
 		# That's why we are multiplying the detection length with 3.
-		dets = list(res.reshape(-1, 5))[0:dets_len*3]
+		dets = list(res.reshape(-1, ARRAY_DIM))[0:dets_len*3]
 		return dets
 
 # initialize the camera
