@@ -1,6 +1,6 @@
 ## Facial landmark points detection demo
 
-Python example for live webcam facial landmark points detection.
+Python demo for live webcam facial landmark points detection.
 
 ### Requirements
 * OpenCV2
