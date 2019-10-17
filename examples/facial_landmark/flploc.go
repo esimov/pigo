@@ -77,7 +77,7 @@ func FindFaces(pixels []uint8) uintptr {
 			}
 		}
 
-		// Traverse all the mounth cascades and run the detector on each of them.
+		// Traverse all the mouth cascades and run the detector on each of them.
 		for _, mouth := range mouthCascade {
 			for _, flpc := range flpcs[mouth] {
 				flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
