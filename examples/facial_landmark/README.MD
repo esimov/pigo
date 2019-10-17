@@ -1,6 +1,6 @@
-## Pupils/eyes localization demo
+## Facial landmark points detection demo
 
-This is an example of how to use Pigo for pupils/eyes localization.
+Python example for live webcam facial landmark points detection.
 
 ### Requirements
 * OpenCV2
@@ -8,10 +8,11 @@ This is an example of how to use Pigo for pupils/eyes localization.
 
 ### Usage
 ```bash
-$ python2 puploc.py
+$ python2 flploc.py
 ```
 
 ### Keys:
 <kbd>w</kbd> - Toggle pupils localization<br/>
 <kbd>e</kbd> - Toggle eyes localization<br/>
+<kbd>a</kbd> - Toggle facial landmark points detection<br/>
 <kbd>q</kbd> - Quit
