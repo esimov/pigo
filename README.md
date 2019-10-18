@@ -49,13 +49,15 @@ In case of in plane rotated faces the angle value should be adapted to the provi
 
 Starting from **v1.2.0** Pigo includes pupils/eyes localization capabilites. The implementation is based on [Eye pupil localization with an ensemble of randomized trees](https://www.sciencedirect.com/science/article/abs/pii/S0031320313003294).
 
-Check the examples folder for a realtime demo.
+Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/puploc
 
 ![puploc](https://user-images.githubusercontent.com/883386/62784340-f5b3c100-bac6-11e9-865e-a2b4b9520b08.png)
 
 ### Facial landmark points detection
 
 **v1.3.0** marks a new milestone in the library evolution, since it's capable of facial landmark points detection. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
+
+Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/facial_landmark
 
 ![flp_example](https://user-images.githubusercontent.com/883386/66802771-3b0cc880-ef26-11e9-9ee3-7e9e981ef3f7.png)
 
