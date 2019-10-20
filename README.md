@@ -32,7 +32,7 @@ This library does not require any third party modules to be installed. However i
 #### Todo
 - [ ] Webassembly support
 
-**The library can also detect in plane rotated faces.** For this reason a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
+**The library can also detect in plane rotated faces.** For this a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
 ```bash
 $ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
@@ -43,7 +43,7 @@ $ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
 | ![input](https://user-images.githubusercontent.com/883386/50761018-015db180-1272-11e9-93d9-d3693cae9d66.jpg) | ![output](https://user-images.githubusercontent.com/883386/50761024-03277500-1272-11e9-9c20-2568b87a2344.png) |
 
 
-In case of in plane rotated faces the angle value should be adapted to the provided image.
+Note: In case of in plane rotated faces the angle value should be adapted to the provided image.
 
 ### Pupils / eyes localization 
 
