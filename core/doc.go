@@ -1,4 +1,4 @@
-// Package Pigo is a lightweight pure Go face detection, pupil/eyes localization and facial landmark points detection library
+// Package pigo is a lightweight pure Go face detection, pupil/eyes localization and facial landmark points detection library
 // based on Pixel Intensity Comparison-based Object detection paper (https://arxiv.org/pdf/1305.4537.pdf).
 // Is platform agnostic and does not require any external dependencies and third party modules.
 
@@ -54,5 +54,4 @@
 // dets = classifier.ClusterDetections(dets, 0.2)
 
 // For pupil/eyes localization and facial landmark points detection API example check the source code.
-
 package pigo
