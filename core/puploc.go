@@ -148,7 +148,7 @@ func (plc *PuplocCascade) classifyRegion(r, c, s float32, nrows, ncols int, pixe
 				r2 := min(nrows-1, max(0, (256*int(r)+int(plc.treeCodes[root+4*idx+2])*int(round(float64(s))))>>8))
 
 				// flipV means that we wish to flip the column coordinates sign in the tree nodes.
-				// This is required when we are running the facial landmark detector over the right side of the detected eyes.
+				// This is required at running the facial landmark detector over the right side of the detected face.
 				if flipV {
 					c1 = min(ncols-1, max(0, (256*int(c)+int(-plc.treeCodes[root+4*idx+1])*int(round(float64(s))))>>8))
 					c2 = min(ncols-1, max(0, (256*int(c)+int(-plc.treeCodes[root+4*idx+3])*int(round(float64(s))))>>8))
@@ -205,7 +205,7 @@ func (plc *PuplocCascade) classifyRotatedRegion(r, c, s float32, a float64, nrow
 				row2 = int(plc.treeCodes[root+4*idx+2])
 
 				// flipV means that we wish to flip the column coordinates sign in the tree nodes.
-				// This is required when we are running the facial landmark detector over the right side of the detected eyes.
+				// This is required at running the facial landmark detector over the right side of the detected face.
 				if flipV {
 					col1 = int(-plc.treeCodes[root+4*idx+1])
 					col2 = int(-plc.treeCodes[root+4*idx+3])
