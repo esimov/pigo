@@ -6,9 +6,9 @@ import os
 import cv2
 import time
 
-os.system('go build -o puploc.so -buildmode=c-shared puploc.go')
-pigo = cdll.LoadLibrary('./puploc.so')
-os.system('rm puploc.so')
+os.system('go build -o flploc.so -buildmode=c-shared flploc.go')
+pigo = cdll.LoadLibrary('./flploc.so')
+os.system('rm flploc.so')
 
 MAX_NDETS = 2024
 ARRAY_DIM = 5
@@ -42,9 +42,9 @@ def process_frame(pixs):
 		dets_len = res[0][0]
 		res = np.delete(res, 0, 0) # delete the first element from the array
 
-		# We have to consider the pupil pair added into the list.
-		# That's why we are multiplying the detection length with 3.
-		dets = list(res.reshape(-1, ARRAY_DIM))[0:dets_len*3]
+		# We have to multiply the detection length with the total 
+		# detection points(face, pupils and facial lendmark points), in total 18
+		dets = list(res.reshape(-1, ARRAY_DIM))[0:dets_len*18]
 		return dets
 
 # initialize the camera
@@ -58,6 +58,7 @@ time.sleep(0.4)
 
 showPupil = True
 showEyes = False
+showLandmarkPoints = True
 
 while(True):
 	ret, frame = cap.read()
@@ -72,17 +73,24 @@ while(True):
 			# We know that the detected faces are taking place in the first positions of the multidimensional array.
 			for det in dets:
 				if det[3] > 50:
-					if det[4] == 1: # 1 == face; 0 == pupil
-						cv2.circle(frame, (int(det[1]), int(det[0])), int(det[2]/2.0), (0, 0, 255), 2)
-					else:
+					if det[4] == 0: # 0 == face;
+						cv2.rectangle(frame, 
+							(int(det[1])-int(det[2]/2), int(det[0])-int(det[2]/2)), 
+							(int(det[1])+int(det[2]/2), int(det[0])+int(det[2]/2)), 
+							(0, 0, 255), 2
+						)
+					elif det[4] == 1: # 1 == pupil;
 						if showPupil:
 							cv2.circle(frame, (int(det[1]), int(det[0])), 4, (0, 0, 255), -1, 8, 0)
 						if showEyes:
 							cv2.rectangle(frame, 
 								(int(det[1])-int(det[2]), int(det[0])-int(det[2])), 
 								(int(det[1])+int(det[2]), int(det[0])+int(det[2])), 
-								(0, 255, 0), 2
+								(0, 255, 255), 2
 							)
+					elif det[4] == 2: # 2 == facial landmark;
+						if showLandmarkPoints:
+							cv2.circle(frame, (int(det[1]), int(det[0])), 4, (0, 255, 0), -1, 8, 0)
 
 	cv2.imshow('', frame)
 
@@ -93,6 +101,8 @@ while(True):
 		showPupil = not showPupil
 	elif key & 0xFF == ord('e'):
 		showEyes = not showEyes
+	elif key & 0xFF == ord('a'):
+		showLandmarkPoints = not showLandmarkPoints
 
 cap.release()
 cv2.destroyAllWindows()

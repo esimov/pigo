@@ -3,8 +3,8 @@
 [![Build Status](https://travis-ci.org/esimov/pigo.svg?branch=master)](https://travis-ci.org/esimov/pigo)
 [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/esimov/pigo/core)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat)](./LICENSE)
-[![release](https://img.shields.io/badge/release-v1.2.1-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.2.1)
-[![snapcraft](https://img.shields.io/badge/snapcraft-v1.2.1-green.svg)](https://snapcraft.io/pigo)
+[![release](https://img.shields.io/badge/release-v1.3.0-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.3.0)
+[![snapcraft](https://img.shields.io/badge/snapcraft-v1.3.0-green.svg)](https://snapcraft.io/pigo)
 [![Snap Status](https://build.snapcraft.io/badge/esimov/pigo.svg)](https://build.snapcraft.io/user/esimov/pigo)
 
 Pigo is a pure Go face detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
@@ -27,9 +27,12 @@ This library does not require any third party modules to be installed. However i
 - [x] Fast detection of in-plane rotated faces
 - [x] The library can detect even faces with eyeglasses 
 - [x] [Pupils/eyes localization](#pupils--eyes-localization)
-- [x] [Facial landmarks](#facial-landmark-points-detection)
+- [x] [Facial landmark points detection](#facial-landmark-points-detection)
 
-**The library can also detect in plane rotated faces.** For this reason a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
+#### Todo
+- [ ] Webassembly support
+
+**The library can also detect in plane rotated faces.** For this a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
 ```bash
 $ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
@@ -40,19 +43,21 @@ $ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
 | ![input](https://user-images.githubusercontent.com/883386/50761018-015db180-1272-11e9-93d9-d3693cae9d66.jpg) | ![output](https://user-images.githubusercontent.com/883386/50761024-03277500-1272-11e9-9c20-2568b87a2344.png) |
 
 
-In case of in plane rotated faces the angle value should be adapted to the provided image.
+Note: In case of in plane rotated faces the angle value should be adapted to the provided image.
 
 ### Pupils / eyes localization 
 
 Starting from **v1.2.0** Pigo includes pupils/eyes localization capabilites. The implementation is based on [Eye pupil localization with an ensemble of randomized trees](https://www.sciencedirect.com/science/article/abs/pii/S0031320313003294).
 
-Check the examples folder for a realtime demo.
+Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/puploc
 
 ![puploc](https://user-images.githubusercontent.com/883386/62784340-f5b3c100-bac6-11e9-865e-a2b4b9520b08.png)
 
 ### Facial landmark points detection
 
 **v1.3.0** marks a new milestone in the library evolution, since it's capable of facial landmark points detection. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
+
+Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/facial_landmark
 
 ![flp_example](https://user-images.githubusercontent.com/883386/66802771-3b0cc880-ef26-11e9-9ee3-7e9e981ef3f7.png)
 
@@ -145,7 +150,7 @@ $ pigo --help
 ┴  ┴└─┘└─┘
 
 Go (Golang) Face detection library.
-    Version: 1.2.0
+    Version: 1.3.0
 
   -angle float
     	0.0 is 0 radians and 1.0 is 2*pi radians
@@ -153,12 +158,18 @@ Go (Golang) Face detection library.
     	Cascade binary file
   -circle
     	Use circle as detection marker
+  -flp
+    	Use facial landmark points localization
+  -flpdir string
+    	The facial landmark points base directory
   -in string
     	Source image
   -iou float
     	Intersection over union (IoU) threshold (default 0.2)
   -json
     	Output face box coordinates into a json file
+  -mark
+    	Mark detected eyes (default true)
   -max int
     	Maximum size of face (default 1000)
   -min int
@@ -166,11 +177,9 @@ Go (Golang) Face detection library.
   -out string
     	Destination image
   -pl
-    	Pupils localization
+    	Pupils/eyes localization
   -plc string
     	Pupil localization cascade file
-  -rect
-    	Mark detected eyes (default true)
   -scale float
     	Scale detection window by percentage (default 1.1)
   -shift float
