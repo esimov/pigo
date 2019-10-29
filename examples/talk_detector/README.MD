@@ -1,5 +1,7 @@
 ## Talk detection demo
 
+### Work in progress!
+
 This demo demonstrates how Pigo's facial landmark points detection capabilities can be used for detecting if a person is talking or not. This method can be used in a variety of fields, like checking if a person is communicating or not.
 
 ### Requirements
