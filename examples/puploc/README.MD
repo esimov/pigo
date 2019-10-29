@@ -1,6 +1,6 @@
 ## Pupils/eyes localization demo
 
-This is an example of how to use Pigo for pupils/eyes localization.
+Python demo for live webcam pupils/eyes localization.
 
 ### Requirements
 * OpenCV2
