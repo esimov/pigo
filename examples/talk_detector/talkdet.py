@@ -11,7 +11,7 @@ pigo = cdll.LoadLibrary('./talkdet.so')
 os.system('rm talkdet.so')
 
 MAX_NDETS = 2024
-ARRAY_DIM = 5
+ARRAY_DIM = 6
 
 # define class GoPixelSlice to map to:
 # C type struct { void *data; GoInt len; GoInt cap; }
@@ -44,7 +44,7 @@ def process_frame(pixs):
 
 		# We have to multiply the detection length with the total 
 		# detection points(face, pupils and facial lendmark points), in total 18
-		dets = list(res.reshape(-1, ARRAY_DIM))[0:dets_len*18]
+		dets = list(res.reshape(-1, ARRAY_DIM))[0:dets_len*19]
 		return dets
 
 # initialize the camera
@@ -86,6 +86,8 @@ while(True):
 					elif det[4] == 2: # 2 == facial landmark;
 						if showLandmarkPoints:
 							cv2.circle(frame, (int(det[1]), int(det[0])), 4, (0, 255, 0), -1, 8, 0)
+					elif det[4] == 3:
+						print(det[5])
 
 	cv2.imshow('', frame)
 

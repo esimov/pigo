@@ -3,7 +3,6 @@ package main
 import "C"
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
@@ -42,7 +41,9 @@ func FindFaces(pixels []uint8) uintptr {
 	dets := make([][]int, len(results))
 
 	for i := 0; i < len(results); i++ {
-		dets[i] = append(dets[i], results[i].Row, results[i].Col, results[i].Scale, int(results[i].Q), 0)
+		// Hack: the fifth value in the slice represents the detection type: face, pupils, landmark points.
+		// The sixt value was included only to transfer the mouth aspect ratio.
+		dets[i] = append(dets[i], results[i].Row, results[i].Col, results[i].Scale, int(results[i].Q), 0, 1)
 		// left eye
 		puploc := &pigo.Puploc{
 			Row:      results[i].Row - int(0.085*float32(results[i].Scale)),
@@ -52,7 +53,7 @@ func FindFaces(pixels []uint8) uintptr {
 		}
 		leftEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
 		if leftEye.Row > 0 && leftEye.Col > 0 {
-			dets[i] = append(dets[i], leftEye.Row, leftEye.Col, int(leftEye.Scale), int(results[i].Q), 1)
+			dets[i] = append(dets[i], leftEye.Row, leftEye.Col, int(leftEye.Scale), int(results[i].Q), 1, 1)
 		}
 
 		// right eye
@@ -65,7 +66,7 @@ func FindFaces(pixels []uint8) uintptr {
 
 		rightEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
 		if rightEye.Row > 0 && rightEye.Col > 0 {
-			dets[i] = append(dets[i], rightEye.Row, rightEye.Col, int(rightEye.Scale), int(results[i].Q), 1)
+			dets[i] = append(dets[i], rightEye.Row, rightEye.Col, int(rightEye.Scale), int(results[i].Q), 1, 1)
 		}
 
 		// Traverse all the eye cascades and run the detector on each of them.
@@ -73,12 +74,12 @@ func FindFaces(pixels []uint8) uintptr {
 			for _, flpc := range flpcs[eye] {
 				flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
 				if flp.Row > 0 && flp.Col > 0 {
-					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2)
+					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
 				}
 
 				flp = flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
 				if flp.Row > 0 && flp.Col > 0 {
-					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2)
+					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
 				}
 			}
 		}
@@ -90,16 +91,19 @@ func FindFaces(pixels []uint8) uintptr {
 				flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
 				if flp.Row > 0 && flp.Col > 0 {
 					mouthPoints = append(mouthPoints, flp.Row, flp.Col)
-					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2)
+					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
 				}
 			}
 		}
 		flp := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
 		if flp.Row > 0 && flp.Col > 0 {
 			mouthPoints = append(mouthPoints, flp.Row, flp.Col)
-			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2)
+			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
 		}
-		fmt.Println(mouthPoints)
+
+		// Calculate the distance ratio between the two horizontal and
+		// two vertical landmark points on the mouth section.
+		// If the ratio is below 1, it means that the mouth is open, otherwise it means that it's closed.
 		p1 := &point{x: mouthPoints[2], y: mouthPoints[3]}
 		p2 := &point{x: mouthPoints[len(mouthPoints)-2], y: mouthPoints[len(mouthPoints)-1]}
 		p3 := &point{x: mouthPoints[4], y: mouthPoints[5]}
@@ -108,8 +112,8 @@ func FindFaces(pixels []uint8) uintptr {
 		dist1 := math.Sqrt(math.Pow(float64(p2.y-p1.y), 2) + math.Pow(float64(p2.x-p1.x), 2))
 		dist2 := math.Sqrt(math.Pow(float64(p4.y-p3.y), 2) + math.Pow(float64(p4.x-p3.x), 2))
 
-		ar := math.Round((dist1 / dist2) * 0.2)
-		fmt.Println(ar)
+		mar := int(math.Round((dist1 / dist2) * 0.2))
+		dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 3, mar)
 	}
 
 	coords := make([]int, 0, len(dets))
@@ -122,7 +126,7 @@ func FindFaces(pixels []uint8) uintptr {
 		}
 		// Include as a first slice element the number of detected faces.
 		// We need to transfer this value in order to define the Python array buffer length.
-		coords = append([]int{len(dets), 0, 0, 0, 0}, coords...)
+		coords = append([]int{len(dets), 0, 0, 0, 0, 0}, coords...)
 
 		// Convert the slice into an array pointer.
 		s := *(*[]uint8)(unsafe.Pointer(&coords))
