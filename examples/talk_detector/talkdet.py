@@ -14,6 +14,7 @@ MAX_NDETS = 2024
 ARRAY_DIM = 6
 
 MOUTH_AR_THRESH = 0.2
+MOUTH_AR_CONSEC_FRAMES = 5
 
 def verify_alpha_channel(frame):
     try:
@@ -27,14 +28,14 @@ def alpha_blend(frame_1, frame_2, mask):
     blended = cv2.convertScaleAbs(frame_1*(1-alpha) + frame_2*alpha)
     return blended
 
-def apply_circle_focus_blur(frame, x, y):
+def apply_circle_focus_blur(frame, x, y, dim, blur):
     frame = verify_alpha_channel(frame)
     height, width, _ = frame.shape
     mask = np.zeros((height, width, 4), dtype='uint8')
-    cv2.circle(mask, (int(x), int(y)), int(x/2),
+    cv2.circle(mask, (int(x), int(y)), int(dim/1.5),
                (255, 255, 255), -1, cv2.LINE_AA)
-    mask = cv2.GaussianBlur(mask, (41, 41), cv2.BORDER_DEFAULT)
-    blured = cv2.GaussianBlur(frame, (41, 41), cv2.BORDER_DEFAULT)
+    mask = cv2.blur(mask, (blur, blur), cv2.BORDER_DEFAULT)
+    blured = cv2.blur(frame, (blur, blur), cv2.BORDER_DEFAULT)
     blended = alpha_blend(frame, blured, 255-mask)
     frame = cv2.cvtColor(blended, cv2.COLOR_BGRA2BGR)
     return frame
@@ -88,6 +89,9 @@ showFaceDet = False
 showPupil = True
 showLandmarkPoints = True
 
+counter = 0
+talking = False
+
 while(True):
     ret, frame = cap.read()
     pixs = np.ascontiguousarray(
@@ -99,25 +103,34 @@ while(True):
         dets = process_frame(pixs)  # pixs needs to be numpy.uint8 array
 
         if dets is not None:
+            face_col, face_row, face_dim = 0, 0, 0
             # We know that the detected faces are taking place in the first positions of the multidimensional array.
             for row, col, scale, q, det_type, mouth_ar in dets:
                 if q > 50:
                     if det_type == 0:  # 0 == face;
+                        face_col, face_row, face_dim = col, row, scale
                         if showFaceDet:
-                            cv2.rectangle(
-                                frame, (col-scale/2, row-scale/2), (col+scale/2, row+scale/2), (0, 0, 255), 2)
+                            cv2.rectangle(frame, (col-scale/2, row-scale/2), (col+scale/2, row+scale/2), (0, 0, 255), 2)
                     elif det_type == 1:  # 1 == pupil;
                         if showPupil:
-                            cv2.circle(frame, (int(col), int(row)),
-                                       4, (0, 0, 255), -1, 8, 0)
+                            cv2.circle(frame, (int(col), int(row)), 4, (0, 0, 255), -1, 8, 0)
                     elif det_type == 2:  # 2 == facial landmark;
                         if showLandmarkPoints:
-                            cv2.circle(frame, (int(col), int(row)),
-                                       4, (0, 255, 0), -1, 8, 0)
+                            cv2.circle(frame, (int(col), int(row)), 4, (0, 255, 0), -1, 8, 0)
                     elif det_type == 3:
-                        if mouth_ar < MOUTH_AR_THRESH:  # mouth is open
-                            frame = apply_circle_focus_blur(frame, col, row)
-                            cv2.putText(frame, "TALKING!", (10, 30),
+                        if mouth_ar < MOUTH_AR_THRESH: # mouth is open
+                            talking = True
+                            counter = 0
+                        else: # mouth is closed
+                            if counter < MOUTH_AR_CONSEC_FRAMES:
+                                counter += 1
+                            else:
+                                talking = False
+                                counter = 0
+
+                        if talking and counter < MOUTH_AR_CONSEC_FRAMES:
+                            frame = apply_circle_focus_blur(frame, face_col, face_row, face_dim, 25)
+                            cv2.putText(frame, "Bla bla bla...", (10, 30),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
     cv2.imshow('', frame)

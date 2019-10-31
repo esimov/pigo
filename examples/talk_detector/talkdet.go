@@ -112,7 +112,7 @@ func FindFaces(pixels []uint8) uintptr {
 		dist1 := math.Sqrt(math.Pow(float64(p2.y-p1.y), 2) + math.Pow(float64(p2.x-p1.x), 2))
 		dist2 := math.Sqrt(math.Pow(float64(p4.y-p3.y), 2) + math.Pow(float64(p4.x-p3.x), 2))
 
-		mar := int(math.Round((dist1 / dist2) * 0.2))
+		mar := int(math.Round((dist1 / dist2) * 0.19))
 		dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 3, mar)
 	}
 
@@ -151,7 +151,7 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 		Dim:    cols,
 	}
 	cParams := pigo.CascadeParams{
-		MinSize:     60,
+		MinSize:     100,
 		MaxSize:     600,
 		ShiftFactor: 0.1,
 		ScaleFactor: 1.1,
