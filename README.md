@@ -5,7 +5,6 @@
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat)](./LICENSE)
 [![release](https://img.shields.io/badge/release-v1.3.0-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.3.0)
 [![snapcraft](https://img.shields.io/badge/snapcraft-v1.3.0-green.svg)](https://snapcraft.io/pigo)
-[![Snap Status](https://build.snapcraft.io/badge/esimov/pigo.svg)](https://build.snapcraft.io/user/esimov/pigo)
 
 Pigo is a pure Go face detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
 
@@ -223,6 +222,6 @@ The code used for the above test can be found under the following link: https://
 
 ## License
 
-Copyright © 2018 Endre Simo
+Copyright © 2019 Endre Simo
 
 This software is distributed under the MIT license. See the LICENSE file for the full license text.
