@@ -34,6 +34,7 @@ func NewCanvas() *Canvas {
 
 	c.windowSize.width = c.window.Get("innerWidth").Float()
 	c.windowSize.height = c.window.Get("innerHeight").Float()
+	c.Log(c.windowSize.width)
 
 	c.canvas = c.doc.Call("createElement", "canvas")
 	c.canvas.Set("width", c.windowSize.width)
@@ -50,7 +51,8 @@ func (c *Canvas) Render() {
 	go func() {
 		c.renderer = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			c.reqID = c.window.Call("requestAnimationFrame", c.renderer)
-			c.Log("Running")
+			// Draw the canvas frame to the canvas element
+			c.ctx.Call("drawImage", c.video, 0, 0)
 			return nil
 		})
 		c.window.Call("requestAnimationFrame", c.renderer)
@@ -73,19 +75,41 @@ func (c *Canvas) StartWebcam() *Canvas {
 	c.video.Set("playsinline", 1) // important for iPhones
 
 	// The video should fill out all of the canvas
-	c.video.Set("width", 1)
-	c.video.Set("height", 1)
+	c.video.Set("width", 0)
+	c.video.Set("height", 0)
 
 	c.body.Call("appendChild", c.video)
 
-	userMediaSettings := &map[string]interface{}{
-		"video": true,
-		"adio":  false,
-	}
-	stream := c.window.Get("navigator").Call("mediaDevices").Call("getUserMedia", userMediaSettings)
+	success := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		c.video.Set("srcObject", args[0])
+		c.video.Call("play")
+		return nil
+	})
 
-	c.video.Set("srcObject", stream)
-	c.Render()
+	failure := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		c.Log("Failed initialising the camera %s:", args[0].String())
+		return nil
+	})
+
+	opts := js.Global().Get("Object").New()
+	widthOpts := js.Global().Get("Object").New()
+	widthOpts.Set("min", 1024)
+	widthOpts.Set("max", 1920)
+
+	heightOpts := js.Global().Get("Object").New()
+	heightOpts.Set("min", 720)
+	heightOpts.Set("max", 1080)
+
+	videoSize := js.Global().Get("Object").New()
+	videoSize.Set("width", widthOpts)
+	videoSize.Set("height", heightOpts)
+	videoSize.Set("aspectRatio", 1.777777778)
+
+	opts.Set("video", videoSize)
+	opts.Set("audio", "false")
+
+	promise := c.window.Get("navigator").Get("mediaDevices").Call("getUserMedia", opts)
+	promise.Call("then", success, failure)
 
 	return c
 }
