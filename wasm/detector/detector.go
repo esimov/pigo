@@ -28,6 +28,7 @@ var (
 	mouthCascade = []string{"lp93", "lp84", "lp82", "lp81"}
 )
 
+// UnpackCascades unpack all of used cascade files.
 func (d *Detector) UnpackCascades() error {
 	p := pigo.NewPigo()
 
@@ -61,6 +62,7 @@ func (d *Detector) UnpackCascades() error {
 	return nil
 }
 
+// DetectFaces runs the cluster detection over the frame received as a pixel array.
 func (d *Detector) DetectFaces(pixels []uint8, width, height int) [][]int {
 	results := d.clusterDetection(pixels, width, height)
 	fmt.Println(results)
