@@ -63,7 +63,7 @@ func (d *Detector) FetchCascade(url string) ([]byte, error) {
 	}
 }
 
-// Log calls the `console.log` Javascript
+// Log calls the `console.log` Javascript function
 func (d *Detector) Log(args ...interface{}) {
 	d.window.Get("console").Call("log", args...)
 }

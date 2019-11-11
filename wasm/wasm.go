@@ -12,7 +12,7 @@ func main() {
 	c := canvas.NewCanvas()
 	webcam, err := c.StartWebcam()
 	if err != nil {
-		c.Log(err)
+		c.Alert("Webcam not detected!")
 	}
 	det := detector.NewDetector()
 	res, err := det.FetchCascade("https://raw.githubusercontent.com/esimov/pigo/master/cascade/facefinder")

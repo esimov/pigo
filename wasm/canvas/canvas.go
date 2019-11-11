@@ -48,7 +48,7 @@ func NewCanvas() *Canvas {
 	return &c
 }
 
-// Render method calls the `requestAnimationFrame` Javascript function in asynchronous mode.
+// Render calls the `requestAnimationFrame` Javascript function in asynchronous mode.
 func (c *Canvas) Render() {
 	var data = make([]byte, int(c.windowSize.width*c.windowSize.height*4))
 	c.done = make(chan struct{})
@@ -56,14 +56,13 @@ func (c *Canvas) Render() {
 	go func() {
 		c.renderer = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			c.reqID = c.window.Call("requestAnimationFrame", c.renderer)
-			// Draw the canvas frame to the canvas element
+			// Draw the webcam frame to the canvas element
 			c.ctx.Call("drawImage", c.video, 0, 0)
 			rgba := c.ctx.Call("getImageData", 0, 0, c.windowSize.width, c.windowSize.height).Get("data")
 			c.Log(rgba.Get("length").Int())
 
 			uint8Arr := js.Global().Get("Uint8Array").New(rgba)
 			js.CopyBytesToGo(data, uint8Arr)
-
 			return nil
 		})
 		c.window.Call("requestAnimationFrame", c.renderer)
@@ -78,6 +77,8 @@ func (c *Canvas) Stop() {
 	close(c.done)
 }
 
+// StartWebcam reads the webcam data and feeds it into the canvas element.
+// It returns an empty struct in case of success and error in case of failure.
 func (c *Canvas) StartWebcam() (*Canvas, error) {
 	var err error
 	c.succCh = make(chan struct{})
@@ -140,7 +141,13 @@ func (c *Canvas) StartWebcam() (*Canvas, error) {
 	}
 }
 
-// Log calls the `console.log` Javascript
+// Log calls the `console.log` Javascript function
 func (c *Canvas) Log(args ...interface{}) {
 	c.window.Get("console").Call("log", args...)
+}
+
+// Alert calls the `alert` Javascript function
+func (c *Canvas) Alert(args ...interface{}) {
+	alert := c.window.Get("alert")
+	alert.Invoke(args...)
 }
