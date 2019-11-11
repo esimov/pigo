@@ -28,31 +28,32 @@ func (d *Detector) FetchCascade(url string) ([]byte, error) {
 	d.respChan = make(chan []uint8)
 	d.errChan = make(chan error)
 
-	go func() {
-		promise := js.Global().Call("fetch", url)
-		success := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-			response := args[0]
-			response.Call("arrayBuffer").Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+	promise := js.Global().Call("fetch", url)
+	success := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		response := args[0]
+		response.Call("arrayBuffer").Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			go func() {
 				buffer := args[0]
 				uint8Array := js.Global().Get("Uint8Array").New(buffer)
 
 				jsbuf := make([]byte, uint8Array.Get("length").Int())
 				js.CopyBytesToGo(jsbuf, uint8Array)
 				d.respChan <- jsbuf
-
-				return nil
-			}))
+			}()
 			return nil
-		})
+		}))
+		return nil
+	})
 
-		failure := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+	failure := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		go func() {
 			err := fmt.Errorf("unable to fetch the cascade file: %s", args[0].String())
 			d.errChan <- err
-			return nil
-		})
+		}()
+		return nil
+	})
 
-		promise.Call("then", success, failure)
-	}()
+	promise.Call("then", success, failure)
 
 	select {
 	case resp := <-d.respChan:

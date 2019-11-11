@@ -7,7 +7,9 @@ import (
 
 // Canvas struct holds the Javascript objects needed for the Canvas creation
 type Canvas struct {
-	done chan struct{}
+	done   chan struct{}
+	succCh chan struct{}
+	errCh  chan error
 
 	// DOM elements
 	window     js.Value
@@ -49,6 +51,7 @@ func NewCanvas() *Canvas {
 // Render method calls the `requestAnimationFrame` Javascript function in asynchronous mode.
 func (c *Canvas) Render() {
 	var data = make([]byte, int(c.windowSize.width*c.windowSize.height*4))
+	c.done = make(chan struct{})
 
 	go func() {
 		c.renderer = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
@@ -77,6 +80,9 @@ func (c *Canvas) Stop() {
 
 func (c *Canvas) StartWebcam() (*Canvas, error) {
 	var err error
+	c.succCh = make(chan struct{})
+	c.errCh = make(chan error)
+
 	c.video = c.doc.Call("createElement", "video")
 
 	// If we don't do this, the stream will not be played.
@@ -90,13 +96,19 @@ func (c *Canvas) StartWebcam() (*Canvas, error) {
 	c.body.Call("appendChild", c.video)
 
 	success := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		c.video.Set("srcObject", args[0])
-		c.video.Call("play")
+		go func() {
+			c.video.Set("srcObject", args[0])
+			c.video.Call("play")
+			c.succCh <- struct{}{}
+		}()
 		return nil
 	})
 
 	failure := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		err = fmt.Errorf("failed initialising the camera: %s", args[0].String())
+		go func() {
+			err = fmt.Errorf("failed initialising the camera: %s", args[0].String())
+			c.errCh <- err
+		}()
 		return nil
 	})
 
@@ -120,7 +132,12 @@ func (c *Canvas) StartWebcam() (*Canvas, error) {
 	promise := c.window.Get("navigator").Get("mediaDevices").Call("getUserMedia", opts)
 	promise.Call("then", success, failure)
 
-	return c, err
+	select {
+	case <-c.succCh:
+		return c, nil
+	case err := <-c.errCh:
+		return nil, err
+	}
 }
 
 // Log calls the `console.log` Javascript
