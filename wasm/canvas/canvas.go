@@ -3,6 +3,8 @@ package canvas
 import (
 	"fmt"
 	"syscall/js"
+
+	"github.com/esimov/pigo/wasm/detector"
 )
 
 // Canvas struct holds the Javascript objects needed for the Canvas creation
@@ -54,6 +56,7 @@ func (c *Canvas) Render() {
 	c.done = make(chan struct{})
 
 	go func() {
+		det := detector.NewDetector()
 		c.renderer = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			c.reqID = c.window.Call("requestAnimationFrame", c.renderer)
 			// Draw the webcam frame to the canvas element
@@ -63,6 +66,8 @@ func (c *Canvas) Render() {
 
 			uint8Arr := js.Global().Get("Uint8Array").New(rgba)
 			js.CopyBytesToGo(data, uint8Arr)
+			res := det.FindFaces(data)
+			fmt.Println(res)
 			return nil
 		})
 		c.window.Call("requestAnimationFrame", c.renderer)
