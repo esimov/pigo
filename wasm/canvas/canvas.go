@@ -55,9 +55,9 @@ func (c *Canvas) Render() {
 	var data = make([]byte, int(c.windowSize.width*c.windowSize.height*4))
 	c.done = make(chan struct{})
 
-	go func() {
-		det := detector.NewDetector()
-		c.renderer = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+	det := detector.NewDetector()
+	c.renderer = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		go func() {
 			c.reqID = c.window.Call("requestAnimationFrame", c.renderer)
 			// Draw the webcam frame to the canvas element
 			c.ctx.Call("drawImage", c.video, 0, 0)
@@ -68,10 +68,10 @@ func (c *Canvas) Render() {
 			js.CopyBytesToGo(data, uint8Arr)
 			res := det.FindFaces(data)
 			fmt.Println(res)
-			return nil
-		})
-		c.window.Call("requestAnimationFrame", c.renderer)
-	}()
+		}()
+		return nil
+	})
+	c.window.Call("requestAnimationFrame", c.renderer)
 	<-c.done
 }
 
