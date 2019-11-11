@@ -34,6 +34,7 @@ func (d *Detector) FetchCascade(url string) ([]byte, error) {
 		response.Call("arrayBuffer").Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			go func() {
 				buffer := args[0]
+				fmt.Println(buffer.Get("byteLength").Int())
 				uint8Array := js.Global().Get("Uint8Array").New(buffer)
 
 				jsbuf := make([]byte, uint8Array.Get("length").Int())

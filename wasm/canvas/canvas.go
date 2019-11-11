@@ -2,6 +2,7 @@ package canvas
 
 import (
 	"fmt"
+	"math"
 	"syscall/js"
 
 	"github.com/esimov/pigo/wasm/detector"
@@ -17,7 +18,7 @@ type Canvas struct {
 	window     js.Value
 	doc        js.Value
 	body       js.Value
-	windowSize struct{ width, height float64 }
+	windowSize struct{ width, height int }
 
 	// Canvas properties
 	canvas   js.Value
@@ -37,8 +38,8 @@ func NewCanvas() *Canvas {
 	c.doc = c.window.Get("document")
 	c.body = c.doc.Get("body")
 
-	c.windowSize.width = c.window.Get("innerWidth").Float()
-	c.windowSize.height = c.window.Get("innerHeight").Float()
+	c.windowSize.width = c.window.Get("innerWidth").Int()
+	c.windowSize.height = c.window.Get("innerHeight").Int()
 
 	c.canvas = c.doc.Call("createElement", "canvas")
 	c.canvas.Set("width", c.windowSize.width)
@@ -52,27 +53,31 @@ func NewCanvas() *Canvas {
 
 // Render calls the `requestAnimationFrame` Javascript function in asynchronous mode.
 func (c *Canvas) Render() {
-	var data = make([]byte, int(c.windowSize.width*c.windowSize.height*4))
+	var data = make([]byte, c.windowSize.width*c.windowSize.height*4)
 	c.done = make(chan struct{})
 
 	det := detector.NewDetector()
-	c.renderer = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		go func() {
-			c.reqID = c.window.Call("requestAnimationFrame", c.renderer)
-			// Draw the webcam frame to the canvas element
-			c.ctx.Call("drawImage", c.video, 0, 0)
-			rgba := c.ctx.Call("getImageData", 0, 0, c.windowSize.width, c.windowSize.height).Get("data")
-			c.Log(rgba.Get("length").Int())
+	if err := det.UnpackCascades(); err == nil {
+		c.renderer = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			go func() {
+				c.reqID = c.window.Call("requestAnimationFrame", c.renderer)
+				// Draw the webcam frame to the canvas element
+				c.ctx.Call("drawImage", c.video, 0, 0)
+				width, height := c.windowSize.width, c.windowSize.height
+				rgba := c.ctx.Call("getImageData", 0, 0, width, height).Get("data")
+				//c.Log(rgba.Get("length").Int())
 
-			uint8Arr := js.Global().Get("Uint8Array").New(rgba)
-			js.CopyBytesToGo(data, uint8Arr)
-			res := det.FindFaces(data)
-			fmt.Println(res)
-		}()
-		return nil
-	})
-	c.window.Call("requestAnimationFrame", c.renderer)
-	<-c.done
+				uint8Arr := js.Global().Get("Uint8Array").New(rgba)
+				js.CopyBytesToGo(data, uint8Arr)
+				pixels := c.rgbaToGrayscale(data)
+				res := det.DetectFaces(pixels, width, height)
+				fmt.Println(res)
+			}()
+			return nil
+		})
+		c.window.Call("requestAnimationFrame", c.renderer)
+		<-c.done
+	}
 }
 
 // Stop stops the rendering.
@@ -144,6 +149,31 @@ func (c *Canvas) StartWebcam() (*Canvas, error) {
 	case err := <-c.errCh:
 		return nil, err
 	}
+}
+
+func (c *Canvas) rgbaToGrayscale(data []uint8) []uint8 {
+	rows, cols := c.windowSize.width, c.windowSize.height
+
+	// for i := 0; i < rows*cols; i++ {
+	// 	r := data[i*4+0]
+	// 	g := data[i*4+1]
+	// 	b := data[i*4+2]
+	// 	var gray = uint8(math.Round(0.2126*float64(r) + 0.7152*float64(g) + 0.0722*float64(b)))
+	// 	data[i*4+0] = gray
+	// 	data[i*4+1] = gray
+	// 	data[i*4+2] = gray
+	// }
+
+	for r := 0; r < rows; r++ {
+		for c := 0; c < cols; c++ {
+			// gray = 0.2*red + 0.7*green + 0.1*blue
+			data[r*cols+c] = uint8(math.Round(
+				0.2126*float64(data[r*4*cols+4*c+0]) +
+					0.7152*float64(data[r*4*cols+4*c+1]) +
+					0.0722*float64(data[r*4*cols+4*c+2])))
+		}
+	}
+	return data
 }
 
 // Log calls the `console.log` Javascript function

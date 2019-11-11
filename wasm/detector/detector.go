@@ -1,7 +1,8 @@
 package detector
 
 import (
-	"log"
+	"errors"
+	"fmt"
 
 	pigo "github.com/esimov/pigo/core"
 )
@@ -27,8 +28,42 @@ var (
 	mouthCascade = []string{"lp93", "lp84", "lp82", "lp81"}
 )
 
-func (d *Detector) FindFaces(pixels []uint8) [][]int {
-	results := d.clusterDetection(pixels, 480, 640)
+func (d *Detector) UnpackCascades() error {
+	p := pigo.NewPigo()
+
+	cascade, err = d.FetchCascade("https://raw.githubusercontent.com/esimov/pigo/master/cascade/facefinder")
+	if err != nil {
+		return errors.New("error reading the facefinder cascade file")
+	}
+	// Unpack the binary file. This will return the number of cascade trees,
+	// the tree depth, the threshold and the prediction from tree's leaf nodes.
+	faceClassifier, err = p.Unpack(cascade)
+	if err != nil {
+		return errors.New("error unpacking the facefinder cascade file")
+	}
+
+	plc := pigo.NewPuplocCascade()
+
+	puplocCascade, err = d.FetchCascade("https://raw.githubusercontent.com/esimov/pigo/master/cascade/puploc")
+	if err != nil {
+		return errors.New("error reading the puploc cascade file")
+	}
+
+	puplocClassifier, err = plc.UnpackCascade(puplocCascade)
+	if err != nil {
+		return errors.New("error unpacking the puploc cascade file")
+	}
+
+	flpcs, err = d.parseCascadeFiles("https://raw.githubusercontent.com/esimov/pigo/master/cascade/lps/")
+	if err != nil {
+		return errors.New("error unpacking the facial landmark points detection cascades")
+	}
+	return nil
+}
+
+func (d *Detector) DetectFaces(pixels []uint8, width, height int) [][]int {
+	results := d.clusterDetection(pixels, width, height)
+	fmt.Println(results)
 	dets := make([][]int, len(results))
 
 	for i := 0; i < len(results); i++ {
@@ -92,54 +127,19 @@ func (d *Detector) FindFaces(pixels []uint8) [][]int {
 
 // clusterDetection runs Pigo face detector core methods
 // and returns a cluster with the detected faces coordinates.
-func (d *Detector) clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
-	det := NewDetector()
+func (d *Detector) clusterDetection(pixels []uint8, width, height int) []pigo.Detection {
 	imgParams = &pigo.ImageParams{
 		Pixels: pixels,
-		Rows:   rows,
-		Cols:   cols,
-		Dim:    cols,
+		Rows:   width,
+		Cols:   height,
+		Dim:    height,
 	}
 	cParams := pigo.CascadeParams{
-		MinSize:     60,
-		MaxSize:     600,
+		MinSize:     100,
+		MaxSize:     1200,
 		ShiftFactor: 0.1,
 		ScaleFactor: 1.1,
 		ImageParams: *imgParams,
-	}
-
-	// Ensure that the face detection classifier is loaded only once.
-	if len(cascade) == 0 {
-		cascade, err = det.FetchCascade("https://raw.githubusercontent.com/esimov/pigo/master/cascade/facefinder")
-		if err != nil {
-			det.Log("Error reading the cascade file: %v", err)
-		}
-		p := pigo.NewPigo()
-
-		// Unpack the binary file. This will return the number of cascade trees,
-		// the tree depth, the threshold and the prediction from tree's leaf nodes.
-		faceClassifier, err = p.Unpack(cascade)
-		if err != nil {
-			log.Fatalf("Error unpacking the cascade file: %s", err)
-		}
-	}
-
-	// Ensure that we load the pupil localization cascade only once
-	if len(puplocCascade) == 0 {
-		puplocCascade, err = det.FetchCascade("https://raw.githubusercontent.com/esimov/pigo/master/cascade/puploc")
-		if err != nil {
-			det.Log("Error reading the puploc cascade file: %v", err)
-		}
-
-		puplocClassifier, err = puplocClassifier.UnpackCascade(puplocCascade)
-		if err != nil {
-			log.Fatalf("Error unpacking the puploc cascade file: %s", err)
-		}
-
-		flpcs, err = d.parseCascadeFiles("https://raw.githubusercontent.com/esimov/pigo/master/cascade/lps/")
-		if err != nil {
-			log.Fatalf("Error unpacking the facial landmark detection cascades: %s", err)
-		}
 	}
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
