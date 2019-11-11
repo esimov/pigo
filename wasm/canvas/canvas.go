@@ -1,6 +1,7 @@
 package canvas
 
 import (
+	"fmt"
 	"syscall/js"
 )
 
@@ -74,7 +75,8 @@ func (c *Canvas) Stop() {
 	close(c.done)
 }
 
-func (c *Canvas) StartWebcam() *Canvas {
+func (c *Canvas) StartWebcam() (*Canvas, error) {
+	var err error
 	c.video = c.doc.Call("createElement", "video")
 
 	// If we don't do this, the stream will not be played.
@@ -94,7 +96,7 @@ func (c *Canvas) StartWebcam() *Canvas {
 	})
 
 	failure := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		c.Log("Failed initialising the camera %s:", args[0].String())
+		err = fmt.Errorf("failed initialising the camera: %s", args[0].String())
 		return nil
 	})
 
@@ -118,7 +120,7 @@ func (c *Canvas) StartWebcam() *Canvas {
 	promise := c.window.Get("navigator").Get("mediaDevices").Call("getUserMedia", opts)
 	promise.Call("then", success, failure)
 
-	return c
+	return c, err
 }
 
 // Log calls the `console.log` Javascript
