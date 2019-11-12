@@ -2,6 +2,7 @@ package detector
 
 import (
 	"errors"
+	"fmt"
 
 	pigo "github.com/esimov/pigo/core"
 )
@@ -61,13 +62,26 @@ func (d *Detector) UnpackCascades() error {
 	return nil
 }
 
-// DetectFaces runs the cluster detection over the frame received as a pixel array.
+// DetectFaces runs the cluster detection over the webcam frame
+// received as a pixel array and return the detected faces.
 func (d *Detector) DetectFaces(pixels []uint8, width, height int) [][]int {
 	results := d.clusterDetection(pixels, width, height)
+	fmt.Println(len(results))
 	dets := make([][]int, len(results))
 
 	for i := 0; i < len(results); i++ {
 		dets[i] = append(dets[i], results[i].Row, results[i].Col, results[i].Scale, int(results[i].Q))
+	}
+	return dets
+}
+
+// DetectPupils runs the cluster detection over the webcam frame
+// received as a pixel array and return the detected pupils/eyes.
+func (d *Detector) DetectPupils(pixels []uint8, width, height int) [][]int {
+	results := d.clusterDetection(pixels, width, height)
+	dets := make([][]int, len(results))
+
+	for i := 0; i < len(results); i++ {
 		// left eye
 		puploc := &pigo.Puploc{
 			Row:      results[i].Row - int(0.085*float32(results[i].Scale)),
@@ -93,30 +107,30 @@ func (d *Detector) DetectFaces(pixels []uint8, width, height int) [][]int {
 			dets[i] = append(dets[i], rightEye.Row, rightEye.Col, int(rightEye.Scale), int(results[i].Q))
 		}
 
-		// Traverse all the eye cascades and run the detector on each of them.
-		for _, eye := range eyeCascades {
-			for _, flpc := range flpcs[eye] {
-				flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
-				if flp.Row > 0 && flp.Col > 0 {
-					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q))
-				}
+		// // Traverse all the eye cascades and run the detector on each of them.
+		// for _, eye := range eyeCascades {
+		// 	for _, flpc := range flpcs[eye] {
+		// 		flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
+		// 		if flp.Row > 0 && flp.Col > 0 {
+		// 			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q))
+		// 		}
 
-				flp = flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
-				if flp.Row > 0 && flp.Col > 0 {
-					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q))
-				}
-			}
-		}
+		// 		flp = flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
+		// 		if flp.Row > 0 && flp.Col > 0 {
+		// 			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q))
+		// 		}
+		// 	}
+		// }
 
-		// Traverse all the mouth cascades and run the detector on each of them.
-		for _, mouth := range mouthCascade {
-			for _, flpc := range flpcs[mouth] {
-				flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
-				if flp.Row > 0 && flp.Col > 0 {
-					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q))
-				}
-			}
-		}
+		// // Traverse all the mouth cascades and run the detector on each of them.
+		// for _, mouth := range mouthCascade {
+		// 	for _, flpc := range flpcs[mouth] {
+		// 		flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
+		// 		if flp.Row > 0 && flp.Col > 0 {
+		// 			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q))
+		// 		}
+		// 	}
+		// }
 		flp := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
 		if flp.Row > 0 && flp.Col > 0 {
 			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q))
@@ -135,7 +149,7 @@ func (d *Detector) clusterDetection(pixels []uint8, width, height int) []pigo.De
 		Dim:    height,
 	}
 	cParams := pigo.CascadeParams{
-		MinSize:     400,
+		MinSize:     100,
 		MaxSize:     1200,
 		ShiftFactor: 0.1,
 		ScaleFactor: 1.1,

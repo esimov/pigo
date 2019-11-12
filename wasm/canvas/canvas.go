@@ -71,6 +71,7 @@ func (c *Canvas) Render() {
 				js.CopyBytesToGo(data, uint8Arr)
 				pixels := c.rgbaToGrayscale(data)
 				res := det.DetectFaces(pixels, height, width)
+				c.drawDetectionPoints(res)
 				fmt.Println(res)
 			}()
 			return nil
@@ -153,17 +154,6 @@ func (c *Canvas) StartWebcam() (*Canvas, error) {
 
 func (c *Canvas) rgbaToGrayscale(data []uint8) []uint8 {
 	rows, cols := c.windowSize.width, c.windowSize.height
-
-	// for i := 0; i < rows*cols; i++ {
-	// 	r := data[i*4+0]
-	// 	g := data[i*4+1]
-	// 	b := data[i*4+2]
-	// 	var gray = uint8(math.Round(0.2126*float64(r) + 0.7152*float64(g) + 0.0722*float64(b)))
-	// 	data[i*4+0] = gray
-	// 	data[i*4+1] = gray
-	// 	data[i*4+2] = gray
-	// }
-
 	for r := 0; r < rows; r++ {
 		for c := 0; c < cols; c++ {
 			// gray = 0.2*red + 0.7*green + 0.1*blue
@@ -174,6 +164,20 @@ func (c *Canvas) rgbaToGrayscale(data []uint8) []uint8 {
 		}
 	}
 	return data
+}
+
+func (c *Canvas) drawDetectionPoints(dets [][]int) {
+	for i := 0; i < len(dets); i++ {
+		if dets[i][3] > 50 {
+			row, col, scale := dets[i][1], dets[i][0], dets[i][2]
+			c.Log(row, col, scale)
+			c.ctx.Call("beginPath")
+			c.ctx.Call("rect", row-scale/2, col-scale/2, scale, scale)
+			c.ctx.Set("lineWidth", 3)
+			c.ctx.Set("strokeStyle", "red")
+			c.ctx.Call("stroke")
+		}
+	}
 }
 
 // Log calls the `console.log` Javascript function
