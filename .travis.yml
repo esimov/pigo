@@ -27,10 +27,10 @@ env:
   - GOOS=linux
   - GOOS=darwin
   - GOOS=windows
-  - GOOS=js GOARCH=wasm
 
 script:
-  - go get -u -t ./...
+  - GOOS=js GOARCH=wasm GO111MODULE=off go get -u -t ./...
+  - GOOS=js GOARCH=wasm GO111MODULE=on go get -u -t ./...
 
 notifications:
   email:
