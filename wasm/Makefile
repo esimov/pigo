@@ -1,12 +1,12 @@
 ifeq ($(OS),Windows_NT)
     BROWSER = start
 else
-    BROWSER = xdg-open
+    BROWSER = open
 endif
 
 .PHONY: all clean serve
 
-all: main.wasm serve
+all: lib.wasm serve
 
 %.wasm: %.go
 	GOOS=js GOARCH=wasm go generate

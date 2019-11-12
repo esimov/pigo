@@ -60,10 +60,10 @@ func (c *Canvas) Render() {
 	if err := det.UnpackCascades(); err == nil {
 		c.renderer = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			go func() {
+				width, height := c.windowSize.width, c.windowSize.height
 				c.reqID = c.window.Call("requestAnimationFrame", c.renderer)
 				// Draw the webcam frame to the canvas element
 				c.ctx.Call("drawImage", c.video, 0, 0)
-				width, height := c.windowSize.width, c.windowSize.height
 				rgba := c.ctx.Call("getImageData", 0, 0, width, height).Get("data")
 				//c.Log(rgba.Get("length").Int())
 
