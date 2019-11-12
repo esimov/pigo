@@ -5,19 +5,19 @@ branches:
     - "master"
 
 # In theory, older versions would probably work just fine
+# The wasm integration is working only on 1.13.x
 go:
   - 1.13.x
   - 1.12.x
   - 1.11.x
-  - 1.10.x
-  - 1.9
   - tip
 
 matrix:
   allow_failures:
       - go: tip
-      - go: 1.9
       - go: 1.10.x
+      - go: 1.11.x
+      - go: 1.12.x
   fast_finish: true
 
 ignore:
@@ -27,10 +27,10 @@ env:
   - GOOS=linux
   - GOOS=darwin
   - GOOS=windows
+  - GOOS=js GOARCH=wasm
 
 script:
-  - GOOS=js GOARCH=wasm GO111MODULE=off go get -u -t ./...
-  - GOOS=js GOARCH=wasm GO111MODULE=on go get -u -t ./...
+  - go get -u -t ./...
 
 notifications:
   email:
