@@ -70,7 +70,7 @@ func (c *Canvas) Render() {
 				uint8Arr := js.Global().Get("Uint8Array").New(rgba)
 				js.CopyBytesToGo(data, uint8Arr)
 				pixels := c.rgbaToGrayscale(data)
-				res := det.DetectFaces(pixels, width, height)
+				res := det.DetectFaces(pixels, height, width)
 				fmt.Println(res)
 			}()
 			return nil

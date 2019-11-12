@@ -2,7 +2,6 @@ package detector
 
 import (
 	"errors"
-	"fmt"
 
 	pigo "github.com/esimov/pigo/core"
 )
@@ -65,7 +64,6 @@ func (d *Detector) UnpackCascades() error {
 // DetectFaces runs the cluster detection over the frame received as a pixel array.
 func (d *Detector) DetectFaces(pixels []uint8, width, height int) [][]int {
 	results := d.clusterDetection(pixels, width, height)
-	fmt.Println(results)
 	dets := make([][]int, len(results))
 
 	for i := 0; i < len(results); i++ {
@@ -137,7 +135,7 @@ func (d *Detector) clusterDetection(pixels []uint8, width, height int) []pigo.De
 		Dim:    height,
 	}
 	cParams := pigo.CascadeParams{
-		MinSize:     100,
+		MinSize:     400,
 		MaxSize:     1200,
 		ShiftFactor: 0.1,
 		ScaleFactor: 1.1,
@@ -149,7 +147,7 @@ func (d *Detector) clusterDetection(pixels []uint8, width, height int) []pigo.De
 	dets := faceClassifier.RunCascade(cParams, 0.0)
 
 	// Calculate the intersection over union (IoU) of two clusters.
-	dets = faceClassifier.ClusterDetections(dets, 0.0)
+	dets = faceClassifier.ClusterDetections(dets, 0.1)
 
 	return dets
 }
