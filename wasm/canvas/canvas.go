@@ -31,6 +31,8 @@ type Canvas struct {
 	video     js.Value
 }
 
+var det *detector.Detector
+
 // NewCanvas creates and initializes the new Canvas element
 func NewCanvas() *Canvas {
 	var c Canvas
@@ -48,6 +50,7 @@ func NewCanvas() *Canvas {
 
 	c.ctx = c.canvas.Call("getContext", "2d")
 
+	det = detector.NewDetector()
 	return &c
 }
 
@@ -56,10 +59,11 @@ func (c *Canvas) Render() {
 	var data = make([]byte, c.windowSize.width*c.windowSize.height*4)
 	c.done = make(chan struct{})
 
-	det := detector.NewDetector()
 	if err := det.UnpackCascades(); err == nil {
 		c.renderer = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			go func() {
+				c.window.Get("stats").Call("begin")
+
 				width, height := c.windowSize.width, c.windowSize.height
 				c.reqID = c.window.Call("requestAnimationFrame", c.renderer)
 				// Draw the webcam frame to the canvas element
@@ -72,7 +76,8 @@ func (c *Canvas) Render() {
 				pixels := c.rgbaToGrayscale(data)
 				res := det.DetectFaces(pixels, height, width)
 				c.drawDetectionPoints(res)
-				fmt.Println(res)
+
+				c.window.Get("stats").Call("end")
 			}()
 			return nil
 		})
@@ -170,9 +175,24 @@ func (c *Canvas) drawDetectionPoints(dets [][]int) {
 	for i := 0; i < len(dets); i++ {
 		if dets[i][3] > 50 {
 			row, col, scale := dets[i][1], dets[i][0], dets[i][2]
-			c.Log(row, col, scale)
 			c.ctx.Call("beginPath")
 			c.ctx.Call("rect", row-scale/2, col-scale/2, scale, scale)
+			c.ctx.Set("lineWidth", 3)
+			c.ctx.Set("strokeStyle", "red")
+			c.ctx.Call("stroke")
+
+			leftPupil := det.DetectLeftPupil(dets[i])
+			row, col, scale = leftPupil[1], leftPupil[0], leftPupil[2]/4
+			c.ctx.Call("beginPath")
+			c.ctx.Call("arc", row, col, scale, 0, 2*math.Pi, false)
+			c.ctx.Set("lineWidth", 3)
+			c.ctx.Set("strokeStyle", "red")
+			c.ctx.Call("stroke")
+
+			rightPupil := det.DetectRightPupil(dets[i])
+			row, col, scale = rightPupil[1], rightPupil[0], leftPupil[2]/4
+			c.ctx.Call("beginPath")
+			c.ctx.Call("arc", row, col, scale, 0, 2*math.Pi, false)
 			c.ctx.Set("lineWidth", 3)
 			c.ctx.Set("strokeStyle", "red")
 			c.ctx.Call("stroke")

@@ -2,7 +2,6 @@ package detector
 
 import (
 	"errors"
-	"fmt"
 
 	pigo "github.com/esimov/pigo/core"
 )
@@ -66,7 +65,6 @@ func (d *Detector) UnpackCascades() error {
 // received as a pixel array and return the detected faces.
 func (d *Detector) DetectFaces(pixels []uint8, width, height int) [][]int {
 	results := d.clusterDetection(pixels, width, height)
-	fmt.Println(len(results))
 	dets := make([][]int, len(results))
 
 	for i := 0; i < len(results); i++ {
@@ -75,68 +73,36 @@ func (d *Detector) DetectFaces(pixels []uint8, width, height int) [][]int {
 	return dets
 }
 
-// DetectPupils runs the cluster detection over the webcam frame
-// received as a pixel array and return the detected pupils/eyes.
-func (d *Detector) DetectPupils(pixels []uint8, width, height int) [][]int {
-	results := d.clusterDetection(pixels, width, height)
-	dets := make([][]int, len(results))
-
-	for i := 0; i < len(results); i++ {
-		// left eye
-		puploc := &pigo.Puploc{
-			Row:      results[i].Row - int(0.085*float32(results[i].Scale)),
-			Col:      results[i].Col - int(0.185*float32(results[i].Scale)),
-			Scale:    float32(results[i].Scale) * 0.4,
-			Perturbs: 63,
-		}
-		leftEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
-		if leftEye.Row > 0 && leftEye.Col > 0 {
-			dets[i] = append(dets[i], leftEye.Row, leftEye.Col, int(leftEye.Scale), int(results[i].Q))
-		}
-
-		// right eye
-		puploc = &pigo.Puploc{
-			Row:      results[i].Row - int(0.085*float32(results[i].Scale)),
-			Col:      results[i].Col + int(0.185*float32(results[i].Scale)),
-			Scale:    float32(results[i].Scale) * 0.4,
-			Perturbs: 63,
-		}
-
-		rightEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
-		if rightEye.Row > 0 && rightEye.Col > 0 {
-			dets[i] = append(dets[i], rightEye.Row, rightEye.Col, int(rightEye.Scale), int(results[i].Q))
-		}
-
-		// // Traverse all the eye cascades and run the detector on each of them.
-		// for _, eye := range eyeCascades {
-		// 	for _, flpc := range flpcs[eye] {
-		// 		flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
-		// 		if flp.Row > 0 && flp.Col > 0 {
-		// 			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q))
-		// 		}
-
-		// 		flp = flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
-		// 		if flp.Row > 0 && flp.Col > 0 {
-		// 			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q))
-		// 		}
-		// 	}
-		// }
-
-		// // Traverse all the mouth cascades and run the detector on each of them.
-		// for _, mouth := range mouthCascade {
-		// 	for _, flpc := range flpcs[mouth] {
-		// 		flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
-		// 		if flp.Row > 0 && flp.Col > 0 {
-		// 			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q))
-		// 		}
-		// 	}
-		// }
-		flp := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
-		if flp.Row > 0 && flp.Col > 0 {
-			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q))
-		}
+// DetectLeftPupil detects the left pupil
+func (d *Detector) DetectLeftPupil(results []int) []int {
+	det := []int{}
+	puploc := &pigo.Puploc{
+		Row:      results[0] - int(0.085*float32(results[2])),
+		Col:      results[1] - int(0.185*float32(results[2])),
+		Scale:    float32(results[2]) * 0.4,
+		Perturbs: 63,
 	}
-	return dets
+	leftEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
+	if leftEye.Row > 0 && leftEye.Col > 0 {
+		det = append(det, leftEye.Row, leftEye.Col, int(leftEye.Scale), int(results[3]))
+	}
+	return det
+}
+
+// DetectLeftPupil detects the right pupil
+func (d *Detector) DetectRightPupil(results []int) []int {
+	det := []int{}
+	puploc := &pigo.Puploc{
+		Row:      results[0] - int(0.085*float32(results[2])),
+		Col:      results[1] + int(0.185*float32(results[2])),
+		Scale:    float32(results[2]) * 0.4,
+		Perturbs: 63,
+	}
+	leftEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
+	if leftEye.Row > 0 && leftEye.Col > 0 {
+		det = append(det, leftEye.Row, leftEye.Col, int(leftEye.Scale), int(results[3]))
+	}
+	return det
 }
 
 // clusterDetection runs Pigo face detector core methods
