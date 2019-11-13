@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <script src="wasm_exec.js"></script>
+    <script src="stats.min.js"></script>
     <script type="text/javascript">
         function fetchAndInstantiate(url, importObject) {
             return fetch(url).then(response =>
@@ -22,9 +23,13 @@
         };
 
     </script>
-
 </head>
 
-<body></body>
-
+<body>
+    <script type="text/javascript">
+        var stats = new Stats();
+        stats.showPanel(0);
+        document.body.appendChild( stats.dom );
+    </script>
+</body>
 </html>
