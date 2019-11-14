@@ -29,6 +29,8 @@ type Canvas struct {
 	// Webcam properties
 	navigator js.Value
 	video     js.Value
+
+	showPupil bool
 }
 
 var det *detector.Detector
@@ -49,6 +51,7 @@ func NewCanvas() *Canvas {
 	c.body.Call("appendChild", c.canvas)
 
 	c.ctx = c.canvas.Call("getContext", "2d")
+	c.showPupil = false
 
 	det = detector.NewDetector()
 	return &c
@@ -74,13 +77,14 @@ func (c *Canvas) Render() {
 				js.CopyBytesToGo(data, uint8Arr)
 				pixels := c.rgbaToGrayscale(data)
 				res := det.DetectFaces(pixels, height, width)
-				c.drawDetectionPoints(res)
+				c.drawDetection(res)
 
 				c.window.Get("stats").Call("end")
 			}()
 			return nil
 		})
 		c.window.Call("requestAnimationFrame", c.renderer)
+		c.detectKeyPress()
 		<-c.done
 	}
 }
@@ -156,6 +160,7 @@ func (c *Canvas) StartWebcam() (*Canvas, error) {
 	}
 }
 
+// rgbaToGrayscale converts the rgb pixel values to grayscale
 func (c *Canvas) rgbaToGrayscale(data []uint8) []uint8 {
 	rows, cols := c.windowSize.width, c.windowSize.height
 	for r := 0; r < rows; r++ {
@@ -170,7 +175,8 @@ func (c *Canvas) rgbaToGrayscale(data []uint8) []uint8 {
 	return data
 }
 
-func (c *Canvas) drawDetectionPoints(dets [][]int) {
+// drawDetection draws the detected faces and eyes.
+func (c *Canvas) drawDetection(dets [][]int) {
 	for i := 0; i < len(dets); i++ {
 		if dets[i][3] > 50 {
 			row, col, scale := dets[i][1], dets[i][0], dets[i][2]
@@ -180,23 +186,37 @@ func (c *Canvas) drawDetectionPoints(dets [][]int) {
 			c.ctx.Set("strokeStyle", "red")
 			c.ctx.Call("stroke")
 
-			leftPupil := det.DetectLeftPupil(dets[i])
-			row, col, scale = leftPupil[1], leftPupil[0], leftPupil[2]/6
-			c.ctx.Call("beginPath")
-			c.ctx.Call("arc", row, col, scale, 0, 2*math.Pi, false)
-			c.ctx.Set("lineWidth", 3)
-			c.ctx.Set("strokeStyle", "red")
-			c.ctx.Call("stroke")
+			if c.showPupil {
+				leftPupil := det.DetectLeftPupil(dets[i])
+				row, col, scale = leftPupil[1], leftPupil[0], leftPupil[2]/6
+				c.ctx.Call("beginPath")
+				c.ctx.Call("arc", row, col, scale, 0, 2*math.Pi, false)
+				c.ctx.Set("lineWidth", 3)
+				c.ctx.Set("strokeStyle", "red")
+				c.ctx.Call("stroke")
 
-			rightPupil := det.DetectRightPupil(dets[i])
-			row, col, scale = rightPupil[1], rightPupil[0], leftPupil[2]/6
-			c.ctx.Call("beginPath")
-			c.ctx.Call("arc", row, col, scale, 0, 2*math.Pi, false)
-			c.ctx.Set("lineWidth", 3)
-			c.ctx.Set("strokeStyle", "red")
-			c.ctx.Call("stroke")
+				rightPupil := det.DetectRightPupil(dets[i])
+				row, col, scale = rightPupil[1], rightPupil[0], leftPupil[2]/6
+				c.ctx.Call("beginPath")
+				c.ctx.Call("arc", row, col, scale, 0, 2*math.Pi, false)
+				c.ctx.Set("lineWidth", 3)
+				c.ctx.Set("strokeStyle", "red")
+				c.ctx.Call("stroke")
+			}
 		}
 	}
+}
+
+// detectKeyPress listen for the keypress event and retrieves the key code.
+func (c *Canvas) detectKeyPress() {
+	keyEventHandler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		keyCode := args[0].Get("key")
+		if keyCode.String() == "s" {
+			c.showPupil = !c.showPupil
+		}
+		return nil
+	})
+	c.doc.Call("addEventListener", "keypress", keyEventHandler)
 }
 
 // Log calls the `console.log` Javascript function
