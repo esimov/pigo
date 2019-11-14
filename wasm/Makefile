@@ -1,7 +1,13 @@
 ifeq ($(OS),Windows_NT)
     BROWSER = start
 else
-    BROWSER = open
+	UNAME := $(shell uname)
+	ifeq ($(UNAME), Linux)
+		BROWSER = xdg-open
+	endif
+	ifeq ($(UNAME_S),Darwin)
+		BROWSER = open
+	endif
 endif
 
 .PHONY: all clean serve
