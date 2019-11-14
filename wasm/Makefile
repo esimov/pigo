@@ -1,11 +1,11 @@
 ifeq ($(OS),Windows_NT)
     BROWSER = start
 else
-	UNAME := $(shell uname)
+	UNAME := $(shell uname -s)
 	ifeq ($(UNAME), Linux)
 		BROWSER = xdg-open
 	endif
-	ifeq ($(UNAME_S),Darwin)
+	ifeq ($(UNAME), Darwin)
 		BROWSER = open
 	endif
 endif
@@ -20,7 +20,10 @@ all: lib.wasm serve
 
 serve:
 	$(BROWSER) 'http://localhost:5000'
-	serve
+	go run main.go
 
 clean:
 	rm -f *.wasm
+
+debug:
+	@echo $(UNAME)
