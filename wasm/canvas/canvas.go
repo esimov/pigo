@@ -69,7 +69,6 @@ func (c *Canvas) Render() {
 				// Draw the webcam frame to the canvas element
 				c.ctx.Call("drawImage", c.video, 0, 0)
 				rgba := c.ctx.Call("getImageData", 0, 0, width, height).Get("data")
-				//c.Log(rgba.Get("length").Int())
 
 				uint8Arr := js.Global().Get("Uint8Array").New(rgba)
 				js.CopyBytesToGo(data, uint8Arr)
@@ -182,7 +181,7 @@ func (c *Canvas) drawDetectionPoints(dets [][]int) {
 			c.ctx.Call("stroke")
 
 			leftPupil := det.DetectLeftPupil(dets[i])
-			row, col, scale = leftPupil[1], leftPupil[0], leftPupil[2]/4
+			row, col, scale = leftPupil[1], leftPupil[0], leftPupil[2]/6
 			c.ctx.Call("beginPath")
 			c.ctx.Call("arc", row, col, scale, 0, 2*math.Pi, false)
 			c.ctx.Set("lineWidth", 3)
@@ -190,7 +189,7 @@ func (c *Canvas) drawDetectionPoints(dets [][]int) {
 			c.ctx.Call("stroke")
 
 			rightPupil := det.DetectRightPupil(dets[i])
-			row, col, scale = rightPupil[1], rightPupil[0], leftPupil[2]/4
+			row, col, scale = rightPupil[1], rightPupil[0], leftPupil[2]/6
 			c.ctx.Call("beginPath")
 			c.ctx.Call("arc", row, col, scale, 0, 2*math.Pi, false)
 			c.ctx.Set("lineWidth", 3)
