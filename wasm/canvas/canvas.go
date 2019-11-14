@@ -51,7 +51,7 @@ func NewCanvas() *Canvas {
 	c.body.Call("appendChild", c.canvas)
 
 	c.ctx = c.canvas.Call("getContext", "2d")
-	c.showPupil = false
+	c.showPupil = true
 
 	det = detector.NewDetector()
 	return &c
