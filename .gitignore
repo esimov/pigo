@@ -6,5 +6,6 @@
 pigo
 build
 packages
+wasm/lib.wasm
 !/testdata/*.png
 !/examples/**/*.png
