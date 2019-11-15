@@ -188,21 +188,13 @@ Go (Golang) Face detection library.
 
 ## Real time face detection
 
-In case you wish to test the library real time face detection capabilities using a webcam, the `examples` folder contains a  Web and a few Python examples. Prior running it you need to have Python2 and OpenCV2 installed.
+In case you wish to test the library real time face detection capabilities using a webcam, the `examples` folder contains a  web and a few Python examples. Prior running it you need to have Python2 and OpenCV2 installed.
 
-Select one of the few samples provided in the `examples` folder and simply run the python file from there. Each of them will execute the exported Go binary file as a shared object. This is also a proof of concept how Pigo can be integrated into different programming languages. I have provided examples only for Python, since this was the only viable way to access the webcam, Go suffering badly from a comprehensive and widely supported library for webcam access.
+Select one of the few examples provided in the `examples` folder and simply run the python file from there. Each of them will execute the exported Go binary file as a shared library. This is also a proof of concept how Pigo can be integrated into different programming languages. I have provided examples only for Python, since this was the only viable way to access the webcam, Go suffering badly from a comprehensive and widely supported library for webcam access.
 
-```bash
-$ python2 demo.py
-```
+### WASM (Webassembly) support 🎉
 
-To run the web version:
-
-```bash
-$ go run main.go -cf "../../cascade/facefinder"
-```
-
-Then access the `http://localhost:8081/cam` url from a web browser.
+Starting from **v1.4.0** [**WASM**](http://webassembly.org/) support has been included into the library. This gives a huge performance gain in terms of real time face detection capabilities of the library. Form more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
 
 ## Benchmark results
 
