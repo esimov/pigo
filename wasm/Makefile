@@ -20,7 +20,7 @@ all: lib.wasm serve
 
 serve:
 	$(BROWSER) 'http://localhost:5000'
-	go run main.go
+	serve
 
 clean:
 	rm -f *.wasm

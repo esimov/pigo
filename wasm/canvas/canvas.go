@@ -30,7 +30,8 @@ type Canvas struct {
 	navigator js.Value
 	video     js.Value
 
-	showPupil bool
+	showPupil  bool
+	drawCircle bool
 }
 
 var det *detector.Detector
@@ -52,6 +53,7 @@ func NewCanvas() *Canvas {
 
 	c.ctx = c.canvas.Call("getContext", "2d")
 	c.showPupil = true
+	c.drawCircle = false
 
 	det = detector.NewDetector()
 	return &c
@@ -181,14 +183,18 @@ func (c *Canvas) drawDetection(dets [][]int) {
 		if dets[i][3] > 50 {
 			row, col, scale := dets[i][1], dets[i][0], dets[i][2]
 			c.ctx.Call("beginPath")
-			c.ctx.Call("rect", row-scale/2, col-scale/2, scale, scale)
+			if c.drawCircle {
+				c.ctx.Call("arc", row, col, scale/2, 0, 2*math.Pi, false)
+			} else {
+				c.ctx.Call("rect", row-scale/2, col-scale/2, scale, scale)
+			}
 			c.ctx.Set("lineWidth", 3)
 			c.ctx.Set("strokeStyle", "red")
 			c.ctx.Call("stroke")
 
 			if c.showPupil {
 				leftPupil := det.DetectLeftPupil(dets[i])
-				row, col, scale = leftPupil[1], leftPupil[0], leftPupil[2]/6
+				row, col, scale = leftPupil[1], leftPupil[0], leftPupil[2]/8
 				c.ctx.Call("beginPath")
 				c.ctx.Call("arc", row, col, scale, 0, 2*math.Pi, false)
 				c.ctx.Set("lineWidth", 3)
@@ -196,7 +202,7 @@ func (c *Canvas) drawDetection(dets [][]int) {
 				c.ctx.Call("stroke")
 
 				rightPupil := det.DetectRightPupil(dets[i])
-				row, col, scale = rightPupil[1], rightPupil[0], leftPupil[2]/6
+				row, col, scale = rightPupil[1], rightPupil[0], leftPupil[2]/8
 				c.ctx.Call("beginPath")
 				c.ctx.Call("arc", row, col, scale, 0, 2*math.Pi, false)
 				c.ctx.Set("lineWidth", 3)
@@ -211,8 +217,13 @@ func (c *Canvas) drawDetection(dets [][]int) {
 func (c *Canvas) detectKeyPress() {
 	keyEventHandler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		keyCode := args[0].Get("key")
-		if keyCode.String() == "s" {
+		switch {
+		case keyCode.String() == "s":
 			c.showPupil = !c.showPupil
+		case keyCode.String() == "c":
+			c.drawCircle = !c.drawCircle
+		default:
+			c.drawCircle = false
 		}
 		return nil
 	})

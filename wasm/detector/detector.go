@@ -54,15 +54,15 @@ func (d *Detector) UnpackCascades() error {
 		return errors.New("error unpacking the puploc cascade file")
 	}
 
-	flpcs, err = d.parseCascadeFiles("https://raw.githubusercontent.com/esimov/pigo/master/cascade/lps/")
-	if err != nil {
-		return errors.New("error unpacking the facial landmark points detection cascades")
-	}
+	// flpcs, err = d.parseFlpCascades("https://raw.githubusercontent.com/esimov/pigo/master/cascade/lps/")
+	// if err != nil {
+	// 	return errors.New("error unpacking the facial landmark points detection cascades")
+	// }
 	return nil
 }
 
 // DetectFaces runs the cluster detection over the webcam frame
-// received as a pixel array and return the detected faces.
+// received as a pixel array and returns the detected faces.
 func (d *Detector) DetectFaces(pixels []uint8, width, height int) [][]int {
 	results := d.clusterDetection(pixels, width, height)
 	dets := make([][]int, len(results))
@@ -132,8 +132,8 @@ func (d *Detector) clusterDetection(pixels []uint8, width, height int) []pigo.De
 	return dets
 }
 
-// parseCascadeFiles reads the facial landmark points cascades from the provided url.
-func (d *Detector) parseCascadeFiles(path string) (map[string][]*FlpCascade, error) {
+// parseFlpCascades reads the facial landmark points cascades from the provided url.
+func (d *Detector) parseFlpCascades(path string) (map[string][]*FlpCascade, error) {
 	cascades := append(eyeCascades, mouthCascade...)
 	flpcs := make(map[string][]*FlpCascade)
 
