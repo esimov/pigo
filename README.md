@@ -27,9 +27,7 @@ This library does not require any third party modules to be installed. However i
 - [x] The library can detect even faces with eyeglasses 
 - [x] [Pupils/eyes localization](#pupils--eyes-localization)
 - [x] [Facial landmark points detection](#facial-landmark-points-detection)
-
-#### Todo
-- [ ] Webassembly support
+- [x] [Webassembly support 🎉](#wasm-webassembly-support)
 
 **The library can also detect in plane rotated faces.** For this a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
@@ -61,6 +59,9 @@ Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/
 ![flp_example](https://user-images.githubusercontent.com/883386/66802771-3b0cc880-ef26-11e9-9ee3-7e9e981ef3f7.png)
 
 ## Install
+
+**Important note: for the WASM support Go 1.13 is required!**
+
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
 
 ```bash
@@ -73,6 +74,7 @@ Next download the project and build the binary file.
 $ go get -u -f github.com/esimov/pigo/cmd/pigo
 $ go install
 ```
+
 ### Binary releases
 In case you do not have installed or do not wish to install Go, you can obtain the binary file from the [releases](https://github.com/esimov/pigo/releases) folder.
 
@@ -192,7 +194,7 @@ In case you wish to test the library real time face detection capabilities using
 
 Select one of the few examples provided in the `examples` folder and simply run the python file from there. Each of them will execute the exported Go binary file as a shared library. This is also a proof of concept how Pigo can be integrated into different programming languages. I have provided examples only for Python, since this was the only viable way to access the webcam, Go suffering badly from a comprehensive and widely supported library for webcam access.
 
-### WASM (Webassembly) support 🎉
+## WASM (Webassembly) support
 
 Starting from **v1.4.0** [**WASM**](http://webassembly.org/) support has been included into the library. This gives a huge performance gain in terms of real time face detection capabilities of the library. Form more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
 
