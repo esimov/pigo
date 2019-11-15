@@ -12,11 +12,10 @@ endif
 
 .PHONY: all clean serve
 
-all: lib.wasm serve
+all: wasm serve
 
-%.wasm: %.go
-	GOOS=js GOARCH=wasm go generate
-	GOOS=js GOARCH=wasm go build -o "$@" "$<"
+wasm:
+	GOOS=js GOARCH=wasm go build -o lib.wasm wasm.go
 
 serve:
 	$(BROWSER) 'http://localhost:5000'
