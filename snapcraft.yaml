@@ -1,5 +1,5 @@
 name: pigo
-version: '1.3.0'
+version: '1.4.0'
 summary: Pure Go face detection library
 description: |
   Key features:
@@ -11,6 +11,7 @@ description: |
    - Fast detection of in-plane rotated faces
    - Pupils/eyes detection
    - Facial landmark points detection
+   - WASM (Webassembly) support
 grade: stable
 confinement: strict
 base: core18
