@@ -43,12 +43,13 @@ func NewCanvas() *Canvas {
 	c.doc = c.window.Get("document")
 	c.body = c.doc.Get("body")
 
-	c.windowSize.width = c.window.Get("innerWidth").Int()
-	c.windowSize.height = c.window.Get("innerHeight").Int()
+	c.windowSize.width = 1280
+	c.windowSize.height = 720
 
 	c.canvas = c.doc.Call("createElement", "canvas")
 	c.canvas.Set("width", c.windowSize.width)
 	c.canvas.Set("height", c.windowSize.height)
+	c.canvas.Set("id", "canvas")
 	c.body.Call("appendChild", c.canvas)
 
 	c.ctx = c.canvas.Call("getContext", "2d")
@@ -135,17 +136,10 @@ func (c *Canvas) StartWebcam() (*Canvas, error) {
 	})
 
 	opts := js.Global().Get("Object").New()
-	widthOpts := js.Global().Get("Object").New()
-	widthOpts.Set("min", 1024)
-	widthOpts.Set("max", 1920)
-
-	heightOpts := js.Global().Get("Object").New()
-	heightOpts.Set("min", 720)
-	heightOpts.Set("max", 1080)
 
 	videoSize := js.Global().Get("Object").New()
-	videoSize.Set("width", widthOpts)
-	videoSize.Set("height", heightOpts)
+	videoSize.Set("width", c.windowSize.width)
+	videoSize.Set("height", c.windowSize.height)
 	videoSize.Set("aspectRatio", 1.777777778)
 
 	opts.Set("video", videoSize)
