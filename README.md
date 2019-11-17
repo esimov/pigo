@@ -60,7 +60,7 @@ Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/
 
 ## Install
 
-**Important note: for the WASM support Go 1.13 is required!**
+**Important note: for Webassembly Go 1.13 is required!**
 
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
 
