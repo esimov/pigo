@@ -151,7 +151,7 @@ $ pigo --help
 ┴  ┴└─┘└─┘
 
 Go (Golang) Face detection library.
-    Version: 1.3.0
+    Version: 1.4.0
 
   -angle float
     	0.0 is 0 radians and 1.0 is 2*pi radians
