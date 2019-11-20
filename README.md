@@ -27,9 +27,9 @@ This library does not require any third party modules to be installed. However i
 - [x] The library can detect even faces with eyeglasses 
 - [x] [Pupils/eyes localization](#pupils--eyes-localization)
 - [x] [Facial landmark points detection](#facial-landmark-points-detection)
-- [x] [Webassembly support 🎉](#wasm-webassembly-support)
+- [x] **[Webassembly support 🎉](#wasm-webassembly-support)**
 
-**The library can also detect in plane rotated faces.** For this a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
+**The library can also detect in plane rotated faces.** For this reason a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
 ```bash
 $ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
@@ -196,7 +196,7 @@ Select one of the few examples provided in the `examples` folder and simply run 
 
 ## WASM (Webassembly) support
 
-Starting from **v1.4.0** [**WASM**](http://webassembly.org/) support has been included into the library. This gives a huge performance gain in terms of real time face detection capabilities of the library. Form more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
+Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This gives the library a huge performance gain in terms of real time face detection capabilities. Form more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
 
 ## Benchmark results
 
