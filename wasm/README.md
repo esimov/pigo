@@ -10,7 +10,7 @@ This means that there is no need anymore to run it in a Python environment as a 
 
 First download and build the [serve](https://github.com/mattn/serve) package for making a simple webserver. Then simply type the `$ serve` command to build the `wasm` file and start the webserver. That's all. It will open a new page under `http://localhost:5000/`.
 
-In case the `lib.wasm` is not generated automatically you can build yourself running the following command:
+In case the `lib.wasm` is not generated automatically you can build yourself by running the following command:
 
 ```bash
 $ GOOS=js GOARCH=wasm go build -o lib.wasm wasm.go
