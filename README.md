@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/esimov/pigo.svg?branch=master)](https://travis-ci.org/esimov/pigo)
 [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/esimov/pigo/core)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat)](./LICENSE)
-[![release](https://img.shields.io/badge/release-v1.3.0-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.3.0)
+[![release](https://img.shields.io/badge/release-v1.4.0-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.4.0)
 [![snapcraft](https://img.shields.io/badge/snapcraft-v1.3.0-green.svg)](https://snapcraft.io/pigo)
 
 Pigo is a pure Go face detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf). 
@@ -27,9 +27,9 @@ This library does not require any third party modules to be installed. However i
 - [x] The library can detect even faces with eyeglasses 
 - [x] [Pupils/eyes localization](#pupils--eyes-localization)
 - [x] [Facial landmark points detection](#facial-landmark-points-detection)
-- [x] [Webassembly support 🎉](#wasm-webassembly-support)
+- [x] **[Webassembly support 🎉](#wasm-webassembly-support)**
 
-**The library can also detect in plane rotated faces.** For this a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
+**The library can also detect in plane rotated faces.** For this reason a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
 ```bash
 $ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
@@ -60,7 +60,7 @@ Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/
 
 ## Install
 
-**Important note: for Webassembly Go 1.13 is required!**
+**Important note: for the Webassembly support Go 1.13 is required!**
 
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
 
@@ -151,7 +151,7 @@ $ pigo --help
 ┴  ┴└─┘└─┘
 
 Go (Golang) Face detection library.
-    Version: 1.3.0
+    Version: 1.4.0
 
   -angle float
     	0.0 is 0 radians and 1.0 is 2*pi radians
@@ -196,7 +196,7 @@ Select one of the few examples provided in the `examples` folder and simply run 
 
 ## WASM (Webassembly) support
 
-Starting from **v1.4.0** [**WASM**](http://webassembly.org/) support has been included into the library. This gives a huge performance gain in terms of real time face detection capabilities of the library. Form more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
+Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This gives the library a huge performance gain in terms of real time face detection capabilities. Form more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
 
 ## Benchmark results
 
