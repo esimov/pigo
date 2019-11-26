@@ -54,10 +54,10 @@ func (d *Detector) UnpackCascades() error {
 		return errors.New("error unpacking the puploc cascade file")
 	}
 
-	// flpcs, err = d.parseFlpCascades("https://raw.githubusercontent.com/esimov/pigo/master/cascade/lps/")
-	// if err != nil {
-	// 	return errors.New("error unpacking the facial landmark points detection cascades")
-	// }
+	flpcs, err = d.parseFlpCascades("https://raw.githubusercontent.com/esimov/pigo/master/cascade/lps/")
+	if err != nil {
+		return errors.New("error unpacking the facial landmark points detection cascades")
+	}
 	return nil
 }
 
@@ -74,8 +74,7 @@ func (d *Detector) DetectFaces(pixels []uint8, width, height int) [][]int {
 }
 
 // DetectLeftPupil detects the left pupil
-func (d *Detector) DetectLeftPupil(results []int) []int {
-	det := []int{}
+func (d *Detector) DetectLeftPupil(results []int) *pigo.Puploc {
 	puploc := &pigo.Puploc{
 		Row:      results[0] - int(0.085*float32(results[2])),
 		Col:      results[1] - int(0.185*float32(results[2])),
@@ -84,23 +83,61 @@ func (d *Detector) DetectLeftPupil(results []int) []int {
 	}
 	leftEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
 	if leftEye.Row > 0 && leftEye.Col > 0 {
-		det = append(det, leftEye.Row, leftEye.Col, int(leftEye.Scale), int(results[3]))
+		return leftEye
 	}
-	return det
+	return nil
 }
 
-// DetectLeftPupil detects the right pupil
-func (d *Detector) DetectRightPupil(results []int) []int {
-	det := []int{}
+// DetectRightPupil detects the right pupil
+func (d *Detector) DetectRightPupil(results []int) *pigo.Puploc {
 	puploc := &pigo.Puploc{
 		Row:      results[0] - int(0.085*float32(results[2])),
 		Col:      results[1] + int(0.185*float32(results[2])),
 		Scale:    float32(results[2]) * 0.4,
 		Perturbs: 63,
 	}
-	leftEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
-	if leftEye.Row > 0 && leftEye.Col > 0 {
-		det = append(det, leftEye.Row, leftEye.Col, int(leftEye.Scale), int(results[3]))
+	rightEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
+	if rightEye.Row > 0 && rightEye.Col > 0 {
+		return rightEye
+	}
+	return nil
+}
+
+// DetectLandmarkPoints detects the landmark points
+func (d *Detector) DetectLandmarkPoints(leftEye, rightEye *pigo.Puploc) [][]int {
+	var (
+		det = make([][]int, 15)
+		idx int
+	)
+
+	for _, eye := range eyeCascades {
+		for _, flpc := range flpcs[eye] {
+			flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, false)
+			if flp.Row > 0 && flp.Col > 0 {
+				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
+			}
+			idx++
+
+			flp = flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, true)
+			if flp.Row > 0 && flp.Col > 0 {
+				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
+			}
+			idx++
+		}
+	}
+
+	for _, mouth := range mouthCascade {
+		for _, flpc := range flpcs[mouth] {
+			flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, false)
+			if flp.Row > 0 && flp.Col > 0 {
+				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
+			}
+			idx++
+		}
+	}
+	flp := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, true)
+	if flp.Row > 0 && flp.Col > 0 {
+		det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 	}
 	return det
 }
