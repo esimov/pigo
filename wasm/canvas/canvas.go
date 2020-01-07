@@ -78,6 +78,8 @@ func (c *Canvas) Render() {
 				c.ctx.Call("drawImage", c.video, 0, 0)
 				rgba := c.ctx.Call("getImageData", 0, 0, width, height).Get("data")
 
+				// Convert the rgba value of type Uint8ClampedArray to Uint8Array in order to
+				// be able to transfer it from Javascript to Go via the js.CopyBytesToGo function.
 				uint8Arr := js.Global().Get("Uint8Array").New(rgba)
 				js.CopyBytesToGo(data, uint8Arr)
 				pixels := c.rgbaToGrayscale(data)
