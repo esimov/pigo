@@ -104,7 +104,7 @@ func main() {
 	}
 
 	if *flploc && len(*flplocDir) == 0 {
-		//log.Fatal("Please specify the base directory of the facial landmark points binary files")
+		log.Fatal("Please specify the base directory of the facial landmark points binary files")
 	}
 
 	fileTypes := []string{".jpg", ".jpeg", ".png"}
