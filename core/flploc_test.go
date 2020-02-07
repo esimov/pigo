@@ -66,7 +66,7 @@ func TestFlploc_LandmarkPointsFinderShouldReturnDetectionPoints(t *testing.T) {
 			}
 			rightEye := plc.RunDetector(*puploc, *imgParams, 0.0, false)
 
-			flp := plc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, "left")
+			flp := plc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, false)
 			landMarkPoints = append(landMarkPoints, *flp)
 		}
 	}
@@ -123,7 +123,7 @@ func BenchmarkFlploc(b *testing.B) {
 				}
 				rightEye := plc.RunDetector(*puploc, *imgParams, 0.0, false)
 
-				plc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, "left")
+				plc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, false)
 
 			}
 		}
