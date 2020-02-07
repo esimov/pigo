@@ -103,10 +103,10 @@ pixels := pigo.RgbToGrayscale(src)
 cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
 
 cParams := pigo.CascadeParams{
-	MinSize:     fd.minSize,
-	MaxSize:     fd.maxSize,
-	ShiftFactor: fd.shiftFactor,
-	ScaleFactor: fd.scaleFactor,
+	MinSize:     20,
+	MaxSize:     1000,
+	ShiftFactor: 0.1,
+	ScaleFactor: 1.1,
 	
 	ImageParams: pigo.ImageParams{
 		Pixels: pixels,
