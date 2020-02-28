@@ -8,4 +8,5 @@ build
 packages
 wasm/lib.wasm
 !/testdata/*.png
+!/testdata/*.jpg
 !/examples/**/*.png
