@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/esimov/pigo.svg?branch=master)](https://travis-ci.org/esimov/pigo)
 [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/esimov/pigo/core)
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg?style=flat)](./LICENSE)
+[![license](https://img.shields.io/github/license/esimov/pigo)](./LICENSE)
 [![release](https://img.shields.io/badge/release-v1.4.0-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.4.0)
 [![snapcraft](https://img.shields.io/badge/snapcraft-v1.3.0-green.svg)](https://snapcraft.io/pigo)
 
