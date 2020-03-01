@@ -202,7 +202,7 @@ func (c *Canvas) drawDetection(dets [][]int) {
 
 				rightPupil := det.DetectRightPupil(dets[i])
 				if rightPupil != nil {
-					col, row, scale := rightPupil.Col, rightPupil.Row, leftPupil.Scale/8
+					col, row, scale := rightPupil.Col, rightPupil.Row, rightPupil.Scale/8
 					c.ctx.Call("moveTo", col+int(scale), row)
 					c.ctx.Call("arc", col, row, scale, 0, 2*math.Pi, true)
 				}
