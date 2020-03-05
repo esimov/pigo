@@ -14,8 +14,13 @@ endif
 
 all: wasm serve
 
+demo: masquerade serve
+
 wasm:
 	GOOS=js GOARCH=wasm go build -o lib.wasm wasm.go
+
+masquerade:
+	GOOS=js GOARCH=wasm go build -o lib.wasm demo.go
 
 serve:
 	$(BROWSER) 'http://localhost:5000'
