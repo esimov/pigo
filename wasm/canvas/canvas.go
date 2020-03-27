@@ -31,6 +31,7 @@ type Canvas struct {
 	video     js.Value
 
 	showPupil  bool
+	showCoord  bool
 	drawCircle bool
 	flploc     bool
 }
@@ -55,6 +56,7 @@ func NewCanvas() *Canvas {
 
 	c.ctx = c.canvas.Call("getContext", "2d")
 	c.showPupil = true
+	c.showCoord = false
 	c.drawCircle = false
 	c.flploc = false
 
@@ -188,6 +190,13 @@ func (c *Canvas) drawDetection(dets [][]int) {
 				c.ctx.Call("moveTo", row+int(scale/2), col)
 				c.ctx.Call("arc", row, col, scale/2, 0, 2*math.Pi, true)
 			} else {
+				if c.showCoord {
+					c.ctx.Set("fillStyle", "red")
+					c.ctx.Set("font", "18px Arial")
+					message := fmt.Sprintf("(%v, %v)", row-scale/2, col-scale/2)
+					txtWidth := c.ctx.Call("measureText", js.ValueOf(message)).Get("width").Int()
+					c.ctx.Call("fillText", message, (row-scale/2)-txtWidth/2, col-scale/2-10)
+				}
 				c.ctx.Call("rect", row-scale/2, col-scale/2, scale, scale)
 			}
 			c.ctx.Call("stroke")
@@ -236,6 +245,8 @@ func (c *Canvas) detectKeyPress() {
 			c.drawCircle = !c.drawCircle
 		case keyCode.String() == "f":
 			c.flploc = !c.flploc
+		case keyCode.String() == "x":
+			c.showCoord = !c.showCoord
 		default:
 			c.drawCircle = false
 		}
