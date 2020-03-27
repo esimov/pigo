@@ -39,6 +39,7 @@ type Canvas struct {
 	showPupil  bool
 	showFace   bool
 	showMask   bool
+	showCoord  bool
 	drawCircle bool
 }
 
@@ -228,6 +229,13 @@ func (c *Canvas) drawDetection(dets [][]int) {
 					c.ctx.Call("moveTo", row+int(scale/2), col)
 					c.ctx.Call("arc", row, col, scale/2, 0, 2*math.Pi, true)
 				} else {
+					if c.showCoord {
+						c.ctx.Set("fillStyle", "red")
+						c.ctx.Set("font", "18px Arial")
+						message := fmt.Sprintf("(%v, %v)", row-scale/2, col-scale/2)
+						txtWidth := c.ctx.Call("measureText", js.ValueOf(message)).Get("width").Int()
+						c.ctx.Call("fillText", message, (row-scale/2)-txtWidth/2, col-scale/2-10)
+					}
 					c.ctx.Call("rect", row-scale/2, col-scale/2, scale, scale)
 				}
 			}
@@ -295,6 +303,8 @@ func (c *Canvas) detectKeyPress() {
 			c.drawCircle = !c.drawCircle
 		case keyCode.String() == "r":
 			c.showMask = !c.showMask
+		case keyCode.String() == "x":
+			c.showCoord = !c.showCoord
 		case keyCode.String() == "w":
 			imgIdx++
 			if imgIdx > len(images)-1 {
