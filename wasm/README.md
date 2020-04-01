@@ -27,3 +27,9 @@ This folder also contains a demo showing an example how the library can be used 
 ```bash
 $ make demo
 ```
+
+---
+### Snapshot from the running demo
+
+![masquerade](https://user-images.githubusercontent.com/883386/78139722-a04f6a00-7431-11ea-9adb-86d69cb3c73f.png)
+
