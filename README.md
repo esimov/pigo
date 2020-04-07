@@ -218,4 +218,4 @@ The code used for the above test can be found under the following link: https://
 
 Copyright © 2019 Endre Simo
 
-This software is distributed under the MIT license. See the LICENSE file for the full license text.
+This software is distributed under the MIT license. See the [LICENSE](https://github.com/esimov/pigo/blob/master/LICENSE) file for the full license text.
