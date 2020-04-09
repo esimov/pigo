@@ -14,15 +14,9 @@ endif
 
 all: wasm serve
 
-demo: masquerade serve
-
 wasm:
 	cp -f "$$(go env GOROOT)/misc/wasm/wasm_exec.js" ./js/
 	GOOS=js GOARCH=wasm go build -o lib.wasm wasm.go
-
-masquerade:
-	cp -f "$$(go env GOROOT)/misc/wasm/wasm_exec.js" ./js/
-	GOOS=js GOARCH=wasm go build -o lib.wasm demo.go
 
 serve:
 	$(BROWSER) 'http://localhost:5000'
