@@ -22,5 +22,7 @@ $ GOOS=js GOARCH=wasm go build -o lib.wasm wasm.go
 
 ## Demos
 
-For the **Webassembly** related demos check this separate repo: https://github.com/esimov/pigo-wasm-demos 
+For the **Webassembly** related demos check this separate repo: 
+
+https://github.com/esimov/pigo-wasm-demos 
 
