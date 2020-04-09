@@ -20,16 +20,7 @@ $ GOOS=js GOARCH=wasm go build -o lib.wasm wasm.go
 <kbd>c</kbd> - Toggle circle/rectangle detection mark<br/>
 <kbd>f</kbd> - Show/hide facial landmark points (hidden by default)
 
-## Face masquerading demo
+## Demos
 
-This folder also contains a demo showing an example how the library can be used to create a Snapchat like face masquerading effect. You can run the example by typing the following command:
-
-```bash
-$ make demo
-```
-
----
-### Snapshot from the running demo
-
-![masquerade](https://user-images.githubusercontent.com/883386/78139722-a04f6a00-7431-11ea-9adb-86d69cb3c73f.png)
+For the **Webassembly** related demos check this separate repo: https://github.com/esimov/pigo-wasm-demos 
 
