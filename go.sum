@@ -1,12 +1,8 @@
 github.com/disintegration/imaging v1.6.1 h1:JnBbK6ECIZb1NsWIikP9pd8gIlTIRx7fuDNpU9fsxOE=
 github.com/disintegration/imaging v1.6.1/go.mod h1:xuIt+sRxDFrHS0drzXUlCJthkJ8k7lkkUojDSR247MQ=
-github.com/esimov/triangle v1.0.4 h1:vmEwL5zBPRbN5+GmJE5Dk38IV/v8Zkdp34+yaGr4zrY=
-github.com/esimov/triangle v1.0.4/go.mod h1:EKT/GJbKyDWK5IdEgx+wKjcj6zI0Wd27+p2zRgjfdKo=
 github.com/fogleman/gg v1.0.0 h1:O2ToZn8ijCP2gXhVY701P1b1jrxKoVPh6CkaX2/PACE=
 github.com/fogleman/gg v1.0.0/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 h1:DACJavvAHhabrF08vX0COfcOBJRhZ8lUbR+ZWIs0Y5g=
 github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0/go.mod h1:E/TSTwGwJL78qG/PmXZO1EjYhfJinVAhrmmHX6Z8B9k=
-golang.org/x/image v0.0.0-20180601115456-af66defab954 h1:n7UB+yxe5jyWxOA3BTAfwi23lhfKEIddaB/so7YOYe0=
-golang.org/x/image v0.0.0-20180601115456-af66defab954/go.mod h1:ux5Hcp/YLpHSI86hEcLt0YII63i6oz57MZXIpbrjZUs=
 golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81 h1:00VmoueYNlNz/aHIilyyQz/MHSqGoWJzpFv/HW8xpzI=
 golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81/go.mod h1:ux5Hcp/YLpHSI86hEcLt0YII63i6oz57MZXIpbrjZUs=
