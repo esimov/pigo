@@ -1,6 +1,7 @@
 package detector
 
 import (
+	"errors"
 	"fmt"
 	"syscall/js"
 )
@@ -29,6 +30,16 @@ func (d *Detector) FetchCascade(url string) ([]byte, error) {
 	d.errChan = make(chan error)
 
 	promise := js.Global().Call("fetch", url)
+	promise.Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		go func() {
+			response := args[0]
+			if !response.Get("ok").Bool() {
+				errorMsg := response.Get("statusText").String()
+				d.errChan <- errors.New(errorMsg)
+			}
+		}()
+		return nil
+	}))
 	success := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		response := args[0]
 		response.Call("arrayBuffer").Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {

@@ -65,37 +65,41 @@ func NewCanvas() *Canvas {
 }
 
 // Render calls the `requestAnimationFrame` Javascript function in asynchronous mode.
-func (c *Canvas) Render() {
+func (c *Canvas) Render() error {
 	var data = make([]byte, c.windowSize.width*c.windowSize.height*4)
 	c.done = make(chan struct{})
 
-	if err := det.UnpackCascades(); err == nil {
-		c.renderer = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-			go func() {
-				c.window.Get("stats").Call("begin")
-
-				width, height := c.windowSize.width, c.windowSize.height
-				c.reqID = c.window.Call("requestAnimationFrame", c.renderer)
-				// Draw the webcam frame to the canvas element
-				c.ctx.Call("drawImage", c.video, 0, 0)
-				rgba := c.ctx.Call("getImageData", 0, 0, width, height).Get("data")
-
-				// Convert the rgba value of type Uint8ClampedArray to Uint8Array in order to
-				// be able to transfer it from Javascript to Go via the js.CopyBytesToGo function.
-				uint8Arr := js.Global().Get("Uint8Array").New(rgba)
-				js.CopyBytesToGo(data, uint8Arr)
-				pixels := c.rgbaToGrayscale(data)
-				res := det.DetectFaces(pixels, height, width)
-				c.drawDetection(res)
-
-				c.window.Get("stats").Call("end")
-			}()
-			return nil
-		})
-		c.window.Call("requestAnimationFrame", c.renderer)
-		c.detectKeyPress()
-		<-c.done
+	err := det.UnpackCascades()
+	if err != nil {
+		return err
 	}
+	c.renderer = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		go func() {
+			c.window.Get("stats").Call("begin")
+
+			width, height := c.windowSize.width, c.windowSize.height
+			c.reqID = c.window.Call("requestAnimationFrame", c.renderer)
+			// Draw the webcam frame to the canvas element
+			c.ctx.Call("drawImage", c.video, 0, 0)
+			rgba := c.ctx.Call("getImageData", 0, 0, width, height).Get("data")
+
+			// Convert the rgba value of type Uint8ClampedArray to Uint8Array in order to
+			// be able to transfer it from Javascript to Go via the js.CopyBytesToGo function.
+			uint8Arr := js.Global().Get("Uint8Array").New(rgba)
+			js.CopyBytesToGo(data, uint8Arr)
+			pixels := c.rgbaToGrayscale(data)
+			res := det.DetectFaces(pixels, height, width)
+			c.drawDetection(res)
+
+			c.window.Get("stats").Call("end")
+		}()
+		return nil
+	})
+	c.window.Call("requestAnimationFrame", c.renderer)
+	c.detectKeyPress()
+	<-c.done
+
+	return nil
 }
 
 // Stop stops the rendering.

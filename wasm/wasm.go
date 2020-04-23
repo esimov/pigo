@@ -3,6 +3,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/esimov/pigo/wasm/canvas"
 )
 
@@ -12,6 +14,9 @@ func main() {
 	if err != nil {
 		c.Alert("Webcam not detected!")
 	} else {
-		webcam.Render()
+		err := webcam.Render()
+		if err != nil {
+			c.Alert(fmt.Sprint(err))
+		}
 	}
 }
