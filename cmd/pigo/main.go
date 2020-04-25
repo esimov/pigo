@@ -63,9 +63,18 @@ type faceDetector struct {
 	markDetEyes   bool
 }
 
-// detectionResult contains the coordinates of the detected faces and the base64 converted image.
-type detectionResult struct {
-	coords []image.Rectangle
+// coord holds the detection coordinates
+type coord struct {
+	Row   int `json:"x,omitempty"`
+	Col   int `json:"y,omitempty"`
+	Scale int `json:"size,omitempty"`
+}
+
+// detection holds the detection points of the various detection types
+type detection struct {
+	FacePoints     coord   `json:"face,omitempty"`
+	EyePoints      []coord `json:"eyes,omitempty"`
+	LandmarkPoints []coord `json:"landmark_points,omitempty"`
 }
 
 func main() {
@@ -86,7 +95,7 @@ func main() {
 		markEyes      = flag.Bool("mark", true, "Mark detected eyes")
 		flploc        = flag.Bool("flp", false, "Use facial landmark points localization")
 		flplocDir     = flag.String("flpdir", "", "The facial landmark points base directory")
-		outputAsJSON  = flag.Bool("json", false, "Output face box coordinates into a json file")
+		jsonf         = flag.String("json", "", "Output face box coordinates into a json file")
 	)
 
 	flag.Usage = func() {
@@ -143,20 +152,22 @@ func main() {
 		log.Fatalf("Detection error: %v", err)
 	}
 
-	_, rects, err := fd.drawFaces(faces, *isCircle)
+	_, dets, err := fd.drawFaces(faces, *isCircle)
 
 	if err != nil {
 		log.Fatalf("Error creating the image output: %s", err)
 	}
 
-	resp := detectionResult{
-		coords: rects,
-	}
+	if *jsonf != "" {
+		out, err := os.Create(*jsonf)
+		defer out.Close()
+		if err != nil {
+			log.Fatalf("Could not create the json file: %s", err)
+		}
 
-	out, err := json.Marshal(resp.coords)
-
-	if *outputAsJSON {
-		ioutil.WriteFile("output.json", out, 0644)
+		if err := json.NewEncoder(out).Encode(dets); err != nil {
+			log.Fatalf("Error encoding the json file: %s", err)
+		}
 	}
 
 	s.stop()
@@ -235,12 +246,17 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 }
 
 // drawFaces marks the detected faces with a circle in case isCircle is true, otherwise marks with a rectangle.
-func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte, []image.Rectangle, error) {
+func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte, []detection, error) {
 	var (
 		qThresh float32 = 5.0
 		perturb         = 63
-		rects   []image.Rectangle
-		puploc  *pigo.Puploc
+	)
+
+	var (
+		detections     []detection
+		eyesCoords     []coord
+		landmarkCoords []coord
+		puploc         *pigo.Puploc
 	)
 
 	for _, face := range faces {
@@ -261,12 +277,12 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 					float64(face.Scale),
 				)
 			}
-			rects = append(rects, image.Rect(
-				face.Col-face.Scale/2,
-				face.Row-face.Scale/2,
-				face.Scale,
-				face.Scale,
-			))
+			faceCoord := &coord{
+				Row:   face.Row,
+				Col:   face.Col,
+				Scale: face.Scale,
+			}
+
 			dc.SetLineWidth(2.0)
 			dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 0, B: 0, A: 255}))
 			dc.Stroke()
@@ -313,6 +329,11 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 							fd.markDetEyes,
 						)
 					}
+					eyesCoords = append(eyesCoords, coord{
+						Row:   leftEye.Row,
+						Col:   leftEye.Col,
+						Scale: int(leftEye.Scale),
+					})
 				}
 
 				// right eye
@@ -348,7 +369,13 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 							fd.markDetEyes,
 						)
 					}
+					eyesCoords = append(eyesCoords, coord{
+						Row:   rightEye.Row,
+						Col:   rightEye.Col,
+						Scale: int(rightEye.Scale),
+					})
 				}
+
 				if fd.flploc {
 					for _, eye := range eyeCascades {
 						for _, flpc := range flpcs[eye] {
@@ -373,6 +400,11 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 									false,
 								)
 							}
+							landmarkCoords = append(landmarkCoords, coord{
+								Row:   flp.Row,
+								Col:   flp.Col,
+								Scale: int(flp.Scale),
+							})
 						}
 					}
 
@@ -388,6 +420,11 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 									false,
 								)
 							}
+							landmarkCoords = append(landmarkCoords, coord{
+								Row:   flp.Row,
+								Col:   flp.Col,
+								Scale: int(flp.Scale),
+							})
 						}
 					}
 					flp := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, true)
@@ -399,9 +436,19 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 							color.RGBA{R: 0, G: 0, B: 255, A: 255},
 							false,
 						)
+						landmarkCoords = append(landmarkCoords, coord{
+							Row:   flp.Row,
+							Col:   flp.Col,
+							Scale: int(flp.Scale),
+						})
 					}
 				}
 			}
+			detections = append(detections, detection{
+				FacePoints:     *faceCoord,
+				EyePoints:      eyesCoords,
+				LandmarkPoints: landmarkCoords,
+			})
 		}
 	}
 
@@ -422,7 +469,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 	}
 	rf, err := ioutil.ReadFile(fd.destination)
 
-	return rf, rects, err
+	return rf, detections, err
 }
 
 type spinner struct {
@@ -463,7 +510,7 @@ func inSlice(item string, slice []string) bool {
 	return false
 }
 
-// drawDetections helper function to draw the detection marks
+// drawDetections is a helper function to draw the detection marks
 func drawDetections(ctx *gg.Context, x, y, r float64, c color.RGBA, markDet bool) {
 	ctx.DrawArc(x, y, r*0.15, 0, 2*math.Pi)
 	ctx.SetFillStyle(gg.NewSolidPattern(c))
