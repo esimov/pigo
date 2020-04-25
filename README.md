@@ -168,7 +168,7 @@ Go (Golang) Face detection library.
   -iou float
     	Intersection over union (IoU) threshold (default 0.2)
   -json
-    	Output face box coordinates into a json file
+    	Output the detection points into a json file
   -mark
     	Mark detected eyes (default true)
   -max int
