@@ -95,7 +95,7 @@ func main() {
 		markEyes      = flag.Bool("mark", true, "Mark detected eyes")
 		flploc        = flag.Bool("flp", false, "Use facial landmark points localization")
 		flplocDir     = flag.String("flpdir", "", "The facial landmark points base directory")
-		jsonf         = flag.String("json", "", "Output face box coordinates into a json file")
+		jsonf         = flag.String("json", "", "Output the detection points into a json file")
 	)
 
 	flag.Usage = func() {
