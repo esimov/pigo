@@ -5,7 +5,7 @@ branches:
     - "master"
 
 # In theory, older versions would probably work just fine
-# The wasm integration is working only on 1.13.x
+# The wasm integration require at least Go 1.13.x
 go:
   - 1.14.x
   - 1.13.x
