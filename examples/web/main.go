@@ -81,7 +81,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 
 	cascadeFile, err := ioutil.ReadFile(*cascadeFile)
 	if err != nil {
-		log.Fatalf("Error reading the cascade file: %v", err)
+		log.Fatalf("[ERROR] reading the cascade file: %v", err)
 	}
 
 	p := pigo.NewPigo()
@@ -89,7 +89,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
 	classifier, err := p.Unpack(cascadeFile)
 	if err != nil {
-		log.Fatalf("Error reading the cascade file: %s", err)
+		log.Fatalf("[ERROR] reading the cascade file: %v", err)
 	}
 
 	mpart := multipart.NewReader(stdout, boundary)
