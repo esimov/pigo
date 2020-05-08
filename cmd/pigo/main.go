@@ -2,12 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"image"
 	"image/color"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"io/ioutil"
 	"log"
 	"math"
@@ -18,6 +20,7 @@ import (
 	"github.com/disintegration/imaging"
 	pigo "github.com/esimov/pigo/core"
 	"github.com/fogleman/gg"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 const banner = `
@@ -29,6 +32,9 @@ Go (Golang) Face detection library.
     Version: %s
 
 `
+
+// pipeName is the file name that indicates stdin/stdout is being used.
+const pipeName = "-"
 
 // Version indicates the current build version.
 var Version string
@@ -78,9 +84,11 @@ type detection struct {
 }
 
 func main() {
+	log.SetFlags(0)
+
 	var (
 		// Flags
-		source        = flag.String("in", "", "Source image")
+		source        = flag.String("in", pipeName, "Source image")
 		destination   = flag.String("out", "", "Destination image")
 		cascadeFile   = flag.String("cf", "", "Cascade binary file")
 		minSize       = flag.Int("min", 20, "Minimum size of face")
@@ -95,7 +103,7 @@ func main() {
 		markEyes      = flag.Bool("mark", true, "Mark detected eyes")
 		flploc        = flag.Bool("flp", false, "Use facial landmark points localization")
 		flplocDir     = flag.String("flpdir", "", "The facial landmark points base directory")
-		jsonf         = flag.String("json", "", "Output the detection points into a json file")
+		jsonf         = flag.String("json", pipeName, "Output the detection points into a json file")
 	)
 
 	flag.Usage = func() {
@@ -104,7 +112,7 @@ func main() {
 	}
 	flag.Parse()
 
-	if len(*source) == 0 || len(*destination) == 0 || len(*cascadeFile) == 0 {
+	if len(*source) == 0 || len(*cascadeFile) == 0 {
 		log.Fatal("Usage: pigo -in input.jpg -out out.png -cf cascade/facefinder")
 	}
 
@@ -114,13 +122,6 @@ func main() {
 
 	if *flploc && len(*flplocDir) == 0 {
 		log.Fatal("Please specify the base directory of the facial landmark points binary files")
-	}
-
-	fileTypes := []string{".jpg", ".jpeg", ".png"}
-	ext := filepath.Ext(*destination)
-
-	if !inSlice(ext, fileTypes) {
-		log.Fatalf("Output file type not supported: %v", ext)
 	}
 
 	if *scaleFactor < 1.05 {
@@ -152,31 +153,49 @@ func main() {
 		log.Fatalf("Detection error: %v", err)
 	}
 
-	_, dets, err := fd.drawFaces(faces, *isCircle)
-
+	dets, err := fd.drawFaces(faces, *isCircle)
 	if err != nil {
 		log.Fatalf("Error creating the image output: %s", err)
 	}
 
 	if *jsonf != "" {
-		out, err := os.Create(*jsonf)
-		defer out.Close()
-		if err != nil {
-			log.Fatalf("Could not create the json file: %s", err)
+		var out io.Writer
+		if *jsonf == pipeName {
+			out = os.Stdout
+		} else {
+			f, err := os.Create(*jsonf)
+			defer f.Close()
+			if err != nil {
+				log.Fatalf("Could not create the json file: %s", err)
+			}
+			out = f
 		}
-
 		if err := json.NewEncoder(out).Encode(dets); err != nil {
 			log.Fatalf("Error encoding the json file: %s", err)
 		}
 	}
-
 	s.stop()
 	fmt.Printf("\nDone in: \x1b[92m%.2fs\n", time.Since(start).Seconds())
 }
 
 // detectFaces run the detection algorithm over the provided source image.
 func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
-	src, err := pigo.GetImage(source)
+	var srcFile io.Reader
+	if source == pipeName {
+		if terminal.IsTerminal(int(os.Stdin.Fd())) {
+			log.Fatalln("`-` should be used with a pipe for stdin")
+		}
+		srcFile = os.Stdin
+	} else {
+		file, err := os.Open(source)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		srcFile = file
+	}
+
+	src, err := pigo.DecodeImage(srcFile)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +265,7 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 }
 
 // drawFaces marks the detected faces with a circle in case isCircle is true, otherwise marks with a rectangle.
-func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte, []detection, error) {
+func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]detection, error) {
 	var (
 		qThresh float32 = 5.0
 		perturb         = 63
@@ -452,24 +471,55 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]byte
 		}
 	}
 
+	if fd.destination != "" {
+		var dst io.Writer
+		if fd.destination == pipeName {
+			if terminal.IsTerminal(int(os.Stdout.Fd())) {
+				log.Fatalln("`-` should be used with a pipe for stdout")
+			}
+			dst = os.Stdout
+		} else {
+			fileTypes := []string{".jpg", ".jpeg", ".png"}
+			ext := filepath.Ext(fd.destination)
+
+			if !inSlice(ext, fileTypes) {
+				log.Fatalf("Output file type not supported: %v", ext)
+			}
+
+			fn, err := os.OpenFile(fd.destination, os.O_CREATE|os.O_WRONLY, 0755)
+			if err != nil {
+				log.Fatalf("Unable to open output file: %v", err)
+			}
+			defer fn.Close()
+			dst = fn
+		}
+
+		if err := fd.encodeImage(dst); err != nil {
+			return detections, err
+		}
+	}
+	return detections, nil
+}
+
+func (fd *faceDetector) encodeImage(dst io.Writer) error {
+	var err error
 	img := dc.Image()
-	output, err := os.OpenFile(fd.destination, os.O_CREATE|os.O_RDWR, 0755)
-	defer output.Close()
 
-	if err != nil {
-		return nil, nil, err
+	switch dst.(type) {
+	case *os.File:
+		ext := filepath.Ext(dst.(*os.File).Name())
+		switch ext {
+		case "", ".jpg", ".jpeg":
+			err = jpeg.Encode(dst, img, &jpeg.Options{Quality: 100})
+		case ".png":
+			err = png.Encode(dst, img)
+		default:
+			err = errors.New("unsupported image format")
+		}
+	default:
+		err = jpeg.Encode(dst, img, &jpeg.Options{Quality: 100})
 	}
-	ext := filepath.Ext(output.Name())
-
-	switch ext {
-	case ".jpg", ".jpeg":
-		jpeg.Encode(output, img, &jpeg.Options{Quality: 100})
-	case ".png":
-		png.Encode(output, img)
-	}
-	rf, err := ioutil.ReadFile(fd.destination)
-
-	return rf, detections, err
+	return err
 }
 
 type spinner struct {
