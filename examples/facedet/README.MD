@@ -11,5 +11,5 @@ This is an example of how to use Pigo for face detection. There are two examples
 # detect faces
 $ python2 demo.py
 # blur out the detect faces
-$ python2 facemask.py
+$ python2 faceblur.py
 ```
