@@ -80,7 +80,7 @@ In case you do not have installed or do not wish to install Go, you can obtain t
 
 The library can be accessed as a snapcraft function too.
 
-<a href="https://snapcraft.io/pigo"><img src="https://raw.githubusercontent.com/snapcore/snap-store-badges/master/EN/%5BEN%5D-snap-store-white-uneditable.png" alt="snapcraft caire"></a>
+<a href="https://snapcraft.io/pigo"><img src="https://raw.githubusercontent.com/snapcore/snap-store-badges/master/EN/%5BEN%5D-snap-store-white-uneditable.png" alt="snapcraft pigo"></a>
 
 ## API
 Below is a minimal example of using the face detection API. 
@@ -185,8 +185,21 @@ Go (Golang) Face detection library.
     	Scale detection window by percentage (default 1.1)
   -shift float
     	Shift detection window by percentage (default 0.1)
-
 ```
+
+### CLI command examples
+You can also use the `stdin` and `stdout` pipe commands:
+
+```bash
+$ cat input/source.jpg | pigo > -in - -out - >out.jpg -cf=/path/to/cascade
+```
+
+`in` and `out` default to `-` so you can also use:
+```bash
+$ cat input/source.jpg | pigo >out.jpg -cf=/path/to/cascade
+$ pigo -out out.jpg < input/source.jpg -cf=/path/to/cascade
+```
+Using the `empty` string as value for the `-out` flag will skip the image generation part. This combined with the `-json` flag will encode the detection results into the specified json file. You can also use the pipe `-` value for the `-json` flag to output the detection coordinates to the standard output `stdout` output.
 
 ## Real time face detection
 
