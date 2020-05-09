@@ -84,12 +84,10 @@ type detection struct {
 }
 
 func main() {
-	log.SetFlags(0)
-
 	var (
 		// Flags
 		source        = flag.String("in", pipeName, "Source image")
-		destination   = flag.String("out", "", "Destination image")
+		destination   = flag.String("out", pipeName, "Destination image")
 		cascadeFile   = flag.String("cf", "", "Cascade binary file")
 		minSize       = flag.Int("min", 20, "Minimum size of face")
 		maxSize       = flag.Int("max", 1000, "Maximum size of face")
@@ -106,6 +104,7 @@ func main() {
 		jsonf         = flag.String("json", "", "Output the detection points into a json file")
 	)
 
+	log.SetFlags(0)
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, fmt.Sprintf(banner, Version))
 		flag.PrintDefaults()
@@ -148,6 +147,31 @@ func main() {
 		flplocDir:     *flplocDir,
 		markDetEyes:   *markEyes,
 	}
+
+	var dst io.Writer
+	if fd.destination != "empty" {
+		if fd.destination == pipeName {
+			if terminal.IsTerminal(int(os.Stdout.Fd())) {
+				log.Fatalln("`-` should be used with a pipe for stdout")
+			}
+			dst = os.Stdout
+		} else {
+			fileTypes := []string{".jpg", ".jpeg", ".png"}
+			ext := filepath.Ext(fd.destination)
+
+			if !inSlice(ext, fileTypes) {
+				log.Fatalf("Output file type not supported: %v", ext)
+			}
+
+			fn, err := os.OpenFile(fd.destination, os.O_CREATE|os.O_WRONLY, 0755)
+			if err != nil {
+				log.Fatalf("Unable to open output file: %v", err)
+			}
+			defer fn.Close()
+			dst = fn
+		}
+	}
+
 	faces, err := fd.detectFaces(*source)
 	if err != nil {
 		log.Fatalf("Detection error: %v", err)
@@ -156,6 +180,12 @@ func main() {
 	dets, err := fd.drawFaces(faces, *isCircle)
 	if err != nil {
 		log.Fatalf("Error creating the image output: %s", err)
+	}
+
+	if fd.destination != "empty" {
+		if err := fd.encodeImage(dst); err != nil {
+			log.Fatalf("Error encoding the output image: %v", err)
+		}
 	}
 
 	if *jsonf != "" {
@@ -175,7 +205,7 @@ func main() {
 		}
 	}
 	s.stop()
-	fmt.Printf("\nDone in: \x1b[92m%.2fs\n", time.Since(start).Seconds())
+	log.Printf("\nDone in: \x1b[92m%.2fs\n", time.Since(start).Seconds())
 }
 
 // detectFaces run the detection algorithm over the provided source image.
@@ -470,34 +500,6 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]dete
 			})
 		}
 	}
-
-	if fd.destination != "" {
-		var dst io.Writer
-		if fd.destination == pipeName {
-			if terminal.IsTerminal(int(os.Stdout.Fd())) {
-				log.Fatalln("`-` should be used with a pipe for stdout")
-			}
-			dst = os.Stdout
-		} else {
-			fileTypes := []string{".jpg", ".jpeg", ".png"}
-			ext := filepath.Ext(fd.destination)
-
-			if !inSlice(ext, fileTypes) {
-				log.Fatalf("Output file type not supported: %v", ext)
-			}
-
-			fn, err := os.OpenFile(fd.destination, os.O_CREATE|os.O_WRONLY, 0755)
-			if err != nil {
-				log.Fatalf("Unable to open output file: %v", err)
-			}
-			defer fn.Close()
-			dst = fn
-		}
-
-		if err := fd.encodeImage(dst); err != nil {
-			return detections, err
-		}
-	}
 	return detections, nil
 }
 
@@ -537,7 +539,7 @@ func (s *spinner) start(message string) {
 				case <-s.stopChan:
 					return
 				default:
-					fmt.Printf("\r%s%s %c%s", message, "\x1b[35m", r, "\x1b[39m")
+					fmt.Fprintf(os.Stderr, "\r%s%s %c%s", message, "\x1b[35m", r, "\x1b[39m")
 					time.Sleep(time.Millisecond * 100)
 				}
 			}
