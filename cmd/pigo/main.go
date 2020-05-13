@@ -20,7 +20,7 @@ import (
 	"github.com/disintegration/imaging"
 	pigo "github.com/esimov/pigo/core"
 	"github.com/fogleman/gg"
-	"golang.org/x/crypto/ssh/terminal"
+	t "golang.org/x/crypto/ssh/terminal"
 )
 
 const banner = `
@@ -151,7 +151,7 @@ func main() {
 	var dst io.Writer
 	if fd.destination != "empty" {
 		if fd.destination == pipeName {
-			if terminal.IsTerminal(int(os.Stdout.Fd())) {
+			if t.IsTerminal(int(os.Stdout.Fd())) {
 				log.Fatalln("`-` should be used with a pipe for stdout")
 			}
 			dst = os.Stdout
@@ -212,7 +212,7 @@ func main() {
 func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 	var srcFile io.Reader
 	if source == pipeName {
-		if terminal.IsTerminal(int(os.Stdin.Fd())) {
+		if t.IsTerminal(int(os.Stdin.Fd())) {
 			log.Fatalln("`-` should be used with a pipe for stdin")
 		}
 		srcFile = os.Stdin
