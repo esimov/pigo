@@ -29,6 +29,9 @@ This library does not require any third party modules to be installed. However i
 - [x] [Facial landmark points detection](#facial-landmark-points-detection)
 - [x] **[Webassembly support 🎉](#wasm-webassembly-support)**
 
+### Todo
+- [ ] Features detection and description
+
 **The library can also detect in plane rotated faces.** For this reason a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
 ```bash
