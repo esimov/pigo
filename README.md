@@ -144,7 +144,6 @@ import (
     pigo "github.com/esimov/pigo/core"
 )
 ```
-If you don't do this you will get a "Image: Unkown format" error
 
 ## Usage
 A command line utility is bundled into the library to detect faces in static images.
