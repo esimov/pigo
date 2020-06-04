@@ -137,6 +137,15 @@ dets := classifier.RunCascade(cParams, angle)
 dets = classifier.ClusterDetections(dets, 0.2)
 ```
 
+**A note about imports**:  in order to decode the image you will need to import `image/jpeg` or `image/png` (depending on the provided image type) and the Pigo library as well, otherwise you will get a `"Image: Unkown format"` error. See the following example:
+```Go
+import (
+    _ "image/jpeg"
+    pigo "github.com/esimov/pigo/core"
+)
+```
+If you don't do this you will get a "Image: Unkown format" error
+
 ## Usage
 A command line utility is bundled into the library to detect faces in static images.
 
