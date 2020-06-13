@@ -243,7 +243,7 @@ func (c *Canvas) detectKeyPress() {
 	keyEventHandler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		keyCode := args[0].Get("key")
 		switch {
-		case keyCode.String() == "s":
+		case keyCode.String() == "e":
 			c.showPupil = !c.showPupil
 		case keyCode.String() == "c":
 			c.drawCircle = !c.drawCircle
