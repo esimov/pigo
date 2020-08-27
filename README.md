@@ -162,32 +162,32 @@ $ pigo --help
 ┴  ┴└─┘└─┘
 
 Go (Golang) Face detection library.
-    Version: 1.4.0
-
+    Version: 1.4.2
+    
   -angle float
     	0.0 is 0 radians and 1.0 is 2*pi radians
   -cf string
     	Cascade binary file
-  -circle
-    	Use circle as detection marker
   -flp
     	Use facial landmark points localization
   -flpdir string
     	The facial landmark points base directory
   -in string
-    	Source image
+    	Source image (default "-")
   -iou float
     	Intersection over union (IoU) threshold (default 0.2)
-  -json
+  -json string
     	Output the detection points into a json file
   -mark
     	Mark detected eyes (default true)
+  -marker string
+    	Detection marker: rectangle|circle|ellipse (default "rect")
   -max int
     	Maximum size of face (default 1000)
   -min int
     	Minimum size of face (default 20)
   -out string
-    	Destination image
+    	Destination image (default "-")
   -pl
     	Pupils/eyes localization
   -plc string
