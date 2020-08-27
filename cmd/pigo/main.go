@@ -104,7 +104,7 @@ func main() {
 		scaleFactor   = flag.Float64("scale", 1.1, "Scale detection window by percentage")
 		angle         = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
 		iouThreshold  = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
-		marker        = flag.String("marker", "rect", "Detection marker: rectangle|circle|ellipse")
+		marker        = flag.String("marker", "rect", "Detection marker: rect|circle|ellipse")
 		puploc        = flag.Bool("pl", false, "Pupils/eyes localization")
 		puplocCascade = flag.String("plc", "", "Pupil localization cascade file")
 		markEyes      = flag.Bool("mark", true, "Mark detected eyes")
