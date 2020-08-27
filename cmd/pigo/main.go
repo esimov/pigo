@@ -106,7 +106,7 @@ func main() {
 		iouThreshold  = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
 		marker        = flag.String("marker", "rect", "Detection marker: rectangle|circle|ellipse")
 		puploc        = flag.Bool("pl", false, "Pupils/eyes localization")
-		puplocCascade = flag.String("plc", MarkerRectangle, "Pupil localization cascade file")
+		puplocCascade = flag.String("plc", "", "Pupil localization cascade file")
 		markEyes      = flag.Bool("mark", true, "Mark detected eyes")
 		flploc        = flag.Bool("flp", false, "Use facial landmark points localization")
 		flplocDir     = flag.String("flpdir", "", "The facial landmark points base directory")
