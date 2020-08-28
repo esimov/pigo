@@ -32,8 +32,9 @@ type Canvas struct {
 
 	showPupil  bool
 	showCoord  bool
-	drawCircle bool
 	flploc     bool
+	markerType string
+	markerIdx  int
 }
 
 var det *detector.Detector
@@ -57,8 +58,8 @@ func NewCanvas() *Canvas {
 	c.ctx = c.canvas.Call("getContext", "2d")
 	c.showPupil = true
 	c.showCoord = false
-	c.drawCircle = false
 	c.flploc = false
+	c.markerType = "rect"
 
 	det = detector.NewDetector()
 	return &c
@@ -190,18 +191,22 @@ func (c *Canvas) drawDetection(dets [][]int) {
 			c.ctx.Set("strokeStyle", "red")
 
 			row, col, scale := dets[i][1], dets[i][0], dets[i][2]
-			if c.drawCircle {
+			if c.showCoord {
+				c.ctx.Set("fillStyle", "red")
+				c.ctx.Set("font", "18px Arial")
+				message := fmt.Sprintf("(%v, %v)", row-scale/2, col-scale/2)
+				txtWidth := c.ctx.Call("measureText", js.ValueOf(message)).Get("width").Int()
+				c.ctx.Call("fillText", message, (row-scale/2)-txtWidth/2, col-scale/2-10)
+			}
+			switch c.markerType {
+			case "rect":
+				c.ctx.Call("rect", row-scale/2, col-scale/2, scale, scale)
+			case "circle":
 				c.ctx.Call("moveTo", row+int(scale/2), col)
 				c.ctx.Call("arc", row, col, scale/2, 0, 2*math.Pi, true)
-			} else {
-				if c.showCoord {
-					c.ctx.Set("fillStyle", "red")
-					c.ctx.Set("font", "18px Arial")
-					message := fmt.Sprintf("(%v, %v)", row-scale/2, col-scale/2)
-					txtWidth := c.ctx.Call("measureText", js.ValueOf(message)).Get("width").Int()
-					c.ctx.Call("fillText", message, (row-scale/2)-txtWidth/2, col-scale/2-10)
-				}
-				c.ctx.Call("rect", row-scale/2, col-scale/2, scale, scale)
+			case "ellipse":
+				c.ctx.Call("moveTo", row+int(scale/2), col)
+				c.ctx.Call("ellipse", row, col, scale/2, float64(scale)/1.6, 0, 0, 2*math.Pi)
 			}
 			c.ctx.Call("stroke")
 
@@ -246,13 +251,21 @@ func (c *Canvas) detectKeyPress() {
 		case keyCode.String() == "e":
 			c.showPupil = !c.showPupil
 		case keyCode.String() == "c":
-			c.drawCircle = !c.drawCircle
+			c.markerIdx++
+			if c.markerIdx > 2 {
+				c.markerIdx = 0
+			}
+			if c.markerIdx == 0 {
+				c.markerType = "rect"
+			} else if c.markerIdx == 1 {
+				c.markerType = "circle"
+			} else if c.markerIdx == 2 {
+				c.markerType = "ellipse"
+			}
 		case keyCode.String() == "f":
 			c.flploc = !c.flploc
 		case keyCode.String() == "x":
 			c.showCoord = !c.showCoord
-		default:
-			c.drawCircle = false
 		}
 		return nil
 	})
