@@ -36,6 +36,15 @@ Go (Golang) Face detection library.
 // pipeName is the file name that indicates stdin/stdout is being used.
 const pipeName = "-"
 
+const (
+	// MarkerRectangle - use rectangle as face detection marker
+	MarkerRectangle string = "rect"
+	// MarkerCircle - use circle as face detection marker
+	MarkerCircle string = "circle"
+	// MarkerEllipse - use ellipse as face detection marker
+	MarkerEllipse string = "ellipse"
+)
+
 // Version indicates the current build version.
 var Version string
 
@@ -95,7 +104,7 @@ func main() {
 		scaleFactor   = flag.Float64("scale", 1.1, "Scale detection window by percentage")
 		angle         = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
 		iouThreshold  = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
-		isCircle      = flag.Bool("circle", false, "Use circle as detection marker")
+		marker        = flag.String("marker", "rect", "Detection marker: rect|circle|ellipse")
 		puploc        = flag.Bool("pl", false, "Pupils/eyes localization")
 		puplocCascade = flag.String("plc", "", "Pupil localization cascade file")
 		markEyes      = flag.Bool("mark", true, "Mark detected eyes")
@@ -177,7 +186,7 @@ func main() {
 		log.Fatalf("Detection error: %v", err)
 	}
 
-	dets, err := fd.drawFaces(faces, *isCircle)
+	dets, err := fd.drawFaces(faces, *marker)
 	if err != nil {
 		log.Fatalf("Error creating the image output: %s", err)
 	}
@@ -294,8 +303,8 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 	return faces, nil
 }
 
-// drawFaces marks the detected faces with a circle in case isCircle is true, otherwise marks with a rectangle.
-func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]detection, error) {
+// drawFaces marks the detected faces with the marker type defined as parameter (rectangle|circle|ellipse).
+func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]detection, error) {
 	var (
 		qThresh float32 = 5.0
 		perturb         = 63
@@ -310,7 +319,14 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]dete
 
 	for _, face := range faces {
 		if face.Q > qThresh {
-			if isCircle {
+			switch marker {
+			case "rect":
+				dc.DrawRectangle(float64(face.Col-face.Scale/2),
+					float64(face.Row-face.Scale/2),
+					float64(face.Scale),
+					float64(face.Scale),
+				)
+			case "circle":
 				dc.DrawArc(
 					float64(face.Col),
 					float64(face.Row),
@@ -318,12 +334,12 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]dete
 					0,
 					2*math.Pi,
 				)
-			} else {
-				dc.DrawRectangle(
-					float64(face.Col-face.Scale/2),
-					float64(face.Row-face.Scale/2),
-					float64(face.Scale),
-					float64(face.Scale),
+			case "ellipse":
+				dc.DrawEllipse(
+					float64(face.Col),
+					float64(face.Row),
+					float64(face.Scale)/2,
+					float64(face.Scale)/1.6,
 				)
 			}
 			faceCoord := &coord{
@@ -357,7 +373,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]dete
 				leftEye := plc.RunDetector(*puploc, *imgParams, fd.angle, false)
 				if leftEye.Row > 0 && leftEye.Col > 0 {
 					if fd.angle > 0 {
-						drawDetections(ctx,
+						drawEyeDetectionMarker(ctx,
 							float64(cols/2-(face.Col-leftEye.Col)),
 							float64(rows/2-(face.Row-leftEye.Row)),
 							float64(leftEye.Scale),
@@ -370,7 +386,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]dete
 
 						dc.DrawImage(final, face.Col-face.Scale/2, face.Row-face.Scale/2)
 					} else {
-						drawDetections(dc,
+						drawEyeDetectionMarker(dc,
 							float64(leftEye.Col),
 							float64(leftEye.Row),
 							float64(leftEye.Scale),
@@ -396,7 +412,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]dete
 				rightEye := plc.RunDetector(*puploc, *imgParams, fd.angle, false)
 				if rightEye.Row > 0 && rightEye.Col > 0 {
 					if fd.angle > 0 {
-						drawDetections(ctx,
+						drawEyeDetectionMarker(ctx,
 							float64(cols/2-(face.Col-rightEye.Col)),
 							float64(rows/2-(face.Row-rightEye.Row)),
 							float64(rightEye.Scale),
@@ -410,7 +426,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]dete
 
 						dc.DrawImage(final, face.Col-face.Scale/2, face.Row-face.Scale/2)
 					} else {
-						drawDetections(dc,
+						drawEyeDetectionMarker(dc,
 							float64(rightEye.Col),
 							float64(rightEye.Row),
 							float64(rightEye.Scale),
@@ -430,7 +446,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]dete
 						for _, flpc := range flpcs[eye] {
 							flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, false)
 							if flp.Row > 0 && flp.Col > 0 {
-								drawDetections(dc,
+								drawEyeDetectionMarker(dc,
 									float64(flp.Col),
 									float64(flp.Row),
 									float64(flp.Scale*0.5),
@@ -441,7 +457,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]dete
 
 							flp = flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, true)
 							if flp.Row > 0 && flp.Col > 0 {
-								drawDetections(dc,
+								drawEyeDetectionMarker(dc,
 									float64(flp.Col),
 									float64(flp.Row),
 									float64(flp.Scale*0.5),
@@ -461,7 +477,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]dete
 						for _, flpc := range flpcs[mouth] {
 							flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, false)
 							if flp.Row > 0 && flp.Col > 0 {
-								drawDetections(dc,
+								drawEyeDetectionMarker(dc,
 									float64(flp.Col),
 									float64(flp.Row),
 									float64(flp.Scale*0.5),
@@ -478,7 +494,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, isCircle bool) ([]dete
 					}
 					flp := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, true)
 					if flp.Row > 0 && flp.Col > 0 {
-						drawDetections(dc,
+						drawEyeDetectionMarker(dc,
 							float64(flp.Col),
 							float64(flp.Row),
 							float64(flp.Scale*0.5),
@@ -562,8 +578,8 @@ func inSlice(item string, slice []string) bool {
 	return false
 }
 
-// drawDetections is a helper function to draw the detection marks
-func drawDetections(ctx *gg.Context, x, y, r float64, c color.RGBA, markDet bool) {
+// drawEyeDetectionMarker is a helper function to draw the detection marks
+func drawEyeDetectionMarker(ctx *gg.Context, x, y, r float64, c color.RGBA, markDet bool) {
 	ctx.DrawArc(x, y, r*0.15, 0, 2*math.Pi)
 	ctx.SetFillStyle(gg.NewSolidPattern(c))
 	ctx.Fill()
