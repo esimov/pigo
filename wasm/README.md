@@ -17,7 +17,7 @@ $ GOOS=js GOARCH=wasm go build -o lib.wasm wasm.go
 ```
 ### Supported keys:
 <kbd>s</kbd> - Show/hide pupils<br/>
-<kbd>c</kbd> - Toggle the detection marker shape type (rectangle|circle|ellipse)<br/>
+<kbd>c</kbd> - Toggle the detection shape types (`rectangle`|`circle`|`ellipse`)<br/>
 <kbd>f</kbd> - Show/hide facial landmark points (hidden by default)
 
 ## Demos
