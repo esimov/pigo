@@ -541,18 +541,18 @@ func (fd *faceDetector) encodeImage(dst io.Writer) error {
 }
 
 type spinner struct {
-	stopChan chan struct{}
+	done chan struct{}
 }
 
 // Start process
 func (s *spinner) start(message string) {
-	s.stopChan = make(chan struct{}, 1)
+	s.done = make(chan struct{}, 1)
 
 	go func() {
 		for {
 			for _, r := range `⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏` {
 				select {
-				case <-s.stopChan:
+				case <-s.done:
 					return
 				default:
 					fmt.Fprintf(os.Stderr, "\r%s%s %c%s", message, "\x1b[35m", r, "\x1b[39m")
@@ -565,7 +565,7 @@ func (s *spinner) start(message string) {
 
 // End process
 func (s *spinner) stop() {
-	s.stopChan <- struct{}{}
+	s.done <- struct{}{}
 }
 
 // inSlice checks if the item exists in the slice.
