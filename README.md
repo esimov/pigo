@@ -13,9 +13,9 @@ Pigo is a pure Go face detection library based on ***Pixel Intensity Comparison-
 | ![rectangle](https://user-images.githubusercontent.com/883386/40916662-2fbbae1a-6809-11e8-8afd-d4ed40c7d4e9.png) | ![circle](https://user-images.githubusercontent.com/883386/40916683-447088a8-6809-11e8-942f-3112c10bede3.png) |
 
 ### Motivation
-I've intended to implement this face detection method, since the only existing solution for face detection in the Go ecosystem is using bindings to OpenCV, but installing OpenCV on various platforms is sometimes daunting.
+I've intended to implement this face detection method because all of the existing solutions for face detection in the Go ecosystem are only bindings to some C/C++ libraries like OpenCV, but installing OpenCV on various platforms is cumbersome.
 
-This library does not require any third party modules to be installed. However in case you wish to try the real time, webcam based face detection you might need to have Python2 and OpenCV installed, but **the core API does not require any third party module or external dependency**.
+The library does not require any third party modules or applications to be installed. However in case you wish to try the real time, webcam based face detection you might need to have Python2 and OpenCV installed, but the core API does not require any third party module or external dependency.
 
 ### Key features
 - [x] Does not require OpenCV or any 3rd party modules to be installed
@@ -55,7 +55,7 @@ Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/
 
 ### Facial landmark points detection
 
-**v1.3.0** marks a new milestone in the library evolution, since it's capable of facial landmark points detection. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
+**v1.3.0** marks a new milestone in the library evolution, being able for facial landmark points detection. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
 
 Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/facial_landmark
 
@@ -210,7 +210,7 @@ $ cat input/source.jpg | pigo > -in - -out - >out.jpg -cf=/path/to/cascade
 $ cat input/source.jpg | pigo >out.jpg -cf=/path/to/cascade
 $ pigo -out out.jpg < input/source.jpg -cf=/path/to/cascade
 ```
-Using the `empty` string as value for the `-out` flag will skip the image generation part. This combined with the `-json` flag will encode the detection results into the specified json file. You can also use the pipe `-` value for the `-json` flag to output the detection coordinates to the standard output `stdout` output.
+Using the `empty` string as value for the `-out` flag will skip the image generation part. This combined with the `-json` flag will encode the detection results into the specified json file. You can also use the pipe `-` value for the `-json` flag to output the detection coordinates to the standard (`stdout`) output.
 
 ## Real time face detection
 
