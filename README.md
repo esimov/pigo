@@ -55,7 +55,7 @@ Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/
 
 ### Facial landmark points detection
 
-**v1.3.0** marks a new milestone in the library evolution, being able for facial landmark points detection. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
+**v1.3.0** marks a new milestone in the library evolution, Pigo being able for facial landmark points detection. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
 
 Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/facial_landmark
 
