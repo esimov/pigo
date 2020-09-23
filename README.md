@@ -6,16 +6,16 @@
 [![release](https://img.shields.io/badge/release-v1.4.2-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.4.2)
 [![snapcraft](https://img.shields.io/badge/snapcraft-v1.3.0-green.svg)](https://snapcraft.io/pigo)
 
-Pigo is a pure Go face detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf).
+Pigo is a pure Go face detection, pupil/eyes localization and facial landmark points detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf).
 
 | Rectangle face marker | Circle face marker
 |:--:|:--:
 | ![rectangle](https://user-images.githubusercontent.com/883386/40916662-2fbbae1a-6809-11e8-8afd-d4ed40c7d4e9.png) | ![circle](https://user-images.githubusercontent.com/883386/40916683-447088a8-6809-11e8-942f-3112c10bede3.png) |
 
 ### Motivation
-I've intended to implement this face detection method, since the only existing solution for face detection in the Go ecosystem is using bindings to OpenCV, but installing OpenCV on various platforms is sometimes daunting.
+I've intended to implement this face detection method because all of the existing solutions for face detection in the Go ecosystem are only bindings to some C/C++ libraries like OpenCV, but installing OpenCV on various platforms is cumbersome.
 
-This library does not require any third party modules to be installed. However in case you wish to try the real time, webcam based face detection you might need to have Python2 and OpenCV installed, but **the core API does not require any third party module or external dependency**.
+The library does not require any third party modules or applications to be installed. However in case you wish to try the real time, webcam based face detection you might need to have Python2 and OpenCV installed, but **the core API does not require any third party module or external dependency**.
 
 ### Key features
 - [x] Does not require OpenCV or any 3rd party modules to be installed
@@ -47,7 +47,7 @@ Note: In case of in plane rotated faces the angle value should be adapted to the
 
 ### Pupils / eyes localization
 
-Starting from **v1.2.0** Pigo includes pupils/eyes localization capabilites. The implementation is based on [Eye pupil localization with an ensemble of randomized trees](https://www.sciencedirect.com/science/article/abs/pii/S0031320313003294).
+Starting from **v1.2.0** Pigo offer pupils/eyes localization capabilites. The implementation is based on [Eye pupil localization with an ensemble of randomized trees](https://www.sciencedirect.com/science/article/abs/pii/S0031320313003294).
 
 Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/puploc
 
@@ -55,7 +55,7 @@ Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/
 
 ### Facial landmark points detection
 
-**v1.3.0** marks a new milestone in the library evolution, since it's capable of facial landmark points detection. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
+**v1.3.0** marks a new milestone in the library evolution, Pigo being able for facial landmark points detection. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
 
 Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/facial_landmark
 
@@ -210,15 +210,15 @@ $ cat input/source.jpg | pigo > -in - -out - >out.jpg -cf=/path/to/cascade
 $ cat input/source.jpg | pigo >out.jpg -cf=/path/to/cascade
 $ pigo -out out.jpg < input/source.jpg -cf=/path/to/cascade
 ```
-Using the `empty` string as value for the `-out` flag will skip the image generation part. This combined with the `-json` flag will encode the detection results into the specified json file. You can also use the pipe `-` value for the `-json` flag to output the detection coordinates to the standard output `stdout` output.
+Using the `empty` string as value for the `-out` flag will skip the image generation part. This, combined with the `-json` flag will encode the detection results into the specified json file. You can also use the pipe `-` value for the `-json` flag to output the detection coordinates to the standard (`stdout`) output.
 
-## Real time face detection
+## Real time face detection (running as a shared object)
 
 In case you wish to test the library real time face detection capabilities using a webcam, the `examples` folder contains a  web and a few Python examples. Prior running it you need to have Python2 and OpenCV2 installed.
 
-Select one of the few examples provided in the `examples` folder and simply run the python file from there. Each of them will execute the exported Go binary file as a shared library. This is also a proof of concept how Pigo can be integrated into different programming languages. I have provided examples only for Python, since this was the only viable way to access the webcam, Go suffering badly from a comprehensive and widely supported library for webcam access.
+Select one of the few Python files provided in the `examples` folder and simply run them. Each of them will execute the exported Go binary file as a shared library. This is also a proof of concept how Pigo can be integrated into different programming languages. I have provided examples only for Python, since this was the only viable way to access the webcam, the Go ecosystem suffering badly from a comprehensive, cross platform and widely available library for accessing the webcam.
 
-## WASM (Webassembly) support
+## WASM (Webassembly) support 🎉
 
 Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This gives the library a huge performance gain in terms of real time face detection capabilities. Form more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
 
