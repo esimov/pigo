@@ -168,10 +168,8 @@ Go (Golang) Face detection library.
     	0.0 is 0 radians and 1.0 is 2*pi radians
   -cf string
     	Cascade binary file
-  -flp
-    	Use facial landmark points localization
-  -flpdir string
-    	The facial landmark points base directory
+  -flpc string
+    	Facial landmark points cascade directory
   -in string
     	Source image (default "-")
   -iou float
@@ -188,15 +186,15 @@ Go (Golang) Face detection library.
     	Minimum size of face (default 20)
   -out string
     	Destination image (default "-")
-  -pl
-    	Pupils/eyes localization
   -plc string
-    	Pupil localization cascade file
+    	Pupils/eyes localization cascade file
   -scale float
     	Scale detection window by percentage (default 1.1)
   -shift float
     	Shift detection window by percentage (default 0.1)
 ```
+
+**Important notice:** In case the `plc` flag is not empty and the provided path is a valid file it will run the pupil/eyes detection method. The same is true for the `flpc` flag, only that in this case you need to provide the directory to the landmark point cascades found under `cascades/lps`.
 
 ### CLI command examples
 You can also use the `stdin` and `stdout` pipe commands:
