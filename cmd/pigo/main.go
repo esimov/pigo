@@ -63,19 +63,17 @@ var (
 
 // faceDetector struct contains Pigo face detector general settings.
 type faceDetector struct {
-	angle         float64
-	cascadeFile   string
-	destination   string
-	minSize       int
-	maxSize       int
-	shiftFactor   float64
-	scaleFactor   float64
-	iouThreshold  float64
-	puploc        bool
-	puplocCascade string
-	flploc        bool
-	flplocDir     string
-	markDetEyes   bool
+	angle        float64
+	cascadeFile  string
+	destination  string
+	minSize      int
+	maxSize      int
+	shiftFactor  float64
+	scaleFactor  float64
+	iouThreshold float64
+	puploc       string
+	flploc       string
+	markDetEyes  bool
 }
 
 // coord holds the detection coordinates
@@ -95,22 +93,20 @@ type detection struct {
 func main() {
 	var (
 		// Flags
-		source        = flag.String("in", pipeName, "Source image")
-		destination   = flag.String("out", pipeName, "Destination image")
-		cascadeFile   = flag.String("cf", "", "Cascade binary file")
-		minSize       = flag.Int("min", 20, "Minimum size of face")
-		maxSize       = flag.Int("max", 1000, "Maximum size of face")
-		shiftFactor   = flag.Float64("shift", 0.1, "Shift detection window by percentage")
-		scaleFactor   = flag.Float64("scale", 1.1, "Scale detection window by percentage")
-		angle         = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
-		iouThreshold  = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
-		marker        = flag.String("marker", "rect", "Detection marker: rect|circle|ellipse")
-		puploc        = flag.Bool("pl", false, "Pupils/eyes localization")
-		puplocCascade = flag.String("plc", "", "Pupil localization cascade file")
-		markEyes      = flag.Bool("mark", true, "Mark detected eyes")
-		flploc        = flag.Bool("flp", false, "Use facial landmark points localization")
-		flplocDir     = flag.String("flpdir", "", "The facial landmark points base directory")
-		jsonf         = flag.String("json", "", "Output the detection points into a json file")
+		source       = flag.String("in", pipeName, "Source image")
+		destination  = flag.String("out", pipeName, "Destination image")
+		cascadeFile  = flag.String("cf", "", "Cascade binary file")
+		minSize      = flag.Int("min", 20, "Minimum size of face")
+		maxSize      = flag.Int("max", 1000, "Maximum size of face")
+		shiftFactor  = flag.Float64("shift", 0.1, "Shift detection window by percentage")
+		scaleFactor  = flag.Float64("scale", 1.1, "Scale detection window by percentage")
+		angle        = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
+		iouThreshold = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
+		marker       = flag.String("marker", "rect", "Detection marker: rect|circle|ellipse")
+		puploc       = flag.String("plc", "", "Pupils/eyes localization cascade file")
+		flploc       = flag.String("flpc", "", "Facial landmark points cascade directory")
+		markEyes     = flag.Bool("mark", true, "Mark detected eyes")
+		jsonf        = flag.String("json", "", "Output the detection points into a json file")
 	)
 
 	log.SetFlags(0)
@@ -123,15 +119,6 @@ func main() {
 	if len(*source) == 0 || len(*cascadeFile) == 0 {
 		log.Fatal("Usage: pigo -in input.jpg -out out.png -cf cascade/facefinder")
 	}
-
-	if *puploc && len(*puplocCascade) == 0 {
-		log.Fatal("Missing the cascade binary file for pupils localization")
-	}
-
-	if *flploc && len(*flplocDir) == 0 {
-		log.Fatal("Please specify the base directory of the facial landmark points binary files")
-	}
-
 	if *scaleFactor < 1.05 {
 		log.Fatal("Scale factor must be greater than 1.05")
 	}
@@ -142,19 +129,17 @@ func main() {
 	start := time.Now()
 
 	fd = &faceDetector{
-		angle:         *angle,
-		destination:   *destination,
-		cascadeFile:   *cascadeFile,
-		minSize:       *minSize,
-		maxSize:       *maxSize,
-		shiftFactor:   *shiftFactor,
-		scaleFactor:   *scaleFactor,
-		iouThreshold:  *iouThreshold,
-		puploc:        *puploc,
-		puplocCascade: *puplocCascade,
-		flploc:        *flploc,
-		flplocDir:     *flplocDir,
-		markDetEyes:   *markEyes,
+		angle:        *angle,
+		destination:  *destination,
+		cascadeFile:  *cascadeFile,
+		minSize:      *minSize,
+		maxSize:      *maxSize,
+		shiftFactor:  *shiftFactor,
+		scaleFactor:  *scaleFactor,
+		iouThreshold: *iouThreshold,
+		puploc:       *puploc,
+		flploc:       *flploc,
+		markDetEyes:  *markEyes,
 	}
 
 	var dst io.Writer
@@ -273,10 +258,9 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 		return nil, err
 	}
 
-	if fd.puploc {
+	if len(fd.puploc) > 0 {
 		pl := pigo.NewPuplocCascade()
-
-		cascade, err := ioutil.ReadFile(fd.puplocCascade)
+		cascade, err := ioutil.ReadFile(fd.puploc)
 		if err != nil {
 			return nil, err
 		}
@@ -285,8 +269,8 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 			return nil, err
 		}
 
-		if fd.flploc {
-			flpcs, err = pl.ReadCascadeDir(fd.flplocDir)
+		if len(fd.flploc) > 0 {
+			flpcs, err = pl.ReadCascadeDir(fd.flploc)
 			if err != nil {
 				return nil, err
 			}
@@ -352,7 +336,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 			dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 0, B: 0, A: 255}))
 			dc.Stroke()
 
-			if fd.puploc && face.Scale > 50 {
+			if len(fd.puploc) > 0 && face.Scale > 50 {
 				rect := image.Rect(
 					face.Col-face.Scale/2,
 					face.Row-face.Scale/2,
@@ -441,7 +425,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 					})
 				}
 
-				if fd.flploc {
+				if len(fd.flploc) > 0 {
 					for _, eye := range eyeCascades {
 						for _, flpc := range flpcs[eye] {
 							flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, false)
