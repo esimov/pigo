@@ -57,8 +57,8 @@ var (
 )
 
 var (
-	eyeCascades  = []string{"lp46", "lp44", "lp42", "lp38", "lp312"}
-	mouthCascade = []string{"lp93", "lp84", "lp82", "lp81"}
+	eyeCascades   = []string{"lp46", "lp44", "lp42", "lp38", "lp312"}
+	mouthCascades = []string{"lp93", "lp84", "lp82", "lp81"}
 )
 
 // faceDetector struct contains Pigo face detector general settings.
@@ -437,12 +437,12 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 									color.RGBA{R: 0, G: 0, B: 255, A: 255},
 									false,
 								)
+								landmarkCoords = append(landmarkCoords, coord{
+									Col:   flp.Row,
+									Row:   flp.Col,
+									Scale: int(flp.Scale),
+								})
 							}
-							landmarkCoords = append(landmarkCoords, coord{
-								Col:   flp.Row,
-								Row:   flp.Col,
-								Scale: int(flp.Scale),
-							})
 
 							flp = flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, true)
 							if flp.Row > 0 && flp.Col > 0 {
@@ -453,16 +453,16 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 									color.RGBA{R: 0, G: 0, B: 255, A: 255},
 									false,
 								)
+								landmarkCoords = append(landmarkCoords, coord{
+									Col:   flp.Row,
+									Row:   flp.Col,
+									Scale: int(flp.Scale),
+								})
 							}
-							landmarkCoords = append(landmarkCoords, coord{
-								Col:   flp.Row,
-								Row:   flp.Col,
-								Scale: int(flp.Scale),
-							})
 						}
 					}
 
-					for _, mouth := range mouthCascade {
+					for _, mouth := range mouthCascades {
 						for _, flpc := range flpcs[mouth] {
 							flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, false)
 							if flp.Row > 0 && flp.Col > 0 {
@@ -473,12 +473,12 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 									color.RGBA{R: 0, G: 0, B: 255, A: 255},
 									false,
 								)
+								landmarkCoords = append(landmarkCoords, coord{
+									Col:   flp.Row,
+									Row:   flp.Col,
+									Scale: int(flp.Scale),
+								})
 							}
-							landmarkCoords = append(landmarkCoords, coord{
-								Col:   flp.Row,
-								Row:   flp.Col,
-								Scale: int(flp.Scale),
-							})
 						}
 					}
 					flp := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, true)
