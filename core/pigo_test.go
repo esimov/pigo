@@ -81,7 +81,7 @@ func TestPigo_Detector_ShouldDetectFace(t *testing.T) {
 	// Calculate the intersection over union (IoU) of two clusters.
 	faces = classifier.ClusterDetections(faces, 0.1)
 	if len(faces) == 0 {
-		t.Fatalf("should have been detected eyes: %s", err)
+		t.Fatalf("face should've been detected")
 	}
 }
 

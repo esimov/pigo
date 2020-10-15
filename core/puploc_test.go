@@ -75,7 +75,7 @@ func TestPuploc_Detector_ShouldDetectEyes(t *testing.T) {
 	}
 
 	if len(eyes) == 0 {
-		t.Fatalf("should have been detected eyes: %s", err)
+		t.Fatalf("eyes should've been detected")
 	}
 }
 
