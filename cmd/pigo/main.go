@@ -327,8 +327,8 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 				)
 			}
 			faceCoord := &coord{
-				Row:   face.Row,
-				Col:   face.Col,
+				Col:   face.Row - face.Scale/2,
+				Row:   face.Col - face.Scale/2,
 				Scale: face.Scale,
 			}
 
@@ -379,8 +379,8 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 						)
 					}
 					eyesCoords = append(eyesCoords, coord{
-						Row:   leftEye.Row,
-						Col:   leftEye.Col,
+						Col:   leftEye.Row,
+						Row:   leftEye.Col,
 						Scale: int(leftEye.Scale),
 					})
 				}
@@ -419,8 +419,8 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 						)
 					}
 					eyesCoords = append(eyesCoords, coord{
-						Row:   rightEye.Row,
-						Col:   rightEye.Col,
+						Col:   rightEye.Row,
+						Row:   rightEye.Col,
 						Scale: int(rightEye.Scale),
 					})
 				}
@@ -438,6 +438,11 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 									false,
 								)
 							}
+							landmarkCoords = append(landmarkCoords, coord{
+								Col:   flp.Row,
+								Row:   flp.Col,
+								Scale: int(flp.Scale),
+							})
 
 							flp = flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, true)
 							if flp.Row > 0 && flp.Col > 0 {
@@ -450,8 +455,8 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 								)
 							}
 							landmarkCoords = append(landmarkCoords, coord{
-								Row:   flp.Row,
-								Col:   flp.Col,
+								Col:   flp.Row,
+								Row:   flp.Col,
 								Scale: int(flp.Scale),
 							})
 						}
@@ -470,8 +475,8 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 								)
 							}
 							landmarkCoords = append(landmarkCoords, coord{
-								Row:   flp.Row,
-								Col:   flp.Col,
+								Col:   flp.Row,
+								Row:   flp.Col,
 								Scale: int(flp.Scale),
 							})
 						}
@@ -486,8 +491,8 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 							false,
 						)
 						landmarkCoords = append(landmarkCoords, coord{
-							Row:   flp.Row,
-							Col:   flp.Col,
+							Col:   flp.Row,
+							Row:   flp.Col,
 							Scale: int(flp.Scale),
 						})
 					}
