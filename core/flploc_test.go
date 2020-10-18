@@ -31,7 +31,7 @@ func TestFlploc_UnpackCascadeFileShouldNotBeNil(t *testing.T) {
 	}
 }
 
-func TestFlploc_LandmarkPointsDetectorShouldReturnDetectionPoints(t *testing.T) {
+func TestFlploc_LandmarkDetectorShouldReturnDetectionPoints(t *testing.T) {
 	p := pigo.NewPigo()
 	// Unpack the binary file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
@@ -77,7 +77,7 @@ func TestFlploc_LandmarkPointsDetectorShouldReturnDetectionPoints(t *testing.T) 
 	}
 }
 
-func TestFlploc_LandmarkPointsDetectorShouldReturnCorrectDetectionPoints(t *testing.T) {
+func TestFlploc_LandmarkDetectorShouldReturnCorrectDetectionPoints(t *testing.T) {
 	var (
 		eyeCascades   = []string{"lp46", "lp44", "lp42", "lp38", "lp312"}
 		mouthCascades = []string{"lp93", "lp84", "lp82", "lp81"}
