@@ -153,7 +153,7 @@ func TestFlploc_LandmarkPointsDetectorShouldReturnCorrectDetectionPoints(t *test
 
 		}
 	}
-	expectedLandmarkPoints := 2*len(eyeCascades) + len(mouthCascades) + 1
+	expectedLandmarkPoints := 2*len(eyeCascades) + len(mouthCascades) + 1 // lendmark points of the left/right eyes, mouth + nose
 	if expectedLandmarkPoints != detectedLandmarkPoints {
 		t.Fatalf("expected facial landmark points to be detected: %d, got: %d", expectedLandmarkPoints, detectedLandmarkPoints)
 	}

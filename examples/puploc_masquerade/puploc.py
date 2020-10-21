@@ -34,20 +34,20 @@ def rotateImage(image, angle):
 
   return result
 
-# Obtain the camera pixels and transfer them to Go trough Ctypes.
+# Obtain the camera pixels and transfer them to Go through Ctypes.
 def process_frame(pixs):
 	dets = np.zeros(ARRAY_DIM * MAX_NDETS, dtype=np.float32)
 	pixels = cast((c_ubyte * len(pixs))(*pixs), POINTER(c_ubyte))
-	
+
 	# call FindFaces
 	faces = GoPixelSlice(pixels, len(pixs), len(pixs))
 	pigo.FindFaces.argtypes = [GoPixelSlice]
 	pigo.FindFaces.restype = c_void_p
 
-	# Call the exported FindFaces function from Go. 
+	# Call the exported FindFaces function from Go.
 	ndets = pigo.FindFaces(faces)
 	data_pointer = cast(ndets, POINTER((c_longlong * ARRAY_DIM) * MAX_NDETS))
-	
+
 	if data_pointer :
 		buffarr = ((c_longlong * ARRAY_DIM) * MAX_NDETS).from_address(addressof(data_pointer.contents))
 		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(MAX_NDETS, ARRAY_DIM,))
@@ -66,7 +66,7 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-# Changing the camera resolution introduce a short delay in the camera initialization. 
+# Changing the camera resolution introduce a short delay in the camera initialization.
 # For this reason we should delay the object detection process with a few milliseconds.
 time.sleep(0.4)
 
@@ -81,7 +81,7 @@ while(True):
 
 		if dets is not None:
 			# We know that the detected faces are taking place in the first positions of the multidimensional array.
-			for row, col, scale, q, angle in dets:			
+			for row, col, scale, q, angle in dets:
 				if q > 50:
 					if angle == 0:
 						px, py = col, row
@@ -105,8 +105,8 @@ while(True):
 						# Convert the image to BGR
 						source_img = source_img[:,:,:3]
 
-						if scale < img_height or scale < img_width:				
-							if img_height > img_width:		
+						if scale < img_height or scale < img_width:
+							if img_height > img_width:
 								img_scale = float(scale)/float(img_height)
 							else:
 								img_scale = float(scale)/float(img_width)
@@ -115,15 +115,15 @@ while(True):
 						img = cv2.resize(source_img, (width, height), cv2.INTER_AREA)
 						mask = cv2.resize(orig_mask, (width, height), cv2.INTER_AREA)
 						mask_inv = cv2.resize(orig_mask_inv, (width, height), cv2.INTER_AREA)
-					
+
 						if px == None or py == None:
 							continue
-							
+
 						y1 = row-scale/2+(row-scale/2-(py-height))
 						y2 = row-scale/2+height+(row-scale/2-(py-height))
 						x1 = col-scale/2
 						x2 = col-scale/2+width
-		
+
 						if y1 < 0 or y2 < 0:
 							continue
 						roi = frame[y1:y2, x1:x2]
@@ -132,15 +132,15 @@ while(True):
 
 						# join the roi_bg and roi_fg
 						dst = cv2.add(roi_bg, roi_fg)
-						frame[y1:y2, x1:x2] = dst			
-						
+						frame[y1:y2, x1:x2] = dst
+
 	cv2.imshow('', frame)
 
 	key = cv2.waitKey(1)
 	if key & 0xFF == ord('q'):
 		break
 	elif key & 0xFF == ord('w'):
-		show_face = not show_face	
+		show_face = not show_face
 	elif key & 0xFF == ord('e'):
 		img_idx += 1
 		if img_idx > len(source_imgs)-1:

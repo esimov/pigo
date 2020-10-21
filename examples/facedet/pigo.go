@@ -34,7 +34,7 @@ func FindFaces(pixels []uint8) uintptr {
 
 	det := make([]int, 0, len(result))
 	go func() {
-		// Since in Go we cannot transfer a 2d array trough an array pointer
+		// Since in Go we cannot transfer a 2d array through an array pointer
 		// we have to transform it into 1d array.
 		for _, v := range result {
 			det = append(det, v...)

@@ -17,12 +17,12 @@ $ GOOS=js GOARCH=wasm go build -o lib.wasm wasm.go
 ```
 ### Supported keys:
 <kbd>s</kbd> - Show/hide pupils<br/>
-<kbd>c</kbd> - Circle trough the detection shape types (`rectangle`|`circle`|`ellipse`)<br/>
+<kbd>c</kbd> - Circle through the detection shape types (`rectangle`|`circle`|`ellipse`)<br/>
 <kbd>f</kbd> - Show/hide facial landmark points (hidden by default)
 
 ## Demos
 
-For **Webassembly** related demos check this separate repo: 
+For **Webassembly** related demos check this separate repo:
 
-https://github.com/esimov/pigo-wasm-demos 
+https://github.com/esimov/pigo-wasm-demos
 

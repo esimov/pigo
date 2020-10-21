@@ -19,20 +19,20 @@ class GoPixelSlice(Structure):
 		("pixels", POINTER(c_ubyte)), ("len", c_longlong), ("cap", c_longlong),
 	]
 
-# Obtain the camera pixels and transfer them to Go trough Ctypes.
+# Obtain the camera pixels and transfer them to Go through Ctypes.
 def process_frame(pixs):
 	dets = np.zeros(3 * MAX_NDETS, dtype=np.float32)
 	pixels = cast((c_ubyte * len(pixs))(*pixs), POINTER(c_ubyte))
-	
+
 	# call FindFaces
 	faces = GoPixelSlice(pixels, len(pixs), len(pixs))
 	pigo.FindFaces.argtypes = [GoPixelSlice]
 	pigo.FindFaces.restype = c_void_p
 
-	# Call the exported FindFaces function from Go. 
+	# Call the exported FindFaces function from Go.
 	ndets = pigo.FindFaces(faces)
 	data_pointer = cast(ndets, POINTER((c_longlong * 3) * MAX_NDETS))
-	
+
 	if data_pointer :
 		buffarr = ((c_longlong * 3) * MAX_NDETS).from_address(addressof(data_pointer.contents))
 		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(MAX_NDETS, 3,))
@@ -50,7 +50,7 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
-# Changing the camera resolution introduce a short delay in the camera initialization. 
+# Changing the camera resolution introduce a short delay in the camera initialization.
 # For this reason we should delay the object detection process with a few milliseconds.
 time.sleep(0.4)
 

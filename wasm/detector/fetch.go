@@ -23,7 +23,7 @@ func NewDetector() *Detector {
 	return &d
 }
 
-// FetchCascade retrive the cascade file trough a JS http connection.
+// FetchCascade retrive the cascade file through a JS http connection.
 // It should return the binary data as uint8 integers or err in case of an error.
 func (d *Detector) FetchCascade(url string) ([]byte, error) {
 	d.respChan = make(chan []uint8)

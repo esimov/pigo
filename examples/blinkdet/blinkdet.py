@@ -22,20 +22,20 @@ class GoPixelSlice(Structure):
 		("pixels", POINTER(c_ubyte)), ("len", c_longlong), ("cap", c_longlong),
 	]
 
-# Obtain the camera pixels and transfer them to Go trough C types.
+# Obtain the camera pixels and transfer them to Go through C types.
 def process_frame(pixs):
 	dets = np.zeros(ARRAY_DIM * MAX_NDETS, dtype=np.float32)
 	pixels = cast((c_ubyte * len(pixs))(*pixs), POINTER(c_ubyte))
-	
+
 	# call FindFaces
 	faces = GoPixelSlice(pixels, len(pixs), len(pixs))
 	pigo.FindFaces.argtypes = [GoPixelSlice]
 	pigo.FindFaces.restype = c_void_p
 
-	# Call the exported FindFaces function from Go. 
+	# Call the exported FindFaces function from Go.
 	ndets = pigo.FindFaces(faces)
 	data_pointer = cast(ndets, POINTER((c_longlong * ARRAY_DIM) * MAX_NDETS))
-	
+
 	if data_pointer :
 		buffarr = ((c_longlong * ARRAY_DIM) * MAX_NDETS).from_address(addressof(data_pointer.contents))
 		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(MAX_NDETS, 5,))
@@ -54,7 +54,7 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-# Changing the camera resolution introduce a short delay in the camera initialization. 
+# Changing the camera resolution introduce a short delay in the camera initialization.
 # For this reason we should delay the object detection process with a few milliseconds.
 time.sleep(0.4)
 
@@ -77,9 +77,9 @@ while(True):
 			for det in dets:
 				if det[4] == 1: # 1 == face; 0 == pupil
 					face_posy = det[1]
-					cv2.rectangle(frame, 
-							(int(det[1])-int(det[2]/2), int(det[0])-int(det[2]/2)), 
-							(int(det[1])+int(det[2]/2), int(det[0])+int(det[2]/2)), 
+					cv2.rectangle(frame,
+							(int(det[1])-int(det[2]/2), int(det[0])-int(det[2]/2)),
+							(int(det[1])+int(det[2]/2), int(det[0])+int(det[2]/2)),
 							(0, 0, 255), 2
 						)
 				else:
@@ -89,22 +89,22 @@ while(True):
 
 						x1, x2 = int(det[0])-int(det[2]*1.2), int(det[0])+int(det[2]*1.2)
 						y1, y2 = int(det[1])-int(det[2]*1.2), int(det[1])+int(det[2]*1.2)
-						subimg = frame[x1:x2, y1:y2]						
-						
+						subimg = frame[x1:x2, y1:y2]
+
 						if subimg is not None:
 							gray = cv2.cvtColor(subimg, cv2.COLOR_BGR2GRAY)
 							img_blur = cv2.medianBlur(gray, 1)
 
 							if img_blur is not None:
 								max_radius = int(det[2]*0.45)
-								circles = cv2.HoughCircles(img_blur, cv2.HOUGH_GRADIENT, 1, int(det[2]*0.45), 
+								circles = cv2.HoughCircles(img_blur, cv2.HOUGH_GRADIENT, 1, int(det[2]*0.45),
 									param1=60, param2=21, minRadius=4, maxRadius=max_radius)
-								
+
 								if circles is not None:
 									circles = np.uint16(np.around(circles))
 									for i in circles[0, :]:
-										if i[2] < max_radius and i[2] > 0:										
-											# Draw outer circle																					
+										if i[2] < max_radius and i[2] > 0:
+											# Draw outer circle
 											cv2.circle(frame, (int(det[1]), int(det[0])), i[2], (0, 255, 0), 2)
 											# Draw inner circle
 											cv2.circle(frame, (int(det[1]), int(det[0])), 2, (255, 0, 255), 3)
@@ -112,21 +112,21 @@ while(True):
 									if face_posy < y1:
 										count_left = 0
 									else:
-										count_right = 0								
-						
-						if count_left < EYE_CLOSED_CONSEC_FRAMES:						
+										count_right = 0
+
+						if count_left < EYE_CLOSED_CONSEC_FRAMES:
 							cv2.putText(frame, "Left blink!", (10, 30),
 								cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 						elif count_right < EYE_CLOSED_CONSEC_FRAMES:
 							cv2.putText(frame, "Right blink!", (frame.shape[1]-150, 30),
 								cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-																							
+
 						cv2.circle(frame, (int(det[1]), int(det[0])), 4, (0, 0, 255), -1, 8, 0)
 
 					if show_eyes:
-						cv2.rectangle(frame, 
-							(int(det[1])-int(det[2]), int(det[0])-int(det[2])), 
-							(int(det[1])+int(det[2]), int(det[0])+int(det[2])), 
+						cv2.rectangle(frame,
+							(int(det[1])-int(det[2]), int(det[0])-int(det[2])),
+							(int(det[1])+int(det[2]), int(det[0])+int(det[2])),
 							(0, 255, 0), 2
 						)
 

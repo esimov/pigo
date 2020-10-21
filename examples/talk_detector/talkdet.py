@@ -47,7 +47,7 @@ class GoPixelSlice(Structure):
         ("pixels", POINTER(c_ubyte)), ("len", c_longlong), ("cap", c_longlong),
     ]
 
-# Obtain the camera pixels and transfer them to Go trough Ctypes
+# Obtain the camera pixels and transfer them to Go through Ctypes
 def process_frame(pixs):
     dets = np.zeros(ARRAY_DIM * MAX_NDETS, dtype=np.float32)
     pixels = cast((c_ubyte * len(pixs))(*pixs), POINTER(c_ubyte))
