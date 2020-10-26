@@ -225,10 +225,10 @@ Starting from version **v1.4.0** the library has been ported to [**WASM**](http:
 Below are the benchmark results obtained running Pigo against [GoCV](https://github.com/hybridgroup/gocv) using the same conditions.
 
 ```
-BenchmarkGoCV-4   	       3	 382104939 ns/op
-BenchmarkPIGO-4   	      10	 102096206 ns/op
-PASS
-ok  	github.com/esimov/pigo-gocv-benchmark	3.732s
+    BenchmarkGoCV-4   	       3	 414122553 ns/op	     704 B/op	       1 allocs/op
+    BenchmarkPIGO-4   	      10	 173664832 ns/op	       0 B/op	       0 allocs/op
+    PASS
+    ok  	github.com/esimov/gocv-test	4.530s
 ```
 The code used for the above test can be found under the following link: https://github.com/esimov/pigo-gocv-benchmark
 
