@@ -277,7 +277,8 @@ func (pg *Pigo) ClusterDetections(detections []Detection, iouThreshold float64) 
 				q          float32
 			)
 			for j := 0; j < len(detections); j++ {
-				// Check if the comparison result is below a certain threshold.
+				// Check if the comparison result is above a certain threshold.
+				// In this case we union the detections.
 				if calcIoU(detections[i], detections[j]) > iouThreshold {
 					assignments[j] = true
 					r += detections[j].Row
