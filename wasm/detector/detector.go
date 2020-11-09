@@ -112,13 +112,13 @@ func (d *Detector) DetectLandmarkPoints(leftEye, rightEye *pigo.Puploc) [][]int 
 
 	for _, eye := range eyeCascades {
 		for _, flpc := range flpcs[eye] {
-			flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, false)
+			flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, false)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
 			idx++
 
-			flp = flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, true)
+			flp = flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, true)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
@@ -128,14 +128,14 @@ func (d *Detector) DetectLandmarkPoints(leftEye, rightEye *pigo.Puploc) [][]int 
 
 	for _, mouth := range mouthCascade {
 		for _, flpc := range flpcs[mouth] {
-			flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, false)
+			flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, false)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
 			idx++
 		}
 	}
-	flp := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, true)
+	flp := flpcs["lp84"][0].GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, true)
 	if flp.Row > 0 && flp.Col > 0 {
 		det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 	}

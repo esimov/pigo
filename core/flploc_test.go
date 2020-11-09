@@ -68,7 +68,7 @@ func TestFlploc_LandmarkDetectorShouldReturnDetectionPoints(t *testing.T) {
 			}
 			rightEye := plc.RunDetector(*puploc, *imgParams, 0.0, false)
 
-			flp := plc.FindLandmarkPoints(leftEye, rightEye, *imgParams, perturbation, false)
+			flp := plc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturbation, false)
 			landMarkPoints = append(landMarkPoints, *flp)
 		}
 	}
@@ -127,11 +127,11 @@ func TestFlploc_LandmarkDetectorShouldReturnCorrectDetectionPoints(t *testing.T)
 
 			for _, eye := range eyeCascades {
 				for _, flpc := range flpcs[eye] {
-					flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, perturbation, false)
+					flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturbation, false)
 					if flp.Row > 0 && flp.Col > 0 {
 						detectedLandmarkPoints++
 					}
-					flp = flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, perturbation, true)
+					flp = flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturbation, true)
 					if flp.Row > 0 && flp.Col > 0 {
 						detectedLandmarkPoints++
 					}
@@ -139,14 +139,14 @@ func TestFlploc_LandmarkDetectorShouldReturnCorrectDetectionPoints(t *testing.T)
 			}
 			for _, mouth := range mouthCascades {
 				for _, flpc := range flpcs[mouth] {
-					flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, perturbation, false)
+					flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturbation, false)
 					if flp.Row > 0 && flp.Col > 0 {
 						detectedLandmarkPoints++
 					}
 				}
 			}
 
-			flp := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, perturbation, true)
+			flp := flpcs["lp84"][0].GetLandmarkPoint(leftEye, rightEye, *imgParams, perturbation, true)
 			if flp.Row > 0 && flp.Col > 0 {
 				detectedLandmarkPoints++
 			}
@@ -207,7 +207,7 @@ func BenchmarkFlploc(b *testing.B) {
 				}
 				rightEye := plc.RunDetector(*puploc, *imgParams, 0.0, false)
 
-				plc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, false)
+				plc.GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, false)
 
 			}
 		}
