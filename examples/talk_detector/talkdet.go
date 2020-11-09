@@ -72,12 +72,12 @@ func FindFaces(pixels []uint8) uintptr {
 		// Traverse all the eye cascades and run the detector on each of them.
 		for _, eye := range eyeCascades {
 			for _, flpc := range flpcs[eye] {
-				flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
+				flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
 				if flp.Row > 0 && flp.Col > 0 {
 					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
 				}
 
-				flp = flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
+				flp = flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
 				if flp.Row > 0 && flp.Col > 0 {
 					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
 				}
@@ -88,14 +88,14 @@ func FindFaces(pixels []uint8) uintptr {
 		// Traverse all the mouth cascades and run the detector on each of them.
 		for _, mouth := range mouthCascade {
 			for _, flpc := range flpcs[mouth] {
-				flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
+				flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
 				if flp.Row > 0 && flp.Col > 0 {
 					mouthPoints = append(mouthPoints, flp.Row, flp.Col)
 					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
 				}
 			}
 		}
-		flp := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
+		flp := flpcs["lp84"][0].GetLandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
 		if flp.Row > 0 && flp.Col > 0 {
 			mouthPoints = append(mouthPoints, flp.Row, flp.Col)
 			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)

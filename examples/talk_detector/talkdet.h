@@ -68,8 +68,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-
-extern GoUintptr FindFaces(GoSlice p0);
+extern GoUintptr FindFaces(GoSlice pixels);
 
 #ifdef __cplusplus
 }
