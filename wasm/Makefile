@@ -20,7 +20,7 @@ wasm:
 
 serve:
 	$(BROWSER) 'http://localhost:5000'
-	serve
+	go run http/serve.go
 
 clean:
 	rm -f *.wasm
