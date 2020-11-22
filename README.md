@@ -218,7 +218,13 @@ Select one of the few Python files provided in the `examples` folder and simply 
 
 ## WASM (Webassembly) support 🎉
 
-Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This gives the library a huge performance gain in terms of real time face detection capabilities. Form more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
+Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This gives the library a huge performance gain in terms of real time face detection capabilities. 
+
+### WASM demo
+
+To run the `wasm` demo select the `wasm` folder and type `make`.
+
+For more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
 
 ## Benchmark results
 
