@@ -228,13 +228,14 @@ func (c *Canvas) drawDetection(dets [][]int) {
 
 				if c.flploc {
 					flps := det.DetectLandmarkPoints(leftPupil, rightPupil)
-
 					c.ctx.Call("beginPath")
 					c.ctx.Set("fillStyle", "rgb(0, 255, 0)")
 					for _, flp := range flps {
-						col, row, scale = flp[1], flp[0], flp[2]/7
-						c.ctx.Call("moveTo", row+flp[2]/7, col)
-						c.ctx.Call("arc", row, col, scale, 0, 2*math.Pi, false)
+						if len(flp) > 0 {
+							col, row, scale = flp[1], flp[0], flp[2]/7
+							c.ctx.Call("moveTo", row, col)
+							c.ctx.Call("arc", row, col, scale, 0, 2*math.Pi, false)
+						}
 					}
 					c.ctx.Call("fill")
 				}

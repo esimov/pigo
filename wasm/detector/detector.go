@@ -31,7 +31,7 @@ var (
 func (d *Detector) UnpackCascades() error {
 	p := pigo.NewPigo()
 
-	cascade, err = d.FetchCascade("https://raw.githubusercontent.com/esimov/pigo/master/cascade/facefinder")
+	cascade, err = d.ParseCascade("/cascade/facefinder")
 	if err != nil {
 		return errors.New("error reading the facefinder cascade file")
 	}
@@ -44,7 +44,7 @@ func (d *Detector) UnpackCascades() error {
 
 	plc := pigo.NewPuplocCascade()
 
-	puplocCascade, err = d.FetchCascade("https://raw.githubusercontent.com/esimov/pigo/master/cascade/puploc")
+	puplocCascade, err = d.ParseCascade("/cascade/puploc")
 	if err != nil {
 		return errors.New("error reading the puploc cascade file")
 	}
@@ -54,7 +54,7 @@ func (d *Detector) UnpackCascades() error {
 		return errors.New("error unpacking the puploc cascade file")
 	}
 
-	flpcs, err = d.parseFlpCascades("https://raw.githubusercontent.com/esimov/pigo/master/cascade/lps/")
+	flpcs, err = d.parseFlpCascades("/cascade/lps/")
 	if err != nil {
 		return errors.New("error unpacking the facial landmark points detection cascades")
 	}
@@ -112,13 +112,13 @@ func (d *Detector) DetectLandmarkPoints(leftEye, rightEye *pigo.Puploc) [][]int 
 
 	for _, eye := range eyeCascades {
 		for _, flpc := range flpcs[eye] {
-			flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, false)
+			flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, false)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
 			idx++
 
-			flp = flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, true)
+			flp = flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, true)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
@@ -128,14 +128,14 @@ func (d *Detector) DetectLandmarkPoints(leftEye, rightEye *pigo.Puploc) [][]int 
 
 	for _, mouth := range mouthCascade {
 		for _, flpc := range flpcs[mouth] {
-			flp := flpc.FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, false)
+			flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, false)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
 			idx++
 		}
 	}
-	flp := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, 63, true)
+	flp := flpcs["lp84"][0].GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, true)
 	if flp.Row > 0 && flp.Col > 0 {
 		det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 	}
@@ -177,7 +177,7 @@ func (d *Detector) parseFlpCascades(path string) (map[string][]*FlpCascade, erro
 	pl := pigo.NewPuplocCascade()
 
 	for _, cascade := range cascades {
-		puplocCascade, err = d.FetchCascade(path + cascade)
+		puplocCascade, err = d.ParseCascade(path + cascade)
 		if err != nil {
 			d.Log("Error reading the cascade file: %v", err)
 		}
