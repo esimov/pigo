@@ -30,7 +30,7 @@ The library does not require any third party modules or applications to be insta
 - [x] **[Webassembly support 🎉](#wasm-webassembly-support)**
 
 ### Todo
-- [ ] Features detection and description
+- [ ] Object detection and description
 
 **The library can also detect in plane rotated faces.** For this reason a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
