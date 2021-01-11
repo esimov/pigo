@@ -243,7 +243,7 @@ func (pg *Pigo) RunCascade(cp CascadeParams, angle float64) []Detection {
 				}
 			}
 		}
-		scale = int(float64(scale) * cp.ScaleFactor)
+		scale = max(int(float64(scale)*cp.ScaleFactor), 10)
 	}
 	return detections
 }
