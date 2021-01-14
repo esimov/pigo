@@ -119,9 +119,6 @@ func main() {
 	if len(*source) == 0 || len(*cascadeFile) == 0 {
 		log.Fatal("Usage: pigo -in input.jpg -out out.png -cf cascade/facefinder")
 	}
-	if *scaleFactor < 1.05 {
-		log.Fatal("Scale factor must be greater than 1.05")
-	}
 
 	// Progress indicator
 	s := new(spinner)

@@ -243,7 +243,10 @@ func (pg *Pigo) RunCascade(cp CascadeParams, angle float64) []Detection {
 				}
 			}
 		}
-		scale = max(int(float64(scale)*cp.ScaleFactor), 10)
+		// 100 is an arbitrary value to speedup the process.
+		// Normally we should have been used 1/scale, but this would been icreased the iteration process.
+		// This approach will result in a significant improvement without having an impact on the detection score.
+		scale = int(float64(scale) + math.Ceil(100/float64(scale)*cp.ScaleFactor))
 	}
 	return detections
 }
