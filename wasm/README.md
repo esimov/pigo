@@ -8,7 +8,7 @@ This also means that it's not needed anymore to run the library in a Python envi
 
 ## How to run it?
 
-To run the WASM demo is as simple as to type the <kbd>make</kbd> command inside the `wasm` folder. This will build the `wasm` file and will start a new webserver. That's all. It will open a new page in your browser under the following address: `http://localhost:5000/`.
+In order to run the WASM demo is as simple as to type the <kbd>make</kbd> command inside the `wasm` folder. This will build the `wasm` file and will start a new webserver. That's all. It will open a new page in your browser under the following address: `http://localhost:5000/`.
 
 In case the `lib.wasm` is not getting generated automatically you can build it yourself by running the following command:
 
