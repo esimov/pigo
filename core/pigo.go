@@ -305,12 +305,6 @@ type det []Detection
 func (q det) Len() int      { return len(q) }
 func (q det) Swap(i, j int) { q[i], q[j] = q[j], q[i] }
 func (q det) Less(i, j int) bool {
-	if q[i].Q < q[j].Q {
-		return true
-	}
-	if q[i].Q > q[j].Q {
-		return false
-	}
 	return q[i].Q < q[j].Q
 }
 
