@@ -1,14 +1,14 @@
-## WASM (Webassembly) support
+## WASM (Webassembly) integration
 
-**Important note: in order to run the Webassembly demo at least Go 1.13 is required!**
+**Important notice: in order to run the Webassembly demo at least Go 1.13 is required!**
 
-Starting from **v1.4.0** Pigo has been ported to Webassembly 🎉. This gives it a huge gain in terms of real time performance.
+Starting from **v1.4.0** Pigo has been ported to Webassembly 🎉. This proves the library real time performance capabilities.
 
-This means that for the realtime webcam based face detection it's not needed anymore to run the library in a Python environment as a shared library. For more details check the project description from the [Readme](https://github.com/esimov/pigo/blob/master/README.md#real-time-face-detection) file and also read this [blog post](https://esimov.com/2019/11/pupilseyes-localization-in-the-pigo-face-detection-library) for a more detailed explanation.
+This also means that it's not needed anymore to run the library in a Python environment as a shared library for real time face detection. For more details check the project description from the [Readme](https://github.com/esimov/pigo/blob/master/README.md#real-time-face-detection) file and also read this [blog post](https://esimov.com/2019/11/pupilseyes-localization-in-the-pigo-face-detection-library) for a more detailed explanation.
 
 ## How to run it?
 
-To run the WASM demo is as simple as to type the <kbd>make</kbd> command inside the `wasm` folder. This will build the `wasm` file and will start a new webserver. That's all. It will open a new page in your browser under the following address: `http://localhost:5000/`.
+In order to run the WASM demo is as simple as to type the <kbd>make</kbd> command inside the `wasm` folder. This will build the `wasm` file and will start a new webserver. That's all. It will open a new page in your browser under the following address: `http://localhost:5000/`.
 
 In case the `lib.wasm` is not getting generated automatically you can build it yourself by running the following command:
 
