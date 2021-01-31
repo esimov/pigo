@@ -285,14 +285,6 @@ func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams, angle float64,
 // Implement custom sorting function on detection values.
 type plocSort []float32
 
-func (q plocSort) Len() int      { return len(q) }
-func (q plocSort) Swap(i, j int) { q[i], q[j] = q[j], q[i] }
-func (q plocSort) Less(i, j int) bool {
-	if q[i] < q[j] {
-		return true
-	}
-	if q[i] > q[j] {
-		return false
-	}
-	return q[i] < q[j]
-}
+func (q plocSort) Len() int           { return len(q) }
+func (q plocSort) Less(i, j int) bool { return q[i] < q[j] }
+func (q plocSort) Swap(i, j int)      { q[i], q[j] = q[j], q[i] }
