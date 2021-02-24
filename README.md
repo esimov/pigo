@@ -13,9 +13,9 @@ Pigo is a pure Go face detection, pupil/eyes localization and facial landmark po
 | ![rectangle](https://user-images.githubusercontent.com/883386/40916662-2fbbae1a-6809-11e8-8afd-d4ed40c7d4e9.png) | ![circle](https://user-images.githubusercontent.com/883386/40916683-447088a8-6809-11e8-942f-3112c10bede3.png) |
 
 ### Motivation
-I've intended to implement this face detection method because all of the existing solutions for face detection in the Go ecosystem are only bindings to some C/C++ libraries like OpenCV, but installing OpenCV on various platforms is cumbersome.
+I've intended to develop this library because almost all of the existing solutions for face detection in the Go ecosystem are purely bindings to some C/C++ libraries like `OpenCV` or `dlib`, but in many cases installing OpenCV on various platforms is just cumbersome.
 
-The library does not require any third party modules or applications to be installed. However in case you wish to try the real time, webcam based face detection you might need to have Python2 and OpenCV installed, but **the core API does not require any third party module or external dependency**.
+**The Pigo library does not require any additional modules or third party applications to be installed**, however in case you wish to run the library in a real time, webcam based desktop application you might need to have Python and OpenCV installed. Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more explanation.
 
 ### Key features
 - [x] Does not require OpenCV or any 3rd party modules to be installed
@@ -27,12 +27,12 @@ The library does not require any third party modules or applications to be insta
 - [x] The library can detect even faces with eyeglasses
 - [x] [Pupils/eyes localization](#pupils--eyes-localization)
 - [x] [Facial landmark points detection](#facial-landmark-points-detection)
-- [x] **[Webassembly support 🎉](#wasm-webassembly-support)**
+- [x] **[Webassembly support 🎉](#wasm-webassembly-support-)**
 
 ### Todo
 - [ ] Object detection and description
 
-**The library can also detect in plane rotated faces.** For this reason a new `-angle` parameter have been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
+**The library can also detect in plane rotated faces.** For this reason a new `-angle` parameter has been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
 ```bash
 $ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
@@ -47,7 +47,7 @@ Note: In case of in plane rotated faces the angle value should be adapted to the
 
 ### Pupils / eyes localization
 
-Starting from **v1.2.0** Pigo offer pupils/eyes localization capabilites. The implementation is based on [Eye pupil localization with an ensemble of randomized trees](https://www.sciencedirect.com/science/article/abs/pii/S0031320313003294).
+Starting from **v1.2.0** Pigo offers pupils/eyes localization capabilities. The implementation is based on [Eye pupil localization with an ensemble of randomized trees](https://www.sciencedirect.com/science/article/abs/pii/S0031320313003294).
 
 Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/puploc
 
@@ -137,7 +137,7 @@ dets := classifier.RunCascade(cParams, angle)
 dets = classifier.ClusterDetections(dets, 0.2)
 ```
 
-**A note about imports**:  in order to decode the image you will need to import `image/jpeg` or `image/png` (depending on the provided image type) and the Pigo library as well, otherwise you will get a `"Image: Unkown format"` error. See the following example:
+**A note about imports**:  in order to decode the image you will need to import `image/jpeg` or `image/png` (depending on the provided image type) and the Pigo library as well, otherwise you will get a `"Image: Unknown format"` error. See the following example:
 ```Go
 import (
     _ "image/jpeg"
@@ -212,9 +212,9 @@ Using the `empty` string as value for the `-out` flag will skip the image genera
 
 ## Real time face detection (running as a shared object)
 
-In case you wish to test the library real time face detection capabilities using a webcam, the `examples` folder contains a  web and a few Python examples. Prior running it you need to have Python2 and OpenCV2 installed.
+In case you wish to test the library real time face detection capabilities, the `examples` folder contains a few demos written in Python. (Prior running it you need to have Python2 and OpenCV2 installed.) 
 
-Select one of the few Python files provided in the `examples` folder and simply run them. Each of them will execute the exported Go binary file as a shared library. This is also a proof of concept how Pigo can be integrated into different programming languages. I have provided examples only for Python, since this was the only viable way to access the webcam, the Go ecosystem suffering badly from a comprehensive, cross platform and widely available library for accessing the webcam.
+**Since Pigo is a pure Go library then why Python you might ask?** The answer is: because the Go echosystem is still missing a cross platform and system independent library for accessing the webcam. In the Python program we are capturing the frames, transforming into a byte array and sending over as a shared object (`.so`) to the Go program where the face detection is happening. This could also be a proof of concept of how easily Pigo can be integrated into other programming languages.
 
 ## WASM (Webassembly) support 🎉
 
