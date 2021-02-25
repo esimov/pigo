@@ -46,7 +46,6 @@ $ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
 Note: In case of in plane rotated faces the angle value should be adapted to the provided image.
 
 ### Pupils / eyes localization
-
 Starting from **v1.2.0** Pigo offers pupils/eyes localization capabilities. The implementation is based on [Eye pupil localization with an ensemble of randomized trees](https://www.sciencedirect.com/science/article/abs/pii/S0031320313003294).
 
 Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/puploc
@@ -54,7 +53,6 @@ Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/
 ![puploc](https://user-images.githubusercontent.com/883386/62784340-f5b3c100-bac6-11e9-865e-a2b4b9520b08.png)
 
 ### Facial landmark points detection
-
 **v1.3.0** marks a new milestone in the library evolution, Pigo being able for facial landmark points detection. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
 
 Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/facial_landmark
@@ -62,9 +60,6 @@ Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/
 ![flp_example](https://user-images.githubusercontent.com/883386/66802771-3b0cc880-ef26-11e9-9ee3-7e9e981ef3f7.png)
 
 ## Install
-
-**Important note: for the Webassembly demo at least Go 1.13 is required!**
-
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
 
 ```bash
@@ -137,7 +132,8 @@ dets := classifier.RunCascade(cParams, angle)
 dets = classifier.ClusterDetections(dets, 0.2)
 ```
 
-**A note about imports**:  in order to decode the image you will need to import `image/jpeg` or `image/png` (depending on the provided image type) and the Pigo library as well, otherwise you will get a `"Image: Unknown format"` error. See the following example:
+**A note about imports**: in order to decode the generated image you have to import `image/jpeg` or `image/png` (depending on the provided image type) as in the following example, otherwise you will get a `"Image: Unknown format"` error.
+
 ```Go
 import (
     _ "image/jpeg"
@@ -146,7 +142,7 @@ import (
 ```
 
 ## Usage
-A command line utility is bundled into the library to detect faces in static images.
+A command line utility is bundled into the library.
 
 ```bash
 $ pigo -in input.jpg -out out.jpg -cf cascade/facefinder
@@ -194,7 +190,7 @@ Go (Golang) Face detection library.
     	Shift detection window by percentage (default 0.1)
 ```
 
-**Important notice:** In case the `plc` flag is not empty and the provided path is a valid file it will run the pupil/eyes detection method. The same is true for the `flpc` flag, only that in this case you need to provide the directory to the landmark point cascades found under `cascades/lps`.
+**Important notice:** In case you wish to run also the pupil/eyes localization, then you need to use the `plc` flag by providing a valid path to the pupil localization cascade file. The same is true for facial landmark points detection, only that this time the parameter accepted by the `flpc` flag is a directory to the facial landmark point cascade files found under `cascades/lps`.
 
 ### CLI command examples
 You can also use the `stdin` and `stdout` pipe commands:
@@ -208,26 +204,25 @@ $ cat input/source.jpg | pigo > -in - -out - >out.jpg -cf=/path/to/cascade
 $ cat input/source.jpg | pigo >out.jpg -cf=/path/to/cascade
 $ pigo -out out.jpg < input/source.jpg -cf=/path/to/cascade
 ```
-Using the `empty` string as value for the `-out` flag will skip the image generation part. This, combined with the `-json` flag will encode the detection results into the specified json file. You can also use the pipe `-` value for the `-json` flag to output the detection coordinates to the standard (`stdout`) output.
+Using the `empty` string as value for the `-out` flag will skip the image generation part. This, combined with the `-json` flag will encode the detection results into the specified json file. You can also use the pipe `-` value combined with the `-json` flag to output the detection coordinates to the standard (`stdout`) output.
 
 ## Real time face detection (running as a shared object)
 
-In case you wish to test the library real time face detection capabilities, the `examples` folder contains a few demos written in Python. (Prior running it you need to have Python2 and OpenCV2 installed.) 
+In case you wish to test the library real time face detection capabilities, the `examples` folder contains a few demos written in Python.
 
-**Since Pigo is a pure Go library then why Python you might ask?** The answer is: because the Go echosystem is still missing a cross platform and system independent library for accessing the webcam. In the Python program we are capturing the frames, transforming into a byte array and sending over as a shared object (`.so`) to the Go program where the face detection is happening. This could also be a proof of concept of how easily Pigo can be integrated into other programming languages.
+**But why Python you might ask?** Because the Go echosystem is (still) missing a cross platform and system independent library for accessing the webcam. In the Python program we are capturing the webcam frames, transforms them into a byte array and send over as a shared object (`.so`) to the Go program where the face detection is happening. This is also a proof of concept of how easily the Pigo library can be integrated into other programming languages.
 
 ## WASM (Webassembly) support 🎉
+**Important note: in order to run the Webassembly demos at least Go 1.13 is required!**
 
 Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This gives the library a huge performance gain in terms of real time face detection capabilities. 
 
 ### WASM demo
-
 To run the `wasm` demo select the `wasm` folder and type `make`.
 
 For more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
 
 ## Benchmark results
-
 Below are the benchmark results obtained running Pigo against [GoCV](https://github.com/hybridgroup/gocv) using the same conditions.
 
 ```
@@ -239,11 +234,9 @@ Below are the benchmark results obtained running Pigo against [GoCV](https://git
 The code used for the above test can be found under the following link: https://github.com/esimov/pigo-gocv-benchmark
 
 ## Author
-
 * Endre Simo ([@simo_endre](https://twitter.com/simo_endre))
 
 ## License
-
 Copyright © 2019 Endre Simo
 
 This software is distributed under the MIT license. See the [LICENSE](https://github.com/esimov/pigo/blob/master/LICENSE) file for the full license text.
