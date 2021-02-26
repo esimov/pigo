@@ -13,7 +13,7 @@ Pigo is a pure Go face detection, pupil/eyes localization and facial landmark po
 | ![rectangle](https://user-images.githubusercontent.com/883386/40916662-2fbbae1a-6809-11e8-8afd-d4ed40c7d4e9.png) | ![circle](https://user-images.githubusercontent.com/883386/40916683-447088a8-6809-11e8-942f-3112c10bede3.png) |
 
 ### Motivation
-I've intended to develop this library because almost all of the existing solutions for face detection in the Go ecosystem are purely bindings to some C/C++ libraries like `OpenCV` or `dlib`, but in many cases installing OpenCV on various platforms is just cumbersome.
+This library exists, because almost all of the curently available solutions for face detection in the Go ecosystem are purely bindings to some C/C++ libraries like `OpenCV` or `dlib`, but in many cases installing OpenCV on various platforms is just cumbersome.
 
 **The Pigo library does not require any additional modules or third party applications to be installed**, however in case you wish to run the library in a real time, webcam based desktop application you might need to have Python and OpenCV installed. Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more explanation.
 
@@ -190,7 +190,7 @@ Go (Golang) Face detection library.
     	Shift detection window by percentage (default 0.1)
 ```
 
-**Important notice:** In case you wish to run also the pupil/eyes localization, then you need to use the `plc` flag by providing a valid path to the pupil localization cascade file. The same is true for facial landmark points detection, only that this time the parameter accepted by the `flpc` flag is a directory to the facial landmark point cascade files found under `cascades/lps`.
+**Important notice:** In case you wish also to run the pupil/eyes localization, then you need to use the `plc` flag by providing a valid path to the pupil localization cascade file. The same is true for facial landmark points detection, only that this time the parameter accepted by the `flpc` flag is a directory to the facial landmark point cascade files found under `cascades/lps`.
 
 ### CLI command examples
 You can also use the `stdin` and `stdout` pipe commands:
