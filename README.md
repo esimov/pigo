@@ -190,7 +190,7 @@ Go (Golang) Face detection library.
     	Shift detection window by percentage (default 0.1)
 ```
 
-**Important notice:** In case you wish also to run the pupil/eyes localization, then you need to use the `plc` flag by providing a valid path to the pupil localization cascade file. The same is true for facial landmark points detection, only that this time the parameter accepted by the `flpc` flag is a directory to the facial landmark point cascade files found under `cascades/lps`.
+**Important notice:** In case you wish to run also the pupil/eyes localization, then you need to use the `plc` flag by providing a valid path to the pupil localization cascade file. The same is true for facial landmark points detection, only that this time the parameter accepted by the `flpc` flag is a directory to the facial landmark point cascade files found under `cascades/lps`.
 
 ### CLI command examples
 You can also use the `stdin` and `stdout` pipe commands:
