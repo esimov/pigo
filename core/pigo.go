@@ -244,7 +244,7 @@ func (pg *Pigo) RunCascade(cp CascadeParams, angle float64) []Detection {
 			}
 		}
 		// We need to avoid running into an infinite loop because of float to int conversion
-		// in cases when scaleFactor = 1.1 and minSize = 9 as example.
+		// in cases when scaleFactor == 1.1 and minSize == 9 as example.
 		// When the scale is 9, the factor would come up with 9.9, which again becomes 9 because of the int() conversion.
 		// This approach gives the same speed without having an impact on the detection score.
 		scale = int(float64(scale) + math.Max(2, (float64(scale)*cp.ScaleFactor)-float64(scale)))
@@ -307,37 +307,4 @@ func (q det) Len() int      { return len(q) }
 func (q det) Swap(i, j int) { q[i], q[j] = q[j], q[i] }
 func (q det) Less(i, j int) bool {
 	return q[i].Q < q[j].Q
-}
-
-// abs returns the absolute value of the provided number
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-// min returns the minum value between two numbers
-func min(val1, val2 int) int {
-	if val1 < val2 {
-		return val1
-	}
-	return val2
-}
-
-// max returns the maximum value between two numbers
-func max(val1, val2 int) int {
-	if val1 > val2 {
-		return val1
-	}
-	return val2
-}
-
-// round returns the nearest integer, rounding ties away from zero.
-func round(x float64) float64 {
-	t := math.Trunc(x)
-	if math.Abs(x-t) >= 0.5 {
-		return t + math.Copysign(1, x)
-	}
-	return t
 }
