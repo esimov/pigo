@@ -210,7 +210,11 @@ Using the `empty` string as value for the `-out` flag will skip the image genera
 
 In case you wish to test the library real time face detection capabilities, the `examples` folder contains a few demos written in Python.
 
-**But why Python you might ask?** Because the Go ecosystem is (still) missing a cross platform and system independent library for accessing the webcam. In the Python program we are accessing the webcam and transferring the pixel data as a byte array through `cgo` as a shared object (`.so`) to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates than the library is capable of. These demos were created before the Webassembly port and were kept for showing the way how to integrate the Pigo library into other programming languages.
+**But why Python you might ask?** Because the Go ecosystem is (still) missing a cross platform and system independent library for accessing the webcam. 
+
+In the Python program we are accessing the webcam and transferring the pixel data as a byte array through `cgo` as a **shared object** to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates than the library is capable of. 
+
+These demos were created before the Webassembly port and were kept for showing the way how to integrate the Pigo library into other programming languages.
 
 ## WASM (Webassembly) support 🎉
 **Important note: in order to run the Webassembly demos at least Go 1.13 is required!**
