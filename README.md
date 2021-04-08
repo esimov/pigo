@@ -15,7 +15,7 @@ Pigo is a pure Go face detection, pupil/eyes localization and facial landmark po
 ### Motivation
 The reason why Pigo has been developed is because almost all of the currently existing solutions for face detection in the Go ecosystem are purely bindings to some C/C++ libraries like `OpenCV` or `dlib`, but calling a C program trough `cgo` introduces huge latencies and implies a significant trade-off in terms of performance. Also in many cases installing OpenCV on various platforms is cumbersome.
 
-**The Pigo library does not require any additional modules or third party applications to be installed**, however in case you wish to run the library in a real time, webcam based desktop application you might need to have Python and OpenCV installed. Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more explanation.
+**The Pigo library does not require any additional modules or third party applications to be installed**, though in case you wish to run the library in a real time desktop application you might need to have Python and OpenCV installed. Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more details.
 
 ### Key features
 - [x] Does not require OpenCV or any 3rd party modules to be installed
@@ -190,7 +190,7 @@ Go (Golang) Face detection library.
     	Shift detection window by percentage (default 0.1)
 ```
 
-**Important notice:** In case you wish to run also the pupil/eyes localization, then you need to use the `plc` flag and provide a valid path to the pupil localization cascade file. The same applies for facial landmark points detection, only that this time the parameter accepted by the `flpc` flag is a directory to the facial landmark point cascade files found under `cascades/lps`.
+**Important notice:** In case you wish to run also the pupil/eyes localization, then you need to use the `plc` flag and provide a valid path to the pupil localization cascade file. The same applies for facial landmark points detection, only that this time the parameter accepted by the `flpc` flag is a directory pointing to the facial landmark points cascade files found under `cascades/lps`.
 
 ### CLI command examples
 You can also use the `stdin` and `stdout` pipe commands:
@@ -212,14 +212,12 @@ In case you wish to test the library real time face detection capabilities, the 
 
 **But why Python you might ask?** Because the Go ecosystem is (still) missing a cross platform and system independent library for accessing the webcam. 
 
-In the Python program we are accessing the webcam and transferring the pixel data as a byte array through `cgo` as a **shared object** to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates than the library is capable of. 
-
-These demos were created before the Webassembly port and were kept for showing the way how to integrate the Pigo library into other programming languages.
+In the Python program we are accessing the webcam and transfer the pixel data as a byte array through `cgo` as a **shared object** to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates than the library is capable of. 
 
 ## WASM (Webassembly) support 🎉
 **Important note: in order to run the Webassembly demos at least Go 1.13 is required!**
 
-Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This gives the library a huge performance gain in terms of real time face detection capabilities. 
+Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This proves the library real time face detection capabilities, constantly producing **~60 FPS**. 
 
 ### WASM demo
 To run the `wasm` demo select the `wasm` folder and type `make`.
