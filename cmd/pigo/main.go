@@ -232,18 +232,33 @@ func main() {
 // detectFaces run the detection algorithm over the provided source image.
 func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 	var srcFile io.Reader
-	if source == pipeName {
-		if term.IsTerminal(int(os.Stdin.Fd())) {
-			log.Fatalln("`-` should be used with a pipe for stdin")
-		}
-		srcFile = os.Stdin
-	} else {
-		file, err := os.Open(source)
+
+	// Check if source path is a local image or URL.
+	if utils.IsValidUrl(source) {
+		src, err := utils.DownloadImage(source)
+		// Close and remove the generated temporary file.
+		defer src.Close()
+		defer os.Remove(src.Name())
+
+		img, err := os.Open(src.Name())
 		if err != nil {
 			return nil, err
 		}
-		defer file.Close()
-		srcFile = file
+		srcFile = img
+	} else {
+		if source == pipeName {
+			if term.IsTerminal(int(os.Stdin.Fd())) {
+				log.Fatalln("`-` should be used with a pipe for stdin")
+			}
+			srcFile = os.Stdin
+		} else {
+			file, err := os.Open(source)
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
+			srcFile = file
+		}
 	}
 
 	src, err := pigo.DecodeImage(srcFile)
