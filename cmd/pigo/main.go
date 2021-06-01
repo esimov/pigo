@@ -19,6 +19,7 @@ import (
 
 	"github.com/disintegration/imaging"
 	pigo "github.com/esimov/pigo/core"
+	"github.com/esimov/pigo/utils"
 	"github.com/fogleman/gg"
 	"golang.org/x/term"
 )
@@ -33,16 +34,24 @@ Go (Golang) Face detection library.
 
 `
 
+// messageType is a placeholder for various message types.
+type messageType int
+
 // pipeName is the file name that indicates stdin/stdout is being used.
 const pipeName = "-"
 
 const (
-	// MarkerRectangle - use rectangle as face detection marker
-	MarkerRectangle string = "rect"
-	// MarkerCircle - use circle as face detection marker
-	MarkerCircle string = "circle"
-	// MarkerEllipse - use ellipse as face detection marker
-	MarkerEllipse string = "ellipse"
+	// markerRectangle - use rectangle as face detection marker
+	markerRectangle string = "rect"
+	// markerCircle - use circle as face detection marker
+	markerCircle string = "circle"
+	// markerEllipse - use ellipse as face detection marker
+	markerEllipse string = "ellipse"
+
+	// message colors
+	successColor = "\x1b[92m"
+	errorColor   = "\x1b[31m"
+	defaultColor = "\x1b[0m"
 )
 
 // Version indicates the current build version.
@@ -50,7 +59,7 @@ var Version string
 
 var (
 	dc        *gg.Context
-	fd        *faceDetector
+	det       *faceDetector
 	plc       *pigo.PuplocCascade
 	flpcs     map[string][]*pigo.FlpCascade
 	imgParams *pigo.ImageParams
@@ -120,12 +129,13 @@ func main() {
 		log.Fatal("Usage: pigo -in input.jpg -out out.png -cf cascade/facefinder")
 	}
 
-	// Progress indicator
-	s := new(spinner)
-	s.start("Processing...")
 	start := time.Now()
 
-	fd = &faceDetector{
+	// Progress indicator
+	ind := utils.NewProgressIndicator("Detecting faces...", time.Millisecond*100)
+	ind.Start()
+
+	det = &faceDetector{
 		angle:        *angle,
 		destination:  *destination,
 		cascadeFile:  *cascadeFile,
@@ -140,21 +150,21 @@ func main() {
 	}
 
 	var dst io.Writer
-	if fd.destination != "empty" {
-		if fd.destination == pipeName {
+	if det.destination != "empty" {
+		if det.destination == pipeName {
 			if term.IsTerminal(int(os.Stdout.Fd())) {
 				log.Fatalln("`-` should be used with a pipe for stdout")
 			}
 			dst = os.Stdout
 		} else {
 			fileTypes := []string{".jpg", ".jpeg", ".png"}
-			ext := filepath.Ext(fd.destination)
+			ext := filepath.Ext(det.destination)
 
 			if !inSlice(ext, fileTypes) {
 				log.Fatalf("Output file type not supported: %v", ext)
 			}
 
-			fn, err := os.OpenFile(fd.destination, os.O_CREATE|os.O_WRONLY, 0755)
+			fn, err := os.OpenFile(det.destination, os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				log.Fatalf("Unable to open output file: %v", err)
 			}
@@ -163,40 +173,60 @@ func main() {
 		}
 	}
 
-	faces, err := fd.detectFaces(*source)
+	faces, err := det.detectFaces(*source)
 	if err != nil {
-		log.Fatalf("Detection error: %v", err)
+		ind.StopMsg = fmt.Sprintf("Detecting faces... %s failed ✗%s\n", errorColor, defaultColor)
+		ind.Stop()
+		log.Fatalf("Detection error: %s%v%s", errorColor, err, defaultColor)
 	}
 
-	dets, err := fd.drawFaces(faces, *marker)
+	dets, err := det.drawFaces(faces, *marker)
 	if err != nil {
 		log.Fatalf("Error creating the image output: %s", err)
 	}
 
-	if fd.destination != "empty" {
-		if err := fd.encodeImage(dst); err != nil {
+	if det.destination != "empty" {
+		if err := det.encodeImage(dst); err != nil {
 			log.Fatalf("Error encoding the output image: %v", err)
 		}
 	}
 
+	var out io.Writer
 	if *jsonf != "" {
-		var out io.Writer
 		if *jsonf == pipeName {
 			out = os.Stdout
 		} else {
 			f, err := os.Create(*jsonf)
 			defer f.Close()
 			if err != nil {
-				log.Fatalf("Could not create the json file: %s", err)
+				ind.StopMsg = fmt.Sprintf("Detecting faces... %s failed ✗%s\n", errorColor, defaultColor)
+				ind.Stop()
+				log.Fatalf(fmt.Sprintf("%sCould not create the json file: %v%s", errorColor, err, defaultColor))
 			}
 			out = f
 		}
-		if err := json.NewEncoder(out).Encode(dets); err != nil {
-			log.Fatalf("Error encoding the json file: %s", err)
-		}
+
 	}
-	s.stop()
-	log.Printf("\nDone in: \x1b[92m%.2fs\n", time.Since(start).Seconds())
+	ind.StopMsg = fmt.Sprintf("Detecting faces... %sfinished ✔%s", successColor, defaultColor)
+	ind.Stop()
+
+	if len(dets) > 0 {
+		log.Printf(fmt.Sprintf("\n%s%d%s face(s) detected", successColor, len(dets), defaultColor))
+
+		if *jsonf != "" && out == os.Stdout {
+			log.Printf(fmt.Sprintf("\n%sThe detection coordinates of the found faces:%s", successColor, defaultColor))
+		}
+
+		if out != nil {
+			if err := json.NewEncoder(out).Encode(dets); err != nil {
+				log.Fatalf("Error encoding the json file: %s", err)
+			}
+		}
+	} else {
+		log.Printf(fmt.Sprintf("\n%sno detected faces!%s", errorColor, defaultColor))
+	}
+
+	log.Printf(fmt.Sprintf("\nExecution time: %s%.2fs%s\n", successColor, time.Since(start).Seconds(), defaultColor))
 }
 
 // detectFaces run the detection algorithm over the provided source image.
@@ -235,14 +265,22 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 	}
 
 	cParams := pigo.CascadeParams{
-		MinSize:     fd.minSize,
-		MaxSize:     fd.maxSize,
-		ShiftFactor: fd.shiftFactor,
-		ScaleFactor: fd.scaleFactor,
+		MinSize:     det.minSize,
+		MaxSize:     det.maxSize,
+		ShiftFactor: det.shiftFactor,
+		ScaleFactor: det.scaleFactor,
 		ImageParams: *imgParams,
 	}
 
-	cascadeFile, err := ioutil.ReadFile(fd.cascadeFile)
+	contentType, err := utils.DetectFileContentType(det.cascadeFile)
+	if err != nil {
+		return nil, err
+	}
+	if contentType != "application/octet-stream" {
+		return nil, errors.New("the provided cascade classifier is not valid.")
+	}
+
+	cascadeFile, err := ioutil.ReadFile(det.cascadeFile)
 	if err != nil {
 		return nil, err
 	}
@@ -255,9 +293,9 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 		return nil, err
 	}
 
-	if len(fd.puploc) > 0 {
+	if len(det.puploc) > 0 {
 		pl := pigo.NewPuplocCascade()
-		cascade, err := ioutil.ReadFile(fd.puploc)
+		cascade, err := ioutil.ReadFile(det.puploc)
 		if err != nil {
 			return nil, err
 		}
@@ -266,8 +304,8 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 			return nil, err
 		}
 
-		if len(fd.flploc) > 0 {
-			flpcs, err = pl.ReadCascadeDir(fd.flploc)
+		if len(det.flploc) > 0 {
+			flpcs, err = pl.ReadCascadeDir(det.flploc)
 			if err != nil {
 				return nil, err
 			}
@@ -276,10 +314,10 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
-	faces := classifier.RunCascade(cParams, fd.angle)
+	faces := classifier.RunCascade(cParams, det.angle)
 
 	// Calculate the intersection over union (IoU) of two clusters.
-	faces = classifier.ClusterDetections(faces, fd.iouThreshold)
+	faces = classifier.ClusterDetections(faces, det.iouThreshold)
 
 	return faces, nil
 }
@@ -301,13 +339,13 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 	for _, face := range faces {
 		if face.Q > qThresh {
 			switch marker {
-			case "rect":
+			case markerRectangle:
 				dc.DrawRectangle(float64(face.Col-face.Scale/2),
 					float64(face.Row-face.Scale/2),
 					float64(face.Scale),
 					float64(face.Scale),
 				)
-			case "circle":
+			case markerCircle:
 				dc.DrawArc(
 					float64(face.Col),
 					float64(face.Row),
@@ -315,7 +353,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 					0,
 					2*math.Pi,
 				)
-			case "ellipse":
+			case markerEllipse:
 				dc.DrawEllipse(
 					float64(face.Col),
 					float64(face.Row),
@@ -333,7 +371,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 			dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 0, B: 0, A: 255}))
 			dc.Stroke()
 
-			if len(fd.puploc) > 0 && face.Scale > 50 {
+			if len(det.puploc) > 0 && face.Scale > 50 {
 				rect := image.Rect(
 					face.Col-face.Scale/2,
 					face.Row-face.Scale/2,
@@ -351,17 +389,17 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 					Scale:    float32(face.Scale) * 0.25,
 					Perturbs: perturb,
 				}
-				leftEye := plc.RunDetector(*puploc, *imgParams, fd.angle, false)
+				leftEye := plc.RunDetector(*puploc, *imgParams, det.angle, false)
 				if leftEye.Row > 0 && leftEye.Col > 0 {
-					if fd.angle > 0 {
+					if det.angle > 0 {
 						drawEyeDetectionMarker(ctx,
 							float64(cols/2-(face.Col-leftEye.Col)),
 							float64(rows/2-(face.Row-leftEye.Row)),
 							float64(leftEye.Scale),
 							color.RGBA{R: 255, G: 0, B: 0, A: 255},
-							fd.markDetEyes,
+							det.markDetEyes,
 						)
-						angle := (fd.angle * 180) / math.Pi
+						angle := (det.angle * 180) / math.Pi
 						rotated := imaging.Rotate(faceZone, 2*angle, color.Transparent)
 						final := imaging.FlipH(rotated)
 
@@ -372,7 +410,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 							float64(leftEye.Row),
 							float64(leftEye.Scale),
 							color.RGBA{R: 255, G: 0, B: 0, A: 255},
-							fd.markDetEyes,
+							det.markDetEyes,
 						)
 					}
 					eyesCoords = append(eyesCoords, coord{
@@ -390,18 +428,18 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 					Perturbs: perturb,
 				}
 
-				rightEye := plc.RunDetector(*puploc, *imgParams, fd.angle, false)
+				rightEye := plc.RunDetector(*puploc, *imgParams, det.angle, false)
 				if rightEye.Row > 0 && rightEye.Col > 0 {
-					if fd.angle > 0 {
+					if det.angle > 0 {
 						drawEyeDetectionMarker(ctx,
 							float64(cols/2-(face.Col-rightEye.Col)),
 							float64(rows/2-(face.Row-rightEye.Row)),
 							float64(rightEye.Scale),
 							color.RGBA{R: 255, G: 0, B: 0, A: 255},
-							fd.markDetEyes,
+							det.markDetEyes,
 						)
 						// convert radians to angle
-						angle := (fd.angle * 180) / math.Pi
+						angle := (det.angle * 180) / math.Pi
 						rotated := imaging.Rotate(faceZone, 2*angle, color.Transparent)
 						final := imaging.FlipH(rotated)
 
@@ -412,7 +450,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 							float64(rightEye.Row),
 							float64(rightEye.Scale),
 							color.RGBA{R: 255, G: 0, B: 0, A: 255},
-							fd.markDetEyes,
+							det.markDetEyes,
 						)
 					}
 					eyesCoords = append(eyesCoords, coord{
@@ -422,7 +460,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 					})
 				}
 
-				if len(fd.flploc) > 0 {
+				if len(det.flploc) > 0 {
 					for _, eye := range eyeCascades {
 						for _, flpc := range flpcs[eye] {
 							flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
@@ -524,34 +562,6 @@ func (fd *faceDetector) encodeImage(dst io.Writer) error {
 		err = jpeg.Encode(dst, img, &jpeg.Options{Quality: 100})
 	}
 	return err
-}
-
-type spinner struct {
-	done chan struct{}
-}
-
-// Start process
-func (s *spinner) start(message string) {
-	s.done = make(chan struct{}, 1)
-
-	go func() {
-		for {
-			for _, r := range `⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏` {
-				select {
-				case <-s.done:
-					return
-				default:
-					fmt.Fprintf(os.Stderr, "\r%s%s %c%s", message, "\x1b[35m", r, "\x1b[39m")
-					time.Sleep(time.Millisecond * 100)
-				}
-			}
-		}
-	}()
-}
-
-// End process
-func (s *spinner) stop() {
-	s.done <- struct{}{}
 }
 
 // inSlice checks if the item exists in the slice.
