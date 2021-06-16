@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/esimov/pigo.svg?branch=master)](https://travis-ci.org/esimov/pigo)
 [![go.dev reference](https://img.shields.io/badge/pkg.go.dev-reference-007d9c?logo=go)](https://pkg.go.dev/github.com/esimov/pigo/core)
 [![license](https://img.shields.io/github/license/esimov/pigo)](./LICENSE)
-[![release](https://img.shields.io/badge/release-v1.4.2-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.4.2)
+[![release](https://img.shields.io/badge/release-v1.4.4-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.4.4)
 [![snapcraft](https://img.shields.io/badge/snapcraft-v1.3.0-green.svg)](https://snapcraft.io/pigo)
 
 Pigo is a pure Go face detection, pupil/eyes localization and facial landmark points detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf).
