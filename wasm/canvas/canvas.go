@@ -89,6 +89,10 @@ func (c *Canvas) Render() error {
 			uint8Arr := js.Global().Get("Uint8Array").New(rgba)
 			js.CopyBytesToGo(data, uint8Arr)
 			pixels := c.rgbaToGrayscale(data)
+
+			// Resetore the slice to its default values to avoid unnecessary memory allocation.
+			// The GC won't clean up the memory address allocated by this slice otherwise
+			// and the memory will keep up increasing on each iteration.
 			data = make([]byte, len(data))
 
 			res := det.DetectFaces(pixels, height, width)
