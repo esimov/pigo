@@ -106,6 +106,7 @@ func (c *Canvas) Render() error {
 	c.window.Call("requestAnimationFrame", c.renderer)
 	c.detectKeyPress()
 	<-c.done
+
 	return nil
 }
 
