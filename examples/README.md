@@ -1,7 +1,6 @@
-## Python demos
+## Pigo demos running in a Python environment
 
-This directory contains a few real time Python demos running as shared object (**.so**). The face detection is happing on the Go side and the results are transfered as byte array to Python as a shared object. It was intended this way since there is a huge hiatus in the Go echosystem of a throughly accessible and platform agnostic webcam library. This dependency issue is partially resolved with the Webassembly (WASM) port of the library. 
-
+This directory contains a few real time demos running as shared objects (**.so**) in a Python environment. The face detection is happening on the Go side but the results are transfered as a byte array to the Python program. It was intended this way because the Go ecosystem is still missing a cross platform and operating system agnostic webcam library. This dependency issue is partially resolved with the Webassembly (WASM) port of the library. 
 
 ## Requirements
 - OpenCV 2
@@ -9,6 +8,6 @@ This directory contains a few real time Python demos running as shared object (*
 
 ## Notice
 
-For the **WASM** port check this subfolder:
+For the `WASM` port check this subfolder:
 
 https://github.com/esimov/pigo/tree/master/wasm

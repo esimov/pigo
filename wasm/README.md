@@ -4,11 +4,11 @@
 
 Starting from **v1.4.0** Pigo has been ported to Webassembly 🎉. This proves the library real time performance capabilities.
 
-This also means that it's not needed anymore to run the library in a Python environment as a shared library for real time face detection. For more details check the project description from the [Readme](https://github.com/esimov/pigo/blob/master/README.md#real-time-face-detection) file and also read this [blog post](https://esimov.com/2019/11/pupilseyes-localization-in-the-pigo-face-detection-library) for a more detailed explanation.
+This also means that for real time face detection it's not needed anymore to run the library in a Python environment as a shared library. For more details check the project description from the [Readme](https://github.com/esimov/pigo#real-time-face-detection-running-as-a-shared-object) file and also read this [blog post](https://esimov.com/2019/11/pupilseyes-localization-in-the-pigo-face-detection-library) for a more detailed explanation.
 
 ## How to run it?
 
-In order to run the WASM demo is as simple as to type the <kbd>make</kbd> command inside the `wasm` folder. This will build the `wasm` file and will start a new webserver. That's all. It will open a new page in your browser under the following address: `http://localhost:5000/`.
+In order to run the WASM demo is as simple as to type the <kbd>make</kbd> command inside the `wasm` folder. This will build the `wasm` file and at the same time will start a new webserver. That's all. It will automatically open a new page in your default browser under the following address: `http://localhost:5000/`.
 
 In case the `lib.wasm` is not getting generated automatically you can build it yourself by running the following command:
 
@@ -22,7 +22,7 @@ $ GOOS=js GOARCH=wasm go build -o lib.wasm wasm.go
 
 ## Demos
 
-For **Webassembly** related demos using the **Pigo** library check this separate repo:
+For Webassembly related demos using the Pigo library check this separate repo:
 
 https://github.com/esimov/pigo-wasm-demos
 

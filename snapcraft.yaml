@@ -1,5 +1,5 @@
 name: pigo
-version: '1.4.0'
+version: '1.4.4'
 summary: Pure Go face detection library
 description: |
   Key features:
@@ -17,14 +17,15 @@ confinement: strict
 base: core18
 parts:
   pigo:
-    plugin: go
-    source: https://github.com/esimov/pigo.git
-    go-importpath: github.com/esimov/pigo
-    build-packages:
-      - build-essential
-apps:
-  pigo:
-    command: bin/pigo
-    plugs:
-      - home
-      - x11
+    plugin: nil
+    source: .
+    build-snaps: [go]
+    override-build: |
+      export GOBIN=$SNAPCRAFT_PART_INSTALL/bin
+      export GO111MODULE=on
+      export CGO_ENABLED=0
+      go build cmd/pigo/main.go
+
+    filesets:
+      exclude-wasm-files:
+        - -wasm
