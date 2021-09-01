@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/esimov/pigo/wasm/canvas"
 )
 
