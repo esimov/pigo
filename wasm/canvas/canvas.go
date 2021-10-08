@@ -67,7 +67,8 @@ func NewCanvas() *Canvas {
 
 // Render calls the `requestAnimationFrame` Javascript function in asynchronous mode.
 func (c *Canvas) Render() error {
-	var data = make([]byte, c.windowSize.width*c.windowSize.height*4)
+	width, height := c.windowSize.width, c.windowSize.height
+	var data = make([]byte, width*height*4)
 	c.done = make(chan struct{})
 
 	err := det.UnpackCascades()
@@ -78,7 +79,6 @@ func (c *Canvas) Render() error {
 		go func() {
 			c.window.Get("stats").Call("begin")
 
-			width, height := c.windowSize.width, c.windowSize.height
 			c.reqID = c.window.Call("requestAnimationFrame", c.renderer)
 			// Draw the webcam frame to the canvas element
 			c.ctx.Call("drawImage", c.video, 0, 0)
@@ -89,6 +89,12 @@ func (c *Canvas) Render() error {
 			uint8Arr := js.Global().Get("Uint8Array").New(rgba)
 			js.CopyBytesToGo(data, uint8Arr)
 			pixels := c.rgbaToGrayscale(data)
+
+			// Restore the data slice to its default values to avoid unnecessary memory allocation.
+			// Otherwise, the GC won't clean up the memory address allocated by this slice
+			// and the memory will keep up increasing by each iteration.
+			data = make([]byte, len(data))
+
 			res := det.DetectFaces(pixels, height, width)
 			c.drawDetection(res)
 
@@ -96,6 +102,7 @@ func (c *Canvas) Render() error {
 		}()
 		return nil
 	})
+	defer c.renderer.Release()
 	c.window.Call("requestAnimationFrame", c.renderer)
 	c.detectKeyPress()
 	<-c.done

@@ -16,7 +16,7 @@ func main() {
 	} else {
 		err := webcam.Render()
 		if err != nil {
-			c.Alert(fmt.Sprint(err))
+			c.Log(fmt.Sprint(err))
 		}
 	}
 }
