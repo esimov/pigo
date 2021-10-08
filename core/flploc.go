@@ -26,9 +26,9 @@ func (plc *PuplocCascade) UnpackFlp(cf string) (*PuplocCascade, error) {
 // GetLandmarkPoint retrieves the facial landmark point based on the pupil localization results.
 func (plc *PuplocCascade) GetLandmarkPoint(leftEye, rightEye *Puploc, img ImageParams, perturb int, flipV bool) *Puploc {
 	var flploc *Puploc
-	dist1 := (leftEye.Row - rightEye.Row) * (leftEye.Row - rightEye.Row)
-	dist2 := (leftEye.Col - rightEye.Col) * (leftEye.Col - rightEye.Col)
-	dist := math.Sqrt(float64(dist1 + dist2))
+	dx := (leftEye.Row - rightEye.Row) * (leftEye.Row - rightEye.Row)
+	dy := (leftEye.Col - rightEye.Col) * (leftEye.Col - rightEye.Col)
+	dist := math.Sqrt(float64(dx + dy))
 
 	row := float64(leftEye.Row+rightEye.Row)/2.0 + 0.25*dist
 	col := float64(leftEye.Col+rightEye.Col)/2.0 + 0.15*dist
