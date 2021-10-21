@@ -12,14 +12,15 @@ import (
 )
 
 var (
-	p           = pigo.NewPigo()
-	pigoCascade []byte
-	srcImg      *image.NRGBA
+	p        = pigo.NewPigo()
+	err      error
+	faceCasc []byte
+	pixs     []uint8
+	srcImg   *image.NRGBA
 )
 
 func init() {
-	var err error
-	pigoCascade, err = ioutil.ReadFile("../cascade/facefinder")
+	faceCasc, err = ioutil.ReadFile("../cascade/facefinder")
 	if err != nil {
 		log.Fatalf("Error reading the cascade file: %v", err)
 	}
@@ -30,7 +31,7 @@ func init() {
 		log.Fatalf("error reading the source file: %s", err)
 	}
 
-	pixs := pigo.RgbToGrayscale(srcImg)
+	pixs = pigo.RgbToGrayscale(srcImg)
 	cols, rows := srcImg.Bounds().Max.X, srcImg.Bounds().Max.Y
 
 	imgParams = &pigo.ImageParams{
@@ -50,11 +51,7 @@ func init() {
 }
 
 func TestPigo_UnpackCascadeFileShouldNotBeNil(t *testing.T) {
-	var (
-		err  error
-		pigo = pigo.NewPigo()
-	)
-	p, err = pigo.Unpack(pigoCascade)
+	p, err = p.Unpack(faceCasc)
 	if err != nil {
 		t.Fatalf("failed unpacking the cascade file: %v", err)
 	}
@@ -71,27 +68,25 @@ func TestPigo_InputImageShouldBeGrayscale(t *testing.T) {
 func TestPigo_Detector_ShouldDetectFace(t *testing.T) {
 	// Unpack the facefinder binary cascade file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
-	p, err := p.Unpack(pigoCascade)
+	p, err = p.Unpack(faceCasc)
 	if err != nil {
 		t.Fatalf("error reading the cascade file: %s", err)
 	}
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
-	faces := p.RunCascade(*cParams, 0.0)
+	dets := p.RunCascade(*cParams, 0.0)
 	// Calculate the intersection over union (IoU) of two clusters.
-	faces = p.ClusterDetections(faces, 0.1)
-	if len(faces) == 0 {
+	dets = p.ClusterDetections(dets, 0.1)
+	if len(dets) == 0 {
 		t.Fatalf("face should've been detected")
 	}
 }
 
 func BenchmarkPigoUnpackCascade(b *testing.B) {
-	pg := pigo.NewPigo()
-
 	for i := 0; i < b.N; i++ {
 		// Unpack the facefinder binary cascade file.
-		_, err := pg.Unpack(pigoCascade)
+		_, err := p.Unpack(faceCasc)
 		if err != nil {
 			log.Fatalf("error reading the cascade file: %s", err)
 		}
@@ -101,8 +96,7 @@ func BenchmarkPigoUnpackCascade(b *testing.B) {
 func BenchmarkPigoFaceDetection(b *testing.B) {
 	var dets []pigo.Detection
 
-	pg := pigo.NewPigo()
-	p, err := pg.Unpack(pigoCascade)
+	p, err = p.Unpack(faceCasc)
 	if err != nil {
 		log.Fatalf("error reading the cascade file: %s", err)
 	}
@@ -110,8 +104,8 @@ func BenchmarkPigoFaceDetection(b *testing.B) {
 	pixs := pigo.RgbToGrayscale(srcImg)
 	cParams.Pixels = pixs
 
-	b.ResetTimer()
 	runtime.GC()
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		// Run the classifier over the obtained leaf nodes and return the detection results.
@@ -126,8 +120,7 @@ func BenchmarkPigoFaceDetection(b *testing.B) {
 func BenchmarkPigoClusterDetection(b *testing.B) {
 	var dets []pigo.Detection
 
-	pg := pigo.NewPigo()
-	p, err := pg.Unpack(pigoCascade)
+	p, err = p.Unpack(faceCasc)
 	if err != nil {
 		log.Fatalf("error reading the cascade file: %s", err)
 	}
@@ -135,8 +128,8 @@ func BenchmarkPigoClusterDetection(b *testing.B) {
 	pixs := pigo.RgbToGrayscale(srcImg)
 	cParams.Pixels = pixs
 
-	b.ResetTimer()
 	runtime.GC()
+	b.ResetTimer()
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
