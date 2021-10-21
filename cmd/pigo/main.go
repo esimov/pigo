@@ -52,6 +52,8 @@ const (
 	successColor = "\x1b[92m"
 	errorColor   = "\x1b[31m"
 	defaultColor = "\x1b[0m"
+
+	perturb = 63
 )
 
 // Version indicates the current build version.
@@ -107,10 +109,10 @@ func main() {
 		cascadeFile  = flag.String("cf", "", "Cascade binary file")
 		minSize      = flag.Int("min", 20, "Minimum size of face")
 		maxSize      = flag.Int("max", 1000, "Maximum size of face")
-		shiftFactor  = flag.Float64("shift", 0.1, "Shift detection window by percentage")
-		scaleFactor  = flag.Float64("scale", 1.1, "Scale detection window by percentage")
+		shiftFactor  = flag.Float64("shift", 0.15, "Shift detection window by percentage")
+		scaleFactor  = flag.Float64("scale", 1.15, "Scale detection window by percentage")
 		angle        = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
-		iouThreshold = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
+		iouThreshold = flag.Float64("iou", 0.15, "Intersection over union (IoU) threshold")
 		marker       = flag.String("marker", "rect", "Detection marker: rect|circle|ellipse")
 		puploc       = flag.String("plc", "", "Pupils/eyes localization cascade file")
 		flploc       = flag.String("flpc", "", "Facial landmark points cascade directory")
@@ -339,15 +341,12 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 
 // drawFaces marks the detected faces with the marker type defined as parameter (rectangle|circle|ellipse).
 func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]detection, error) {
-	var (
-		qThresh float32 = 5.0
-		perturb         = 63
-	)
+	var qThresh float32 = 5.0
 
 	var (
-		detections     []detection
-		eyesCoords     []coord
-		landmarkCoords []coord
+		detections     = make([]detection, 0, len(faces))
+		eyesCoords     = make([]coord, 0, len(faces))
+		landmarkCoords = make([]coord, 0, len(faces))
 		puploc         *pigo.Puploc
 	)
 
