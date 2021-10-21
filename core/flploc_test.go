@@ -3,6 +3,7 @@ package pigo_test
 import (
 	"io/ioutil"
 	"log"
+	"runtime"
 	"testing"
 
 	pigo "github.com/esimov/pigo/core"
@@ -159,7 +160,37 @@ func TestFlploc_LandmarkDetectorShouldReturnCorrectDetectionPoints(t *testing.T)
 	}
 }
 
-func BenchmarkFlploc(b *testing.B) {
+func BenchmarkFlplocReadCascadeDir(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		plc.ReadCascadeDir("../cascade/lps/")
+	}
+}
+
+func BenchmarkFlplocGetLendmarkPoint(b *testing.B) {
+	pl := pigo.PuplocCascade{}
+	plc, err := pl.UnpackCascade(puplocCascade)
+	if err != nil {
+		b.Fatalf("error reading the cascade file: %s", err)
+	}
+
+	pixs := pigo.RgbToGrayscale(srcImg)
+	cParams.Pixels = pixs
+
+	flploc := &pigo.Puploc{Row: 10, Col: 10, Scale: 20, Perturbs: 50}
+	// For benchmarking we are using common values for left and right eye.
+	puploc := plc.RunDetector(*flploc, *imgParams, 0.0, false)
+
+	b.ResetTimer()
+	runtime.GC()
+
+	for i := 0; i < b.N; i++ {
+		plc.GetLandmarkPoint(puploc, puploc, *imgParams, 63, false)
+	}
+}
+
+func BenchmarkFlplocDetection(b *testing.B) {
+	var faces []pigo.Detection
+
 	pg := pigo.NewPigo()
 	// Unpack the binary file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
@@ -174,19 +205,19 @@ func BenchmarkFlploc(b *testing.B) {
 		b.Fatalf("error reading the cascade file: %s", err)
 	}
 
-	var faces []pigo.Detection
+	pixs := pigo.RgbToGrayscale(srcImg)
+	cParams.Pixels = pixs
 
 	b.ResetTimer()
+	runtime.GC()
+
+	// Run the classifier over the obtained leaf nodes and return the detection results.
+	// The result contains quadruplets representing the row, column, scale and detection score.
+	faces = classifier.RunCascade(*cParams, 0.0)
+	// Calculate the intersection over union (IoU) of two clusters.
+	faces = classifier.ClusterDetections(faces, 0.1)
 
 	for i := 0; i < b.N; i++ {
-		pixs := pigo.RgbToGrayscale(srcImg)
-		cParams.Pixels = pixs
-		// Run the classifier over the obtained leaf nodes and return the detection results.
-		// The result contains quadruplets representing the row, column, scale and detection score.
-		faces = classifier.RunCascade(*cParams, 0.0)
-		// Calculate the intersection over union (IoU) of two clusters.
-		faces = classifier.ClusterDetections(faces, 0.1)
-
 		for _, face := range faces {
 			if face.Scale > 50 {
 				// left eye

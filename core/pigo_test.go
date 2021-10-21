@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	pigo "github.com/esimov/pigo/core"
@@ -68,43 +69,82 @@ func TestPigo_InputImageShouldBeGrayscale(t *testing.T) {
 }
 
 func TestPigo_Detector_ShouldDetectFace(t *testing.T) {
-	// Unpack the binary file. This will return the number of cascade trees,
+	// Unpack the facefinder binary cascade file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
-	classifier, err := p.Unpack(pigoCascade)
+	p, err := p.Unpack(pigoCascade)
 	if err != nil {
 		t.Fatalf("error reading the cascade file: %s", err)
 	}
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
-	faces := classifier.RunCascade(*cParams, 0.0)
+	faces := p.RunCascade(*cParams, 0.0)
 	// Calculate the intersection over union (IoU) of two clusters.
-	faces = classifier.ClusterDetections(faces, 0.1)
+	faces = p.ClusterDetections(faces, 0.1)
 	if len(faces) == 0 {
 		t.Fatalf("face should've been detected")
 	}
 }
 
-func BenchmarkPigo(b *testing.B) {
+func BenchmarkPigoUnpackCascade(b *testing.B) {
 	pg := pigo.NewPigo()
-	// Unpack the binary file. This will return the number of cascade trees,
-	// the tree depth, the threshold and the prediction from tree's leaf nodes.
-	classifier, err := pg.Unpack(pigoCascade)
-	if err != nil {
-		log.Fatalf("Error reading the cascade file: %s", err)
-	}
-
-	var dets []pigo.Detection
-	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		pixs := pigo.RgbToGrayscale(srcImg)
-		cParams.Pixels = pixs
+		// Unpack the facefinder binary cascade file.
+		_, err := pg.Unpack(pigoCascade)
+		if err != nil {
+			log.Fatalf("error reading the cascade file: %s", err)
+		}
+	}
+}
+
+func BenchmarkPigoFaceDetection(b *testing.B) {
+	var dets []pigo.Detection
+
+	pg := pigo.NewPigo()
+	p, err := pg.Unpack(pigoCascade)
+	if err != nil {
+		log.Fatalf("error reading the cascade file: %s", err)
+	}
+
+	pixs := pigo.RgbToGrayscale(srcImg)
+	cParams.Pixels = pixs
+
+	b.ResetTimer()
+	runtime.GC()
+
+	for i := 0; i < b.N; i++ {
 		// Run the classifier over the obtained leaf nodes and return the detection results.
 		// The result contains quadruplets representing the row, column, scale and detection score.
-		dets = classifier.RunCascade(*cParams, 0.0)
+		dets = p.RunCascade(*cParams, 0.0)
 		// Calculate the intersection over union (IoU) of two clusters.
-		dets = classifier.ClusterDetections(dets, 0.1)
+		dets = p.ClusterDetections(dets, 0.1)
+	}
+	_ = dets
+}
+
+func BenchmarkPigoClusterDetection(b *testing.B) {
+	var dets []pigo.Detection
+
+	pg := pigo.NewPigo()
+	p, err := pg.Unpack(pigoCascade)
+	if err != nil {
+		log.Fatalf("error reading the cascade file: %s", err)
+	}
+
+	pixs := pigo.RgbToGrayscale(srcImg)
+	cParams.Pixels = pixs
+
+	b.ResetTimer()
+	runtime.GC()
+
+	// Run the classifier over the obtained leaf nodes and return the detection results.
+	// The result contains quadruplets representing the row, column, scale and detection score.
+	dets = p.RunCascade(*cParams, 0.0)
+
+	for i := 0; i < b.N; i++ {
+		// Calculate the intersection over union (IoU) of two clusters.
+		dets = p.ClusterDetections(dets, 0.1)
 	}
 	_ = dets
 }

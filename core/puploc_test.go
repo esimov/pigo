@@ -3,6 +3,7 @@ package pigo_test
 import (
 	"io/ioutil"
 	"log"
+	"runtime"
 	"testing"
 
 	pigo "github.com/esimov/pigo/core"
@@ -36,18 +37,18 @@ func TestPuploc_UnpackCascadeFileShouldNotBeNil(t *testing.T) {
 
 func TestPuploc_Detector_ShouldDetectEyes(t *testing.T) {
 	p := pigo.NewPigo()
-	// Unpack the binary file. This will return the number of cascade trees,
+	// Unpack the facefinder binary cascade file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
-	classifier, err := p.Unpack(pigoCascade)
+	p, err := p.Unpack(pigoCascade)
 	if err != nil {
 		t.Fatalf("error reading the cascade file: %s", err)
 	}
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
-	faces := classifier.RunCascade(*cParams, 0.0)
+	faces := p.RunCascade(*cParams, 0.0)
 	// Calculate the intersection over union (IoU) of two clusters.
-	faces = classifier.ClusterDetections(faces, 0.1)
+	faces = p.ClusterDetections(faces, 0.1)
 
 	eyes := []pigo.Puploc{}
 
@@ -79,11 +80,50 @@ func TestPuploc_Detector_ShouldDetectEyes(t *testing.T) {
 	}
 }
 
-func BenchmarkPuploc(b *testing.B) {
+func BenchmarkPuplocUnpackCascade(b *testing.B) {
 	pg := pigo.NewPigo()
-	// Unpack the binary file. This will return the number of cascade trees,
-	// the tree depth, the threshold and the prediction from tree's leaf nodes.
-	classifier, err := pg.Unpack(pigoCascade)
+
+	// Unpack the facefinder binary cascade file.
+	_, err := pg.Unpack(pigoCascade)
+	if err != nil {
+		log.Fatalf("error reading the cascade file: %s", err)
+	}
+
+	b.ResetTimer()
+	runtime.GC()
+
+	for i := 0; i < b.N; i++ {
+		pl := pigo.PuplocCascade{}
+		// Unpack the pupil localization cascade file.
+		_, err = pl.UnpackCascade(puplocCascade)
+		if err != nil {
+			b.Fatalf("error reading the cascade file: %s", err)
+		}
+	}
+}
+
+func BenchmarkPuplocDetectorRun(b *testing.B) {
+	pl := pigo.PuplocCascade{}
+
+	plc, err := pl.UnpackCascade(puplocCascade)
+	if err != nil {
+		b.Fatalf("error reading the cascade file: %s", err)
+	}
+
+	pixs := pigo.RgbToGrayscale(srcImg)
+	cParams.Pixels = pixs
+
+	puploc := &pigo.Puploc{Row: 10, Col: 10, Scale: 20, Perturbs: 50}
+	for i := 0; i < b.N; i++ {
+		plc.RunDetector(*puploc, *imgParams, 0.0, false)
+	}
+}
+
+func BenchmarkPuplocDetection(b *testing.B) {
+	var faces []pigo.Detection
+
+	pg := pigo.NewPigo()
+	p, err := pg.Unpack(pigoCascade)
 	if err != nil {
 		b.Fatalf("error reading the cascade file: %s", err)
 	}
@@ -94,19 +134,19 @@ func BenchmarkPuploc(b *testing.B) {
 		b.Fatalf("error reading the cascade file: %s", err)
 	}
 
-	var faces []pigo.Detection
+	pixs := pigo.RgbToGrayscale(srcImg)
+	cParams.Pixels = pixs
 
 	b.ResetTimer()
+	runtime.GC()
+
+	// Run the classifier over the obtained leaf nodes and return the detection results.
+	// The result contains quadruplets representing the row, column, scale and detection score.
+	faces = p.RunCascade(*cParams, 0.0)
+	// Calculate the intersection over union (IoU) of two clusters.
+	faces = p.ClusterDetections(faces, 0.1)
 
 	for i := 0; i < b.N; i++ {
-		pixs := pigo.RgbToGrayscale(srcImg)
-		cParams.Pixels = pixs
-		// Run the classifier over the obtained leaf nodes and return the detection results.
-		// The result contains quadruplets representing the row, column, scale and detection score.
-		faces = classifier.RunCascade(*cParams, 0.0)
-		// Calculate the intersection over union (IoU) of two clusters.
-		faces = classifier.ClusterDetections(faces, 0.1)
-
 		for _, face := range faces {
 			if face.Scale > 50 {
 				// left eye
