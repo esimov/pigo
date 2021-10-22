@@ -1,10 +1,10 @@
 package pigo
 
 import (
-	"bytes"
 	"encoding/binary"
 	"math"
 	"sort"
+	"sync"
 	"unsafe"
 )
 
@@ -59,63 +59,47 @@ func (pg *Pigo) Unpack(packet []byte) (*Pigo, error) {
 
 	// We skip the first 8 bytes of the cascade file.
 	pos := 8
-	buff := make([]byte, 4)
-	dataView := bytes.NewBuffer(buff)
 
-	// Read the depth (size) of each tree and write it into the buffer array.
-	_, err := dataView.Write([]byte{packet[pos+0], packet[pos+1], packet[pos+2], packet[pos+3]})
-	if err != nil {
-		return nil, err
-	}
+	// Obtain the depth of each tree from the binary data.
+	treeDepth = binary.LittleEndian.Uint32(packet[pos:])
+	pos += 4
 
-	if dataView.Len() > 0 {
-		treeDepth = binary.LittleEndian.Uint32(packet[pos:])
-		pos += 4
+	// Get the number of cascade trees as 32-bit unsigned integer.
+	treeNum = binary.LittleEndian.Uint32(packet[pos:])
 
-		// Get the number of cascade trees as 32-bit unsigned integer and write it into the buffer array.
-		_, err := dataView.Write([]byte{packet[pos+0], packet[pos+1], packet[pos+2], packet[pos+3]})
-		if err != nil {
-			return nil, err
-		}
+	// To avoid constant memory allocation on each append we predefine the slice capacity.
+	treeThreshold = make([]float32, 0, treeNum)
+	treeCodes = make([]int8, 0, 119808)
+	treePred = make([]float32, 0, 29952)
 
-		treeNum = binary.LittleEndian.Uint32(packet[pos:])
-		pos += 4
+	pos += 4
 
-		for t := 0; t < int(treeNum); t++ {
-			treeCodes = append(treeCodes, []int8{0, 0, 0, 0}...)
+	for t := 0; t < int(treeNum); t++ {
+		// Obtain the tree codes of each tree nodes.
+		treeCodes = append(treeCodes, []int8{0, 0, 0, 0}...)
 
-			code := packet[pos : pos+int(4*math.Pow(2, float64(treeDepth))-4)]
-			// Convert unsigned bytecodes to signed ones.
-			signedCode := *(*[]int8)(unsafe.Pointer(&code))
-			treeCodes = append(treeCodes, signedCode...)
+		code := packet[pos : pos+int(4*pow(2, int(treeDepth))-4)]
+		// Convert unsigned bytecodes to signed ones.
+		signedCode := *(*[]int8)(unsafe.Pointer(&code))
+		treeCodes = append(treeCodes, signedCode...)
 
-			pos += int(4*math.Pow(2, float64(treeDepth)) - 4)
+		pos += int(4*pow(2, int(treeDepth)) - 4)
 
-			// Read prediction from tree's leaf nodes.
-			for i := 0; i < int(math.Pow(2, float64(treeDepth))); i++ {
-				_, err := dataView.Write([]byte{packet[pos+0], packet[pos+1], packet[pos+2], packet[pos+3]})
-				if err != nil {
-					return nil, err
-				}
-				u32pred := binary.LittleEndian.Uint32(packet[pos:])
-				// Convert uint32 to float32
-				f32pred := *(*float32)(unsafe.Pointer(&u32pred))
-				treePred = append(treePred, f32pred)
-				pos += 4
-			}
-
-			// Read tree nodes threshold values.
-			_, err := dataView.Write([]byte{packet[pos+0], packet[pos+1], packet[pos+2], packet[pos+3]})
-			if err != nil {
-				return nil, err
-			}
-			u32thr := binary.LittleEndian.Uint32(packet[pos:])
+		// Read prediction from tree's leaf nodes.
+		for i := 0; i < int(pow(2, int(treeDepth))); i++ {
+			u32pred := binary.LittleEndian.Uint32(packet[pos:])
 			// Convert uint32 to float32
-			f32thr := *(*float32)(unsafe.Pointer(&u32thr))
-			treeThreshold = append(treeThreshold, f32thr)
+			f32pred := *(*float32)(unsafe.Pointer(&u32pred))
+			treePred = append(treePred, f32pred)
 			pos += 4
 		}
+		u32thr := binary.LittleEndian.Uint32(packet[pos:])
+		// Convert uint32 to float32
+		f32thr := *(*float32)(unsafe.Pointer(&u32thr))
+		treeThreshold = append(treeThreshold, f32thr)
+		pos += 4
 	}
+
 	return &Pigo{
 		treeDepth,
 		treeNum,
@@ -126,11 +110,10 @@ func (pg *Pigo) Unpack(packet []byte) (*Pigo, error) {
 }
 
 // classifyRegion constructs the classification function based on the parsed binary data.
-func (pg *Pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
+func (pg *Pigo) classifyRegion(r, c, s, treeDepth int, pixels []uint8, dim int) float32 {
 	var (
-		root      int
-		out       float32
-		treeDepth = int(math.Pow(2, float64(pg.treeDepth)))
+		root int
+		out  float32
 	)
 
 	r = r * 256
@@ -139,7 +122,6 @@ func (pg *Pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 	if pg.treeNum > 0 {
 		for i := 0; i < int(pg.treeNum); i++ {
 			idx := 1
-
 			for j := 0; j < int(pg.treeDepth); j++ {
 				x1 := ((r+int(pg.treeCodes[root+4*idx+0])*s)>>8)*dim + ((c + int(pg.treeCodes[root+4*idx+1])*s) >> 8)
 				x2 := ((r+int(pg.treeCodes[root+4*idx+2])*s)>>8)*dim + ((c + int(pg.treeCodes[root+4*idx+3])*s) >> 8)
@@ -165,11 +147,10 @@ func (pg *Pigo) classifyRegion(r, c, s int, pixels []uint8, dim int) float32 {
 }
 
 // classifyRotatedRegion applies the face classification function over a rotated image based on the parsed binary data.
-func (pg *Pigo) classifyRotatedRegion(r, c, s int, a float64, nrows, ncols int, pixels []uint8, dim int) float32 {
+func (pg *Pigo) classifyRotatedRegion(r, c, s, treeDepth int, a float64, nrows, ncols int, pixels []uint8, dim int) float32 {
 	var (
-		root      int
-		out       float32
-		treeDepth = int(math.Pow(2, float64(pg.treeDepth)))
+		root int
+		out  float32
 	)
 
 	qCosTable := []int{256, 251, 236, 212, 181, 142, 97, 49, 0, -49, -97, -142, -181, -212, -236, -251, -256, -251, -236, -212, -181, -142, -97, -49, 0, 49, 97, 142, 181, 212, 236, 251, 256}
@@ -218,14 +199,27 @@ type Detection struct {
 	Q     float32
 }
 
+// We are using sync.Pool to avoid memory heap allocation
+// in order to keep the GC overhead as small as possible.
+var detpool = sync.Pool{
+	New: func() interface{} {
+		return &Detection{}
+	},
+}
+
 // RunCascade analyze the grayscale converted image pixel data and run the classification function over the detection window.
 // It will return a slice containing the detection row, column, it's center and the detection score (in case this is greater than 0.0).
 func (pg *Pigo) RunCascade(cp CascadeParams, angle float64) []Detection {
-	var detections []Detection
-	var pixels = cp.Pixels
-	var q float32
-
+	var (
+		detections []Detection
+		pixels     = cp.Pixels
+		treeDepth  = int(pow(2, int(pg.treeDepth)))
+		q          float32
+	)
 	scale := cp.MinSize
+
+	det := detpool.Get().(*Detection)
+	defer detpool.Put(det)
 
 	// Run the classification function over the detection window
 	// and check if the false positive rate is above a certain value.
@@ -239,13 +233,18 @@ func (pg *Pigo) RunCascade(cp CascadeParams, angle float64) []Detection {
 					if angle > 1.0 {
 						angle = 1.0
 					}
-					q = pg.classifyRotatedRegion(row, col, scale, angle, cp.Rows, cp.Cols, pixels, cp.Dim)
+					q = pg.classifyRotatedRegion(row, col, scale, treeDepth, angle, cp.Rows, cp.Cols, pixels, cp.Dim)
 				} else {
-					q = pg.classifyRegion(row, col, scale, pixels, cp.Dim)
+					q = pg.classifyRegion(row, col, scale, treeDepth, pixels, cp.Dim)
 				}
 
+				det.Row = row
+				det.Col = col
+				det.Scale = scale
+				det.Q = q
+
 				if q > 0.0 {
-					detections = append(detections, Detection{row, col, scale, q})
+					detections = append(detections, *det)
 				}
 			}
 		}

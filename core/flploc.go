@@ -5,12 +5,19 @@ import (
 	"io/ioutil"
 	"math"
 	"path/filepath"
+	"sync"
 )
 
 // FlpCascade holds the binary representation of the facial landmark points cascade files
 type FlpCascade struct {
 	*PuplocCascade
 	error
+}
+
+var flplocPool = sync.Pool{
+	New: func() interface{} {
+		return &Puploc{}
+	},
 }
 
 // UnpackFlp unpacks the facial landmark points cascade file.
@@ -25,7 +32,6 @@ func (plc *PuplocCascade) UnpackFlp(cf string) (*PuplocCascade, error) {
 
 // GetLandmarkPoint retrieves the facial landmark point based on the pupil localization results.
 func (plc *PuplocCascade) GetLandmarkPoint(leftEye, rightEye *Puploc, img ImageParams, perturb int, flipV bool) *Puploc {
-	var flploc *Puploc
 	dx := (leftEye.Row - rightEye.Row) * (leftEye.Row - rightEye.Row)
 	dy := (leftEye.Col - rightEye.Col) * (leftEye.Col - rightEye.Col)
 	dist := math.Sqrt(float64(dx + dy))
@@ -34,12 +40,13 @@ func (plc *PuplocCascade) GetLandmarkPoint(leftEye, rightEye *Puploc, img ImageP
 	col := float64(leftEye.Col+rightEye.Col)/2.0 + 0.15*dist
 	scale := 3.0 * dist
 
-	flploc = &Puploc{
-		Row:      int(row),
-		Col:      int(col),
-		Scale:    float32(scale),
-		Perturbs: perturb,
-	}
+	flploc := flplocPool.Get().(*Puploc)
+	defer flplocPool.Put(flploc)
+
+	flploc.Row = int(row)
+	flploc.Col = int(col)
+	flploc.Scale = float32(scale)
+	flploc.Perturbs = perturb
 
 	if flipV {
 		return plc.RunDetector(*flploc, img, 0.0, true)
@@ -50,14 +57,16 @@ func (plc *PuplocCascade) GetLandmarkPoint(leftEye, rightEye *Puploc, img ImageP
 // ReadCascadeDir reads the facial landmark points cascade files from the provided directory.
 func (plc *PuplocCascade) ReadCascadeDir(path string) (map[string][]*FlpCascade, error) {
 	cascades, err := ioutil.ReadDir(path)
-	if len(cascades) == 0 {
-		return nil, errors.New("the provided directory is empty")
-	}
-	flpcs := make(map[string][]*FlpCascade)
-
 	if err != nil {
 		return nil, err
 	}
+
+	if len(cascades) == 0 {
+		return nil, errors.New("the provided directory is empty")
+	}
+
+	flpcs := make(map[string][]*FlpCascade, len(cascades))
+
 	for _, cascade := range cascades {
 		cf, err := filepath.Abs(path + "/" + cascade.Name())
 		if err != nil {
