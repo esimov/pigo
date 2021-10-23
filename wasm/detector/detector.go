@@ -12,6 +12,8 @@ type FlpCascade struct {
 	error
 }
 
+const perturb = 63
+
 var (
 	cascade          []byte
 	puplocCascade    []byte
@@ -79,7 +81,7 @@ func (d *Detector) DetectLeftPupil(results []int) *pigo.Puploc {
 		Row:      results[0] - int(0.085*float32(results[2])),
 		Col:      results[1] - int(0.185*float32(results[2])),
 		Scale:    float32(results[2]) * 0.4,
-		Perturbs: 63,
+		Perturbs: perturb,
 	}
 	leftEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
 	if leftEye.Row > 0 && leftEye.Col > 0 {
@@ -94,7 +96,7 @@ func (d *Detector) DetectRightPupil(results []int) *pigo.Puploc {
 		Row:      results[0] - int(0.085*float32(results[2])),
 		Col:      results[1] + int(0.185*float32(results[2])),
 		Scale:    float32(results[2]) * 0.4,
-		Perturbs: 63,
+		Perturbs: perturb,
 	}
 	rightEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
 	if rightEye.Row > 0 && rightEye.Col > 0 {
@@ -112,13 +114,13 @@ func (d *Detector) DetectLandmarkPoints(leftEye, rightEye *pigo.Puploc) [][]int 
 
 	for _, eye := range eyeCascades {
 		for _, flpc := range flpcs[eye] {
-			flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, false)
+			flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
 			idx++
 
-			flp = flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, true)
+			flp = flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
@@ -128,14 +130,14 @@ func (d *Detector) DetectLandmarkPoints(leftEye, rightEye *pigo.Puploc) [][]int 
 
 	for _, mouth := range mouthCascade {
 		for _, flpc := range flpcs[mouth] {
-			flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, false)
+			flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
 			idx++
 		}
 	}
-	flp := flpcs["lp84"][0].GetLandmarkPoint(leftEye, rightEye, *imgParams, 63, true)
+	flp := flpcs["lp84"][0].GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
 	if flp.Row > 0 && flp.Col > 0 {
 		det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 	}
@@ -153,7 +155,7 @@ func (d *Detector) clusterDetection(pixels []uint8, width, height int) []pigo.De
 	}
 	cParams := pigo.CascadeParams{
 		MinSize:     200,
-		MaxSize:     640,
+		MaxSize:     480,
 		ShiftFactor: 0.1,
 		ScaleFactor: 1.1,
 		ImageParams: *imgParams,
