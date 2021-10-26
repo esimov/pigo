@@ -43,7 +43,7 @@ jobs:
 
       - name: Build project
         id: makefile
-        run: make
+        run: sudo make
 
       - name: Test
         run: go test -v ./core/... -run=.
