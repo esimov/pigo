@@ -199,7 +199,7 @@ type Detection struct {
 	Q     float32
 }
 
-// We are using sync.Pool to avoid memory heap allocation
+// We are using sync.Pool to avoid memory allocation on the heap
 // in order to keep the GC overhead as small as possible.
 var detpool = sync.Pool{
 	New: func() interface{} {

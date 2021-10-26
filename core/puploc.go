@@ -225,7 +225,7 @@ type puplocPool struct {
 
 // Create a sync.Pool for further reusing the allocated memory space
 // in order to keep the GC overhead as low as possible.
-var plcDetPool = sync.Pool{
+var plcPool = sync.Pool{
 	New: func() interface{} {
 		return &puplocPool{
 			rows:  make([]float32, 63),
@@ -239,8 +239,8 @@ var plcDetPool = sync.Pool{
 func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams, angle float64, flipV bool) *Puploc {
 	var res = make([]float32, 3)
 
-	det := plcDetPool.Get().(*puplocPool)
-	defer plcDetPool.Put(det)
+	det := plcPool.Get().(*puplocPool)
+	defer plcPool.Put(det)
 
 	treeDepth := int(pow(2, int(plc.treeDepth)))
 

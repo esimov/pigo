@@ -14,6 +14,8 @@ type FlpCascade struct {
 	error
 }
 
+// We are using sync.Pool to avoid memory allocation on the heap
+// in order to keep the GC overhead as small as possible.
 var flplocPool = sync.Pool{
 	New: func() interface{} {
 		return &Puploc{}
