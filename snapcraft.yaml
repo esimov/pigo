@@ -1,5 +1,5 @@
 name: pigo
-version: '1.4.4'
+version: '1.4.5'
 summary: Pure Go face detection library
 description: |
   Key features:
