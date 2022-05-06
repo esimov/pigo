@@ -63,14 +63,7 @@ Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
 
 ```bash
-$ export GOPATH="$HOME/go"
-$ export PATH="$PATH:$GOPATH/bin"
-```
-Next download the project and build the binary file.
-
-```bash
-$ go get -u -f github.com/esimov/pigo/cmd/pigo
-$ go install
+$ go install github.com/esimov/pigo/cmd/pigo@latest
 ```
 
 ### Binary releases
