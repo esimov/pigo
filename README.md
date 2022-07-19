@@ -6,21 +6,21 @@
 [![release](https://img.shields.io/badge/release-v1.4.5-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.4.5)
 [![pigo](https://snapcraft.io/pigo/badge.svg)](https://snapcraft.io/pigo)
 
-Pigo is a pure Go face detection, pupil/eyes localization and facial landmark points detection library based on ***Pixel Intensity Comparison-based Object detection*** paper (https://arxiv.org/pdf/1305.4537.pdf).
+Pigo is a pure Go face detection, pupil/eyes localization and facial landmark points detection library based on the **[Pixel Intensity Comparison-based Object detection](https://arxiv.org/pdf/1305.4537.pdf)** paper.
 
 | Rectangle face marker | Circle face marker
 |:--:|:--:
 | ![rectangle](https://user-images.githubusercontent.com/883386/40916662-2fbbae1a-6809-11e8-8afd-d4ed40c7d4e9.png) | ![circle](https://user-images.githubusercontent.com/883386/40916683-447088a8-6809-11e8-942f-3112c10bede3.png) |
 
 ### Motivation
-The reason why Pigo has been developed is because almost all of the currently existing solutions for face detection in the Go ecosystem are purely bindings to some C/C++ libraries like `OpenCV` or `dlib`, but calling a C program trough `cgo` introduces huge latencies and implies a significant trade-off in terms of performance. Also in many cases installing OpenCV on various platforms is cumbersome.
+The reason why Pigo has been developed is because almost all of the currently existing solutions for face detection in the Go ecosystem are purely bindings to some C/C++ libraries like `OpenCV` or `dlib`, but calling a C program through `cgo` introduces huge latencies and implies a significant trade-off in terms of performance. Also, in many cases installing OpenCV on various platforms is cumbersome.
 
-**The Pigo library does not require any additional modules or third party applications to be installed**, though in case you wish to run the library in a real time desktop application you might need to have Python and OpenCV installed. Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more details.
+**The Pigo library does not require any additional modules or third party applications to be installed**, although you might need to install Python and OpenCV if you wish to run the library in a real time desktop application. Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more details.
 
 ### Key features
 - [x] Does not require OpenCV or any 3rd party modules to be installed
 - [x] High processing speed
-- [x] There is no need for image preprocessing prior detection
+- [x] There is no need for image preprocessing prior to detection
 - [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure
 - [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure
 - [x] Fast detection of in-plane rotated faces
@@ -53,7 +53,7 @@ Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/
 ![puploc](https://user-images.githubusercontent.com/883386/62784340-f5b3c100-bac6-11e9-865e-a2b4b9520b08.png)
 
 ### Facial landmark points detection
-**v1.3.0** marks a new milestone in the library evolution, Pigo being able for facial landmark points detection. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
+**v1.3.0** marks a new milestone in the library evolution, Pigo being able to detect facial landmark points. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
 
 Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/facial_landmark
 
@@ -76,8 +76,8 @@ The library can be accessed as a snapcraft function too.
 ## API
 Below is a minimal example of using the face detection API.
 
-First you need to load and parse the binary classifier, then convert the image to grayscale mode,
-and finally to run the cascade function which returns a slice containing the row, column, scale and the detection score.
+First, you need to load and parse the binary classifier, then convert the image to grayscale mode,
+and finally run the cascade function which returns a slice containing the row, column, scale and the detection score.
 
 ```Go
 cascadeFile, err := ioutil.ReadFile("/path/to/cascade/file")
@@ -183,7 +183,7 @@ Go (Golang) Face detection library.
     	Shift detection window by percentage (default 0.1)
 ```
 
-**Important notice:** In case you wish to run also the pupil/eyes localization, then you need to use the `plc` flag and provide a valid path to the pupil localization cascade file. The same applies for facial landmark points detection, only that this time the parameter accepted by the `flpc` flag is a directory pointing to the facial landmark points cascade files found under `cascades/lps`.
+**Important notice:** In case you also wish to run the pupil/eyes localization, then you need to use the `plc` flag and provide a valid path to the pupil localization cascade file. The same applies for facial landmark points detection, only that this time the parameter accepted by the `flpc` flag is a directory pointing to the facial landmark points cascade files found under `cascades/lps`.
 
 ### CLI command examples
 You can also use the `stdin` and `stdout` pipe commands:
@@ -201,16 +201,16 @@ Using the `empty` string as value for the `-out` flag will skip the image genera
 
 ## Real time face detection (running as a shared object)
 
-In case you wish to test the library real time face detection capabilities, the `examples` folder contains a few demos written in Python.
+If you wish to test the library's real time face detection capabilities, the `examples` folder contains a few demos written in Python.
 
 **But why Python you might ask?** Because the Go ecosystem is (still) missing a cross platform and system independent library for accessing the webcam. 
 
-In the Python program we are accessing the webcam and transfer the pixel data as a byte array through `cgo` as a **shared object** to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates than the library is capable of. 
+In the Python program we access the webcam and transfer the pixel data as a byte array through `cgo` as a **shared object** to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates than the library is capable of. 
 
 ## WASM (Webassembly) support 🎉
-**Important note: in order to run the Webassembly demos at least Go 1.13 is required!**
+**Important note: In order to run the Webassembly demos at least Go 1.13 is required!**
 
-Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This proves the library real time face detection capabilities, constantly producing **~60 FPS**. 
+Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This proves the library's real time face detection capabilities, constantly producing **~60 FPS**. 
 
 ### WASM demo
 To run the `wasm` demo select the `wasm` folder and type `make`.
