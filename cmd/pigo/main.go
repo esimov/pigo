@@ -15,6 +15,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/disintegration/imaging"
@@ -160,7 +161,7 @@ func main() {
 			dst = os.Stdout
 		} else {
 			fileTypes := []string{".jpg", ".jpeg", ".png"}
-			ext := filepath.Ext(det.destination)
+			ext := filepath.Ext(strings.ToLower(det.destination))
 
 			if !inSlice(ext, fileTypes) {
 				log.Fatalf("Output file type not supported: %v", ext)
@@ -581,7 +582,7 @@ func (fd *faceDetector) encodeImage(dst io.Writer) error {
 
 	switch dst := dst.(type) {
 	case *os.File:
-		ext := filepath.Ext(dst.Name())
+		ext := filepath.Ext(strings.ToLower(dst.Name()))
 		switch ext {
 		case "", ".jpg", ".jpeg":
 			err = jpeg.Encode(dst, img, &jpeg.Options{Quality: 100})
