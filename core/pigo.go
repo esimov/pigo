@@ -261,7 +261,9 @@ func (pg *Pigo) RunCascade(cp CascadeParams, angle float64) []Detection {
 // We need to make this comparison to filter out multiple face detection regions.
 func (pg *Pigo) ClusterDetections(detections []Detection, iouThreshold float64) []Detection {
 	// Sort detections by their score
-	sort.Sort(det(detections))
+	sort.Slice(detections, func(i, j int) bool {
+		return detections[i].Q < detections[j].Q
+	})
 
 	calcIoU := func(det1, det2 Detection) float64 {
 		// Unpack the position and size of each detection.
@@ -303,13 +305,4 @@ func (pg *Pigo) ClusterDetections(detections []Detection, iouThreshold float64) 
 		}
 	}
 	return clusters
-}
-
-// Implement sorting function on detection values.
-type det []Detection
-
-func (q det) Len() int      { return len(q) }
-func (q det) Swap(i, j int) { q[i], q[j] = q[j], q[i] }
-func (q det) Less(i, j int) bool {
-	return q[i].Q < q[j].Q
 }
