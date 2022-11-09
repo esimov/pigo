@@ -1,14 +1,11 @@
 from ctypes import *
 
-import subprocess
 import numpy as np
 import os
 import cv2
-import time
 
 os.system('go build -o puploc.so -buildmode=c-shared puploc.go')
 pigo = cdll.LoadLibrary('./puploc.so')
-os.system('rm puploc.so')
 
 MAX_NDETS = 2024
 ARRAY_DIM = 5
@@ -50,7 +47,7 @@ def process_frame(pixs):
 
 	if data_pointer :
 		buffarr = ((c_longlong * ARRAY_DIM) * MAX_NDETS).from_address(addressof(data_pointer.contents))
-		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(MAX_NDETS, ARRAY_DIM,))
+		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(ARRAY_DIM, ARRAY_DIM,))
 
 		# The first value of the buffer aray represents the buffer length.
 		dets_len = res[0][0]
@@ -65,10 +62,6 @@ def process_frame(pixs):
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
-# Changing the camera resolution introduce a short delay in the camera initialization.
-# For this reason we should delay the object detection process with a few milliseconds.
-time.sleep(0.4)
 
 while(True):
 	ret, frame = cap.read()
@@ -87,7 +80,11 @@ while(True):
 						px, py = col, row
 					elif angle > 0:
 						if show_face:
-							cv2.rectangle(frame, (col-scale/2, row-scale/2), (col+scale/2, row+scale/2), (0, 0, 255), 2)
+							cv2.rectangle(frame, 
+								(int(col)-int(scale/2), int(row)-int(scale/2)), 
+								(int(col)+int(scale/2), int(row)+int(scale/2)), 
+								(0, 0, 255), 2
+							)
 
 						src_img = cv2.imread(base_dir + "/" + source_imgs[img_idx], cv2.IMREAD_UNCHANGED)
 						img_height, img_width, img_depth = src_img.shape
@@ -119,10 +116,10 @@ while(True):
 						if px == None or py == None:
 							continue
 
-						y1 = row-scale/2+(row-scale/2-(py-height))
-						y2 = row-scale/2+height+(row-scale/2-(py-height))
-						x1 = col-scale/2
-						x2 = col-scale/2+width
+						y1 = int(row-scale/2+(row-scale/2-(py-height)))
+						y2 = int(row-scale/2+height+(row-scale/2-(py-height)))
+						x1 = int(col-scale/2)
+						x2 = int(col-scale/2+width)
 
 						if y1 < 0 or y2 < 0:
 							continue

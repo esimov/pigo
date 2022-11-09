@@ -3,7 +3,6 @@ from ctypes import *
 import numpy as np
 import os
 import cv2
-import time
 
 os.system('go build -o pigo.so -buildmode=c-shared pigo.go')
 pigo = cdll.LoadLibrary('./pigo.so')
