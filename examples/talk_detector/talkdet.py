@@ -1,19 +1,16 @@
 from ctypes import *
 
-import subprocess
 import numpy as np
 import os
 import cv2
-import time
 
 os.system('go build -o talkdet.so -buildmode=c-shared talkdet.go')
 pigo = cdll.LoadLibrary('./talkdet.so')
-os.system('rm talkdet.so')
 
 MAX_NDETS = 2024
 ARRAY_DIM = 6
+NUM_LP = 95
 
-MOUTH_AR_THRESH = 0.2
 MOUTH_AR_CONSEC_FRAMES = 5
 
 def verify_alpha_channel(frame):
@@ -65,7 +62,7 @@ def process_frame(pixs):
         buffarr = ((c_longlong * ARRAY_DIM) *
                    MAX_NDETS).from_address(addressof(data_pointer.contents))
         res = np.ndarray(buffer=buffarr, dtype=c_longlong,
-                         shape=(MAX_NDETS, ARRAY_DIM,))
+                         shape=(NUM_LP, ARRAY_DIM,))
 
         # The first value of the buffer aray represents the buffer length.
         dets_len = res[0][0]
@@ -80,10 +77,6 @@ def process_frame(pixs):
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
-# Changing the camera resolution introduce a short delay in the camera initialization.
-# For this reason we should delay the object detection process with a few milliseconds.
-time.sleep(0.4)
 
 showFaceDet = False
 showPupil = True
@@ -110,7 +103,11 @@ while(True):
                     if det_type == 0:  # 0 == face;
                         face_col, face_row, face_dim = col, row, scale
                         if showFaceDet:
-                            cv2.rectangle(frame, (col-scale/2, row-scale/2), (col+scale/2, row+scale/2), (0, 0, 255), 2)
+                            cv2.rectangle(frame, 
+								(int(col)-int(scale/2), int(row)-int(scale/2)), 
+								(int(col)+int(scale/2), int(row)+int(scale/2)), 
+								(0, 0, 255), 2
+							)
                     elif det_type == 1:  # 1 == pupil;
                         if showPupil:
                             cv2.circle(frame, (int(col), int(row)), 4, (0, 0, 255), -1, 8, 0)
@@ -118,7 +115,7 @@ while(True):
                         if showLandmarkPoints:
                             cv2.circle(frame, (int(col), int(row)), 4, (0, 255, 0), -1, 8, 0)
                     elif det_type == 3:
-                        if mouth_ar < MOUTH_AR_THRESH: # mouth is open
+                        if mouth_ar == 1: # mouth is open
                             talking = True
                             counter = 0
                         else: # mouth is closed
@@ -130,10 +127,10 @@ while(True):
 
                         if talking and counter < MOUTH_AR_CONSEC_FRAMES:
                             frame = apply_circle_focus_blur(frame, face_col, face_row, face_dim, 25)
-                            cv2.putText(frame, "Bla bla bla...", (10, 30),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                            cv2.putText(frame, "Person talking...", (10, 30),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 1)
 
-    cv2.imshow('', frame)
+    cv2.imshow('Talk detection demo', frame)
 
     key = cv2.waitKey(1)
     if key & 0xFF == ord('q'):

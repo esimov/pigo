@@ -35,6 +35,7 @@ func main() {}
 
 //export FindFaces
 func FindFaces(pixels []uint8) uintptr {
+	var talking int
 	pointCh := make(chan uintptr)
 
 	results := clusterDetection(pixels, 480, 640)
@@ -112,8 +113,13 @@ func FindFaces(pixels []uint8) uintptr {
 		dist1 := math.Sqrt(math.Pow(float64(p2.y-p1.y), 2) + math.Pow(float64(p2.x-p1.x), 2))
 		dist2 := math.Sqrt(math.Pow(float64(p4.y-p3.y), 2) + math.Pow(float64(p4.x-p3.x), 2))
 
-		mar := int(round((dist1 / dist2) * 0.19))
-		dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 3, mar)
+		mar := (dist1 / dist2) * 0.19
+		if mar < 0.4 {
+			talking = 1
+		} else {
+			talking = 0
+		}
+		dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 3, talking)
 	}
 
 	coords := make([]int, 0, len(dets))
