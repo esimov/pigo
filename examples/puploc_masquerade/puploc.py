@@ -131,7 +131,7 @@ while(True):
 						dst = cv2.add(roi_bg, roi_fg)
 						frame[y1:y2, x1:x2] = dst
 
-	cv2.imshow('', frame)
+	cv2.imshow('Masquerade demo', frame)
 
 	key = cv2.waitKey(1)
 	if key & 0xFF == ord('q'):
