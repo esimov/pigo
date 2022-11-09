@@ -1,14 +1,11 @@
 from ctypes import *
 
-import subprocess
 import numpy as np
 import os
 import cv2
-import time
 
 os.system('go build -o blinkdet.so -buildmode=c-shared blinkdet.go')
 pigo = cdll.LoadLibrary('./blinkdet.so')
-os.system('rm blinkdet.so')
 
 MAX_NDETS = 2024
 ARRAY_DIM = 6
@@ -38,7 +35,7 @@ def process_frame(pixs):
 
 	if data_pointer :
 		buffarr = ((c_longlong * ARRAY_DIM) * MAX_NDETS).from_address(addressof(data_pointer.contents))
-		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(MAX_NDETS, 5,))
+		res = np.ndarray(buffer=buffarr, dtype=c_longlong, shape=(ARRAY_DIM, 5,))
 
 		# The first value of the buffer aray represents the buffer length.
 		dets_len = res[0][0]
@@ -53,10 +50,6 @@ def process_frame(pixs):
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
-# Changing the camera resolution introduce a short delay in the camera initialization.
-# For this reason we should delay the object detection process with a few milliseconds.
-time.sleep(0.4)
 
 show_pupil = True
 show_eyes = False
