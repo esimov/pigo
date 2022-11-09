@@ -29,8 +29,8 @@ const (
 	defaultColor = "\x1b[0m"
 )
 
-// NewProgressIndicator instantiates a new progress indicator.
-func NewProgressIndicator(msg string, d time.Duration) *ProgressIndicator {
+// NewSpinner instantiates a new progress indicator.
+func NewSpinner(msg string, d time.Duration) *ProgressIndicator {
 	return &ProgressIndicator{
 		mu:         &sync.RWMutex{},
 		delay:      d,

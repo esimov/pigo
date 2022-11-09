@@ -15,6 +15,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/disintegration/imaging"
@@ -134,8 +135,8 @@ func main() {
 	start := time.Now()
 
 	// Progress indicator
-	ind := utils.NewProgressIndicator("Detecting faces...", time.Millisecond*100)
-	ind.Start()
+	spinner := utils.NewSpinner("Detecting faces...", time.Millisecond*100)
+	spinner.Start()
 
 	det = &faceDetector{
 		angle:        *angle,
@@ -160,7 +161,7 @@ func main() {
 			dst = os.Stdout
 		} else {
 			fileTypes := []string{".jpg", ".jpeg", ".png"}
-			ext := filepath.Ext(det.destination)
+			ext := filepath.Ext(strings.ToLower(det.destination))
 
 			if !inSlice(ext, fileTypes) {
 				log.Fatalf("Output file type not supported: %v", ext)
@@ -177,8 +178,8 @@ func main() {
 
 	faces, err := det.detectFaces(*source)
 	if err != nil {
-		ind.StopMsg = fmt.Sprintf("Detecting faces... %s failed ✗%s\n", errorColor, defaultColor)
-		ind.Stop()
+		spinner.StopMsg = fmt.Sprintf("Detecting faces... %s failed ✗%s\n", errorColor, defaultColor)
+		spinner.Stop()
 		log.Fatalf("Detection error: %s%v%s", errorColor, err, defaultColor)
 	}
 
@@ -199,24 +200,27 @@ func main() {
 			out = os.Stdout
 		} else {
 			f, err := os.Create(*jsonf)
+			if err != nil {
+				log.Printf("%s", err)
+			}
 			defer f.Close()
 			if err != nil {
-				ind.StopMsg = fmt.Sprintf("Detecting faces... %s failed ✗%s\n", errorColor, defaultColor)
-				ind.Stop()
+				spinner.StopMsg = fmt.Sprintf("Detecting faces... %s failed ✗%s\n", errorColor, defaultColor)
+				spinner.Stop()
 				log.Fatalf(fmt.Sprintf("%sCould not create the json file: %v%s", errorColor, err, defaultColor))
 			}
 			out = f
 		}
 
 	}
-	ind.StopMsg = fmt.Sprintf("Detecting faces... %s✔%s", successColor, defaultColor)
-	ind.Stop()
+	spinner.StopMsg = fmt.Sprintf("Detecting faces... %s✔%s", successColor, defaultColor)
+	spinner.Stop()
 
 	if len(dets) > 0 {
-		log.Printf(fmt.Sprintf("\n%s%d%s face(s) detected", successColor, len(dets), defaultColor))
+		log.Printf("\n%s%d%s face(s) detected", successColor, len(dets), defaultColor)
 
 		if *jsonf != "" && out == os.Stdout {
-			log.Printf(fmt.Sprintf("\n%sThe detection coordinates of the found faces:%s", successColor, defaultColor))
+			log.Printf("\n%sThe detection coordinates of the found faces:%s", successColor, defaultColor)
 		}
 
 		if out != nil {
@@ -225,10 +229,10 @@ func main() {
 			}
 		}
 	} else {
-		log.Printf(fmt.Sprintf("\n%sno detected faces!%s", errorColor, defaultColor))
+		log.Printf("\n%sno detected faces!%s", errorColor, defaultColor)
 	}
 
-	log.Printf(fmt.Sprintf("\nExecution time: %s%.2fs%s\n", successColor, time.Since(start).Seconds(), defaultColor))
+	log.Printf("\nExecution time: %s%.2fs%s\n", successColor, time.Since(start).Seconds(), defaultColor)
 }
 
 // detectFaces run the detection algorithm over the provided source image.
@@ -238,6 +242,9 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 	// Check if source path is a local image or URL.
 	if utils.IsValidUrl(source) {
 		src, err := utils.DownloadImage(source)
+		if err != nil {
+			return nil, err
+		}
 		// Close and remove the generated temporary file.
 		defer src.Close()
 		defer os.Remove(src.Name())
@@ -289,17 +296,17 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 		ImageParams: *imgParams,
 	}
 
+	cascadeFile, err := ioutil.ReadFile(det.cascadeFile)
+	if err != nil {
+		return nil, fmt.Errorf("error reading the facefinder cascade file")
+	}
+
 	contentType, err := utils.DetectFileContentType(det.cascadeFile)
 	if err != nil {
 		return nil, err
 	}
 	if contentType != "application/octet-stream" {
-		return nil, errors.New("the provided cascade classifier is not valid.")
-	}
-
-	cascadeFile, err := ioutil.ReadFile(det.cascadeFile)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("the provided cascade classifier is not valid")
 	}
 
 	p := pigo.NewPigo()
@@ -310,22 +317,34 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 		return nil, err
 	}
 
-	if len(det.puploc) > 0 {
-		pl := pigo.NewPuplocCascade()
+	plcReader := func() (*pigo.PuplocCascade, error) {
+		plc := pigo.NewPuplocCascade()
 		cascade, err := ioutil.ReadFile(det.puploc)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error reading the puploc cascade file")
 		}
-		plc, err = pl.UnpackCascade(cascade)
+		plc, err = plc.UnpackCascade(cascade)
 		if err != nil {
 			return nil, err
 		}
+		return plc, nil
+	}
 
-		if len(det.flploc) > 0 {
-			flpcs, err = pl.ReadCascadeDir(det.flploc)
-			if err != nil {
-				return nil, err
-			}
+	if len(det.puploc) > 0 {
+		plc, err = plcReader()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(det.flploc) > 0 {
+		plc, err = plcReader()
+		if err != nil {
+			return nil, fmt.Errorf("the puploc cascade file is required: use the -plc flag")
+		}
+		flpcs, err = plc.ReadCascadeDir(det.flploc)
+		if err != nil {
+			return nil, fmt.Errorf("error reading the facial landmark points directory")
 		}
 	}
 
@@ -561,9 +580,9 @@ func (fd *faceDetector) encodeImage(dst io.Writer) error {
 	var err error
 	img := dc.Image()
 
-	switch dst.(type) {
+	switch dst := dst.(type) {
 	case *os.File:
-		ext := filepath.Ext(dst.(*os.File).Name())
+		ext := filepath.Ext(strings.ToLower(dst.Name()))
 		switch ext {
 		case "", ".jpg", ".jpeg":
 			err = jpeg.Encode(dst, img, &jpeg.Options{Quality: 100})
