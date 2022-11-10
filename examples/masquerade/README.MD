@@ -1,6 +1,6 @@
-## PNG Overlay Demo 
+## Image overlay demo 
 
-This is a demo which detects the webcam faces, localize the pupils and use an overlay mask over the detected eyes.
+In this demo we detect a person's eyes and place an overlay mask like sunglasses which can be replaced by pressing the keys documented below.
 
 ### Requirements
 * OpenCV2
