@@ -1,6 +1,6 @@
 ## Face detection demo
 
-This is an example of how to use Pigo for face detection. There are two examples: one which simply detects the webcam faces and another one which blur out the detected faces.
+This is an example of how to use Pigo for face detection as a Python application. There are two examples: one which simply detects the webcam faces and another one which blur out the detected faces.
 
 ### Requirements
 * OpenCV2
