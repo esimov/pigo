@@ -47,9 +47,10 @@ def process_frame(pixs):
 		return dets
 
 # initialize the camera
+width, height = 640, 480
 cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
 show_pupil = True
 show_eyes = False
@@ -61,8 +62,9 @@ while(True):
 	pixs = np.ascontiguousarray(frame[:, :, 1].reshape((frame.shape[0], frame.shape[1])))
 	pixs = pixs.flatten()
 
-	# Verify if camera is intialized by checking if pixel array is not empty.
-	if np.any(pixs):
+	# We need to make sure that the whole frame size is transfered over Go, 
+	# otherwise we might getting an index out of range panic error.
+	if len(pixs) == width*height:
 		dets = process_frame(pixs) # pixs needs to be numpy.uint8 array
 
 		if dets is not None:
@@ -123,7 +125,7 @@ while(True):
 							(0, 255, 0), 2
 						)
 
-	cv2.imshow('', frame)
+	cv2.imshow('Blink detector', frame)
 
 	key = cv2.waitKey(1)
 	if key & 0xFF == ord('q'):
