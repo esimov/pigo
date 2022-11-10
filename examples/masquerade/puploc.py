@@ -59,10 +59,10 @@ def process_frame(pixs):
 		return dets
 
 # initialize the camera
-width, height = 640, 480
+screen_width, screen_height = 640, 480
 cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, screen_width)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, screen_height)
 
 while(True):
 	ret, frame = cap.read()
@@ -70,8 +70,8 @@ while(True):
 	pixs = pixs.flatten()
 
 	# We need to make sure that the whole frame size is transfered over Go, 
-	# otherwise we might getting an index out of range panic error.
-	if len(pixs) == width*height:
+	# otherwise we might getting an index out of range panic error.	
+	if len(pixs) == screen_width*screen_height:
 		dets = process_frame(pixs) # pixs needs to be numpy.uint8 array
 
 		if dets is not None:
