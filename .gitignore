@@ -11,3 +11,4 @@ wasm/js/wasm_exec.js
 !/testdata/*.png
 !/testdata/*.jpg
 !/examples/**/*.png
+examples/*/*.so
