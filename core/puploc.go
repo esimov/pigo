@@ -21,12 +21,12 @@ type Puploc struct {
 // PuplocCascade is a general struct for storing
 // the cascade tree values encoded into the binary file.
 type PuplocCascade struct {
-	stages    uint32
-	scales    float32
-	trees     uint32
-	treeDepth uint32
 	treeCodes []int8
 	treePreds []float32
+	scales    float32
+	stages    uint32
+	trees     uint32
+	treeDepth uint32
 }
 
 // NewPuplocCascade initializes the PuplocCascade constructor method.
@@ -237,7 +237,7 @@ var plcPool = sync.Pool{
 
 // RunDetector runs the pupil localization function.
 func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams, angle float64, flipV bool) *Puploc {
-	var res = make([]float32, 3)
+	var res []float32
 
 	det := plcPool.Get().(*puplocPool)
 	defer plcPool.Put(det)

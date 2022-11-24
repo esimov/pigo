@@ -14,11 +14,11 @@ import (
 // ShiftFactor: determines to what percentage to move the detection window over its size.
 // ScaleFactor: defines in percentage the resize value of the detection window when moving to a higher scale.
 type CascadeParams struct {
+	ImageParams
 	MinSize     int
 	MaxSize     int
 	ShiftFactor float64
 	ScaleFactor float64
-	ImageParams
 }
 
 // ImageParams is a struct for image related settings.
@@ -35,11 +35,11 @@ type ImageParams struct {
 
 // Pigo struct defines the basic binary tree components.
 type Pigo struct {
-	treeDepth     uint32
-	treeNum       uint32
 	treeCodes     []int8
 	treePred      []float32
 	treeThreshold []float32
+	treeDepth     uint32
+	treeNum       uint32
 }
 
 // NewPigo initializes the Pigo constructor method.
@@ -101,11 +101,11 @@ func (pg *Pigo) Unpack(packet []byte) (*Pigo, error) {
 	}
 
 	return &Pigo{
-		treeDepth,
-		treeNum,
 		treeCodes,
 		treePred,
 		treeThreshold,
+		treeDepth,
+		treeNum,
 	}, nil
 }
 

@@ -35,9 +35,6 @@ Go (Golang) Face detection library.
 
 `
 
-// messageType is a placeholder for various message types.
-type messageType int
-
 // pipeName is the file name that indicates stdin/stdout is being used.
 const pipeName = "-"
 
@@ -69,22 +66,22 @@ var (
 )
 
 var (
-	eyeCascades   = []string{"lp46", "lp44", "lp42", "lp38", "lp312"}
-	mouthCascades = []string{"lp93", "lp84", "lp82", "lp81"}
+	eyeCascades   = [5]string{"lp46", "lp44", "lp42", "lp38", "lp312"}
+	mouthCascades = [4]string{"lp93", "lp84", "lp82", "lp81"}
 )
 
 // faceDetector struct contains Pigo face detector general settings.
 type faceDetector struct {
-	angle        float64
 	cascadeFile  string
 	destination  string
+	puploc       string
+	flploc       string
+	angle        float64
 	minSize      int
 	maxSize      int
 	shiftFactor  float64
 	scaleFactor  float64
 	iouThreshold float64
-	puploc       string
-	flploc       string
 	markDetEyes  bool
 }
 
@@ -97,9 +94,9 @@ type coord struct {
 
 // detection holds the detection points of the various detection types
 type detection struct {
-	FacePoints     coord   `json:"face,omitempty"`
 	EyePoints      []coord `json:"eyes,omitempty"`
 	LandmarkPoints []coord `json:"landmark_points,omitempty"`
+	FacePoints     coord   `json:"face,omitempty"`
 }
 
 func main() {
