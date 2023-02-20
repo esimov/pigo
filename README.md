@@ -1,6 +1,7 @@
 <h1 align="center"><img alt="pigo-logo" src="https://user-images.githubusercontent.com/883386/55795932-8787cf00-5ad1-11e9-8c3e-8211ba9427d8.png" height=240/></h1>
 
 [![CI](https://github.com/esimov/pigo/actions/workflows/ci.yml/badge.svg)](https://github.com/esimov/pigo/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/esimov/pigo)](https://goreportcard.com/report/github.com/esimov/pigo)
 [![go.dev reference](https://img.shields.io/badge/pkg.go.dev-reference-007d9c?logo=go)](https://pkg.go.dev/github.com/esimov/pigo/core)
 [![license](https://img.shields.io/github/license/esimov/pigo)](./LICENSE)
 [![release](https://img.shields.io/badge/release-v1.4.6-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.4.6)
