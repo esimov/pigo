@@ -2,16 +2,19 @@
 package gg
 
 import (
+	"errors"
 	"image"
 	"image/color"
-	"image/draw"
 	"image/png"
 	"io"
 	"math"
+	"strings"
 
 	"github.com/golang/freetype/raster"
+	"golang.org/x/image/draw"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
+	"golang.org/x/image/math/f64"
 )
 
 type LineCap int
@@ -52,6 +55,7 @@ var (
 type Context struct {
 	width         int
 	height        int
+	rasterizer    *raster.Rasterizer
 	im            *image.RGBA
 	mask          *image.Alpha
 	color         color.Color
@@ -63,6 +67,7 @@ type Context struct {
 	current       Point
 	hasCurrent    bool
 	dashes        []float64
+	dashOffset    float64
 	lineWidth     float64
 	lineCap       LineCap
 	lineJoin      LineJoin
@@ -88,9 +93,12 @@ func NewContextForImage(im image.Image) *Context {
 // NewContextForRGBA prepares a context for rendering onto the specified image.
 // No copy is made.
 func NewContextForRGBA(im *image.RGBA) *Context {
+	w := im.Bounds().Size().X
+	h := im.Bounds().Size().Y
 	return &Context{
-		width:         im.Bounds().Size().X,
-		height:        im.Bounds().Size().Y,
+		width:         w,
+		height:        h,
+		rasterizer:    raster.NewRasterizer(w, h),
 		im:            im,
 		color:         color.Transparent,
 		fillPattern:   defaultFillStyle,
@@ -101,6 +109,15 @@ func NewContextForRGBA(im *image.RGBA) *Context {
 		fontHeight:    13,
 		matrix:        Identity(),
 	}
+}
+
+// GetCurrentPoint will return the current point and if there is a current point.
+// The point will have been transformed by the context's transformation matrix.
+func (dc *Context) GetCurrentPoint() (Point, bool) {
+	if dc.hasCurrent {
+		return dc.current, true
+	}
+	return Point{}, false
 }
 
 // Image returns the image that has been drawn by this context.
@@ -133,6 +150,12 @@ func (dc *Context) EncodePNG(w io.Writer) error {
 // alternating on and off lengths.
 func (dc *Context) SetDash(dashes ...float64) {
 	dc.dashes = dashes
+}
+
+// SetDashOffset sets the initial offset into the dash pattern to use when
+// stroking dashed paths.
+func (dc *Context) SetDashOffset(offset float64) {
+	dc.dashOffset = offset
 }
 
 func (dc *Context) SetLineWidth(lineWidth float64) {
@@ -373,14 +396,15 @@ func (dc *Context) joiner() raster.Joiner {
 func (dc *Context) stroke(painter raster.Painter) {
 	path := dc.strokePath
 	if len(dc.dashes) > 0 {
-		path = dashed(path, dc.dashes)
+		path = dashed(path, dc.dashes, dc.dashOffset)
 	} else {
 		// TODO: this is a temporary workaround to remove tiny segments
 		// that result in rendering issues
 		path = rasterPath(flattenPath(path))
 	}
-	r := raster.NewRasterizer(dc.width, dc.height)
+	r := dc.rasterizer
 	r.UseNonZeroWinding = true
+	r.Clear()
 	r.AddStroke(path, fix(dc.lineWidth), dc.capper(), dc.joiner())
 	r.Rasterize(painter)
 }
@@ -392,8 +416,9 @@ func (dc *Context) fill(painter raster.Painter) {
 		copy(path, dc.fillPath)
 		path.Add1(dc.start.Fixed())
 	}
-	r := raster.NewRasterizer(dc.width, dc.height)
+	r := dc.rasterizer
 	r.UseNonZeroWinding = dc.fillRule == FillRuleWinding
+	r.Clear()
 	r.AddPath(path)
 	r.Rasterize(painter)
 }
@@ -402,7 +427,19 @@ func (dc *Context) fill(painter raster.Painter) {
 // line cap, line join and dash settings. The path is preserved after this
 // operation.
 func (dc *Context) StrokePreserve() {
-	painter := newPatternPainter(dc.im, dc.mask, dc.strokePattern)
+	var painter raster.Painter
+	if dc.mask == nil {
+		if pattern, ok := dc.strokePattern.(*solidPattern); ok {
+			// with a nil mask and a solid color pattern, we can be more efficient
+			// TODO: refactor so we don't have to do this type assertion stuff?
+			p := raster.NewRGBAPainter(dc.im)
+			p.SetColor(pattern.color)
+			painter = p
+		}
+	}
+	if painter == nil {
+		painter = newPatternPainter(dc.im, dc.mask, dc.strokePattern)
+	}
 	dc.stroke(painter)
 }
 
@@ -417,7 +454,19 @@ func (dc *Context) Stroke() {
 // FillPreserve fills the current path with the current color. Open subpaths
 // are implicity closed. The path is preserved after this operation.
 func (dc *Context) FillPreserve() {
-	painter := newPatternPainter(dc.im, dc.mask, dc.fillPattern)
+	var painter raster.Painter
+	if dc.mask == nil {
+		if pattern, ok := dc.fillPattern.(*solidPattern); ok {
+			// with a nil mask and a solid color pattern, we can be more efficient
+			// TODO: refactor so we don't have to do this type assertion stuff?
+			p := raster.NewRGBAPainter(dc.im)
+			p.SetColor(pattern.color)
+			painter = p
+		}
+	}
+	if painter == nil {
+		painter = newPatternPainter(dc.im, dc.mask, dc.fillPattern)
+	}
 	dc.fill(painter)
 }
 
@@ -441,6 +490,38 @@ func (dc *Context) ClipPreserve() {
 		mask := image.NewAlpha(image.Rect(0, 0, dc.width, dc.height))
 		draw.DrawMask(mask, mask.Bounds(), clip, image.ZP, dc.mask, image.ZP, draw.Over)
 		dc.mask = mask
+	}
+}
+
+// SetMask allows you to directly set the *image.Alpha to be used as a clipping
+// mask. It must be the same size as the context, else an error is returned
+// and the mask is unchanged.
+func (dc *Context) SetMask(mask *image.Alpha) error {
+	if mask.Bounds().Size() != dc.im.Bounds().Size() {
+		return errors.New("mask size must match context size")
+	}
+	dc.mask = mask
+	return nil
+}
+
+// AsMask returns an *image.Alpha representing the alpha channel of this
+// context. This can be useful for advanced clipping operations where you first
+// render the mask geometry and then use it as a mask.
+func (dc *Context) AsMask() *image.Alpha {
+	mask := image.NewAlpha(dc.im.Bounds())
+	draw.Draw(mask, dc.im.Bounds(), dc.im, image.ZP, draw.Src)
+	return mask
+}
+
+// InvertMask inverts the alpha values in the current clipping mask such that
+// a fully transparent region becomes fully opaque and vice versa.
+func (dc *Context) InvertMask() {
+	if dc.mask == nil {
+		dc.mask = image.NewAlpha(dc.im.Bounds())
+	} else {
+		for i, a := range dc.mask.Pix {
+			dc.mask.Pix[i] = 255 - a
+		}
 	}
 }
 
@@ -520,14 +601,18 @@ func (dc *Context) DrawEllipticalArc(x, y, rx, ry, angle1, angle2 float64) {
 		a2 := angle1 + (angle2-angle1)*p2
 		x0 := x + rx*math.Cos(a1)
 		y0 := y + ry*math.Sin(a1)
-		x1 := x + rx*math.Cos(a1+(a2-a1)/2)
-		y1 := y + ry*math.Sin(a1+(a2-a1)/2)
+		x1 := x + rx*math.Cos((a1+a2)/2)
+		y1 := y + ry*math.Sin((a1+a2)/2)
 		x2 := x + rx*math.Cos(a2)
 		y2 := y + ry*math.Sin(a2)
 		cx := 2*x1 - x0/2 - x2/2
 		cy := 2*y1 - y0/2 - y2/2
-		if i == 0 && !dc.hasCurrent {
-			dc.MoveTo(x0, y0)
+		if i == 0 {
+			if dc.hasCurrent {
+				dc.LineTo(x0, y0)
+			} else {
+				dc.MoveTo(x0, y0)
+			}
 		}
 		dc.QuadraticTo(cx, cy, x2, y2)
 	}
@@ -564,7 +649,6 @@ func (dc *Context) DrawRegularPolygon(n int, x, y, r, rotation float64) {
 }
 
 // DrawImage draws the specified image at the specified point.
-// Currently, rotation and scaling transforms are not supported.
 func (dc *Context) DrawImage(im image.Image, x, y int) {
 	dc.DrawImageAnchored(im, x, y, 0, 0)
 }
@@ -576,12 +660,17 @@ func (dc *Context) DrawImageAnchored(im image.Image, x, y int, ax, ay float64) {
 	s := im.Bounds().Size()
 	x -= int(ax * float64(s.X))
 	y -= int(ay * float64(s.Y))
-	p := image.Pt(x, y)
-	r := image.Rectangle{p, p.Add(s)}
+	transformer := draw.BiLinear
+	fx, fy := float64(x), float64(y)
+	m := dc.matrix.Translate(fx, fy)
+	s2d := f64.Aff3{m.XX, m.XY, m.X0, m.YX, m.YY, m.Y0}
 	if dc.mask == nil {
-		draw.Draw(dc.im, r, im, image.ZP, draw.Over)
+		transformer.Transform(dc.im, s2d, im, im.Bounds(), draw.Over, nil)
 	} else {
-		draw.DrawMask(dc.im, r, im, image.ZP, dc.mask, p, draw.Over)
+		transformer.Transform(dc.im, s2d, im, im.Bounds(), draw.Over, &draw.Options{
+			DstMask:  dc.mask,
+			DstMaskP: image.ZP,
+		})
 	}
 }
 
@@ -601,6 +690,10 @@ func (dc *Context) LoadFontFace(path string, points float64) error {
 	return err
 }
 
+func (dc *Context) FontHeight() float64 {
+	return dc.fontHeight
+}
+
 func (dc *Context) drawString(im *image.RGBA, s string, x, y float64) {
 	d := &font.Drawer{
 		Dst:  im,
@@ -608,11 +701,34 @@ func (dc *Context) drawString(im *image.RGBA, s string, x, y float64) {
 		Face: dc.fontFace,
 		Dot:  fixp(x, y),
 	}
-	d.DrawString(s)
+	// based on Drawer.DrawString() in golang.org/x/image/font/font.go
+	prevC := rune(-1)
+	for _, c := range s {
+		if prevC >= 0 {
+			d.Dot.X += d.Face.Kern(prevC, c)
+		}
+		dr, mask, maskp, advance, ok := d.Face.Glyph(d.Dot, c)
+		if !ok {
+			// TODO: is falling back on the U+FFFD glyph the responsibility of
+			// the Drawer or the Face?
+			// TODO: set prevC = '\ufffd'?
+			continue
+		}
+		sr := dr.Sub(dr.Min)
+		transformer := draw.BiLinear
+		fx, fy := float64(dr.Min.X), float64(dr.Min.Y)
+		m := dc.matrix.Translate(fx, fy)
+		s2d := f64.Aff3{m.XX, m.XY, m.X0, m.YX, m.YY, m.Y0}
+		transformer.Transform(d.Dst, s2d, d.Src, sr, draw.Over, &draw.Options{
+			SrcMask:  mask,
+			SrcMaskP: maskp,
+		})
+		d.Dot.X += advance
+		prevC = c
+	}
 }
 
 // DrawString draws the specified text at the specified point.
-// Currently, rotation and scaling transforms are not supported.
 func (dc *Context) DrawString(s string, x, y float64) {
 	dc.DrawStringAnchored(s, x, y, 0, 0)
 }
@@ -622,7 +738,6 @@ func (dc *Context) DrawString(s string, x, y float64) {
 // text. Use ax=0.5, ay=0.5 to center the text at the specified point.
 func (dc *Context) DrawStringAnchored(s string, x, y, ax, ay float64) {
 	w, h := dc.MeasureString(s)
-	x, y = dc.TransformPoint(x, y)
 	x -= ax * w
 	y += ay * h
 	if dc.mask == nil {
@@ -639,8 +754,11 @@ func (dc *Context) DrawStringAnchored(s string, x, y, ax, ay float64) {
 // spacing and text alignment.
 func (dc *Context) DrawStringWrapped(s string, x, y, ax, ay, width, lineSpacing float64, align Align) {
 	lines := dc.WordWrap(s, width)
+
+	// sync h formula with MeasureMultilineString
 	h := float64(len(lines)) * dc.fontHeight * lineSpacing
 	h -= (lineSpacing - 1) * dc.fontHeight
+
 	x -= ax * width
 	y -= ay * h
 	switch align {
@@ -658,6 +776,29 @@ func (dc *Context) DrawStringWrapped(s string, x, y, ax, ay, width, lineSpacing 
 		dc.DrawStringAnchored(line, x, y, ax, ay)
 		y += dc.fontHeight * lineSpacing
 	}
+}
+
+func (dc *Context) MeasureMultilineString(s string, lineSpacing float64) (width, height float64) {
+	lines := strings.Split(s, "\n")
+
+	// sync h formula with DrawStringWrapped
+	height = float64(len(lines)) * dc.fontHeight * lineSpacing
+	height -= (lineSpacing - 1) * dc.fontHeight
+
+	d := &font.Drawer{
+		Face: dc.fontFace,
+	}
+
+	// max width from lines
+	for _, line := range lines {
+		adv := d.MeasureString(line)
+		currentWidth := float64(adv >> 6) // from gg.Context.MeasureString
+		if currentWidth > width {
+			width = currentWidth
+		}
+	}
+
+	return width, height
 }
 
 // MeasureString returns the rendered width and height of the specified text
