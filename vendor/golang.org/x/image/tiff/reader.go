@@ -8,15 +8,16 @@
 package tiff // import "golang.org/x/image/tiff"
 
 import (
+	"bytes"
 	"compress/zlib"
 	"encoding/binary"
 	"fmt"
 	"image"
 	"image/color"
 	"io"
-	"io/ioutil"
 	"math"
 
+	"golang.org/x/image/ccitt"
 	"golang.org/x/image/tiff/lzw"
 )
 
@@ -36,6 +37,52 @@ func (e UnsupportedError) Error() string {
 }
 
 var errNoPixels = FormatError("not enough pixel data")
+
+const maxChunkSize = 10 << 20 // 10M
+
+// safeReadtAt is a verbatim copy of internal/saferio.ReadDataAt from the
+// standard library, which is used to read data from a reader using a length
+// provided by untrusted data, without allocating the entire slice ahead of time
+// if it is large (>maxChunkSize). This allows us to avoid allocating giant
+// slices before learning that we can't actually read that much data from the
+// reader.
+func safeReadAt(r io.ReaderAt, n uint64, off int64) ([]byte, error) {
+	if int64(n) < 0 || n != uint64(int(n)) {
+		// n is too large to fit in int, so we can't allocate
+		// a buffer large enough. Treat this as a read failure.
+		return nil, io.ErrUnexpectedEOF
+	}
+
+	if n < maxChunkSize {
+		buf := make([]byte, n)
+		_, err := r.ReadAt(buf, off)
+		if err != nil {
+			// io.SectionReader can return EOF for n == 0,
+			// but for our purposes that is a success.
+			if err != io.EOF || n > 0 {
+				return nil, err
+			}
+		}
+		return buf, nil
+	}
+
+	var buf []byte
+	buf1 := make([]byte, maxChunkSize)
+	for n > 0 {
+		next := n
+		if next > maxChunkSize {
+			next = maxChunkSize
+		}
+		_, err := r.ReadAt(buf1[:next], off)
+		if err != nil {
+			return nil, err
+		}
+		buf = append(buf, buf1[:next]...)
+		n -= next
+		off += int64(next)
+	}
+	return buf, nil
+}
 
 type decoder struct {
 	r         io.ReaderAt
@@ -81,8 +128,7 @@ func (d *decoder) ifdUint(p []byte) (u []uint, err error) {
 	}
 	if datalen := lengths[datatype] * count; datalen > 4 {
 		// The IFD contains a pointer to the real value.
-		raw = make([]byte, datalen)
-		_, err = d.r.ReadAt(raw, int64(d.byteOrder.Uint32(p[8:12])))
+		raw, err = safeReadAt(d.r, uint64(datalen), int64(d.byteOrder.Uint32(p[8:12])))
 	} else {
 		raw = p[8 : 8+datalen]
 	}
@@ -110,7 +156,7 @@ func (d *decoder) ifdUint(p []byte) (u []uint, err error) {
 	return u, nil
 }
 
-// parseIFD decides whether the the IFD entry in p is "interesting" and
+// parseIFD decides whether the IFD entry in p is "interesting" and
 // stows away the data in the decoder. It returns the tag number of the
 // entry and an error, if any.
 func (d *decoder) parseIFD(p []byte) (int, error) {
@@ -129,7 +175,10 @@ func (d *decoder) parseIFD(p []byte) (int, error) {
 		tTileOffsets,
 		tTileByteCounts,
 		tImageLength,
-		tImageWidth:
+		tImageWidth,
+		tFillOrder,
+		tT4Options,
+		tT6Options:
 		val, err := d.ifdUint(p)
 		if err != nil {
 			return 0, err
@@ -400,6 +449,9 @@ func newDecoder(r io.Reader) (*decoder, error) {
 
 	p := make([]byte, 8)
 	if _, err := d.r.ReadAt(p, 0); err != nil {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
 		return nil, err
 	}
 	switch string(p[0:4]) {
@@ -420,8 +472,9 @@ func newDecoder(r io.Reader) (*decoder, error) {
 	numItems := int(d.byteOrder.Uint16(p[0:2]))
 
 	// All IFD entries are read in one chunk.
-	p = make([]byte, ifdLen*numItems)
-	if _, err := d.r.ReadAt(p, ifdOffset+2); err != nil {
+	var err error
+	p, err = safeReadAt(d.r, uint64(ifdLen*numItems), ifdOffset+2)
+	if err != nil {
 		return nil, err
 	}
 
@@ -441,7 +494,8 @@ func newDecoder(r io.Reader) (*decoder, error) {
 	d.config.Height = int(d.firstVal(tImageLength))
 
 	if _, ok := d.features[tBitsPerSample]; !ok {
-		return nil, FormatError("BitsPerSample tag missing")
+		// Default is 1 per specification.
+		d.features[tBitsPerSample] = []uint{1}
 	}
 	d.bpp = d.firstVal(tBitsPerSample)
 	switch d.bpp {
@@ -525,6 +579,11 @@ func newDecoder(r io.Reader) (*decoder, error) {
 	default:
 		return nil, UnsupportedError("color model")
 	}
+	if d.firstVal(tPhotometricInterpretation) != pRGB {
+		if len(d.features[tBitsPerSample]) != 1 {
+			return nil, UnsupportedError("extra samples")
+		}
+	}
 
 	return d, nil
 }
@@ -537,6 +596,13 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 		return image.Config{}, err
 	}
 	return d.config, nil
+}
+
+func ccittFillOrder(tiffFillOrder uint) ccitt.Order {
+	if tiffFillOrder == 2 {
+		return ccitt.LSB
+	}
+	return ccitt.MSB
 }
 
 // Decode reads a TIFF image from r and returns it as an image.Image.
@@ -567,6 +633,13 @@ func Decode(r io.Reader) (img image.Image, err error) {
 
 		blockWidth = int(d.firstVal(tTileWidth))
 		blockHeight = int(d.firstVal(tTileLength))
+
+		// The specification says that tile widths and lengths must be a multiple of 16.
+		// We currently permit invalid sizes, but reject anything too small to limit the
+		// amount of work a malicious input can force us to perform.
+		if blockWidth < 8 || blockHeight < 8 {
+			return nil, FormatError("tile size is too small")
+		}
 
 		if blockWidth != 0 {
 			blocksAcross = (d.config.Width + blockWidth - 1) / blockWidth
@@ -620,6 +693,11 @@ func Decode(r io.Reader) (img image.Image, err error) {
 		}
 	}
 
+	if blocksAcross == 0 || blocksDown == 0 {
+		return
+	}
+	// Maximum data per pixel is 8 bytes (RGBA64).
+	blockMaxDataSize := int64(blockWidth) * int64(blockHeight) * 8
 	for i := 0; i < blocksAcross; i++ {
 		blkW := blockWidth
 		if !blockPadding && i == blocksAcross-1 && d.config.Width%blockWidth != 0 {
@@ -641,12 +719,21 @@ func Decode(r io.Reader) (img image.Image, err error) {
 				if b, ok := d.r.(*buffer); ok {
 					d.buf, err = b.Slice(int(offset), int(n))
 				} else {
-					d.buf = make([]byte, n)
-					_, err = d.r.ReadAt(d.buf, offset)
+					d.buf, err = safeReadAt(d.r, uint64(n), offset)
 				}
+			case cG3:
+				inv := d.firstVal(tPhotometricInterpretation) == pWhiteIsZero
+				order := ccittFillOrder(d.firstVal(tFillOrder))
+				r := ccitt.NewReader(io.NewSectionReader(d.r, offset, n), order, ccitt.Group3, blkW, blkH, &ccitt.Options{Invert: inv, Align: false})
+				d.buf, err = readBuf(r, d.buf, blockMaxDataSize)
+			case cG4:
+				inv := d.firstVal(tPhotometricInterpretation) == pWhiteIsZero
+				order := ccittFillOrder(d.firstVal(tFillOrder))
+				r := ccitt.NewReader(io.NewSectionReader(d.r, offset, n), order, ccitt.Group4, blkW, blkH, &ccitt.Options{Invert: inv, Align: false})
+				d.buf, err = readBuf(r, d.buf, blockMaxDataSize)
 			case cLZW:
 				r := lzw.NewReader(io.NewSectionReader(d.r, offset, n), lzw.MSB, 8)
-				d.buf, err = ioutil.ReadAll(r)
+				d.buf, err = readBuf(r, d.buf, blockMaxDataSize)
 				r.Close()
 			case cDeflate, cDeflateOld:
 				var r io.ReadCloser
@@ -654,7 +741,7 @@ func Decode(r io.Reader) (img image.Image, err error) {
 				if err != nil {
 					return nil, err
 				}
-				d.buf, err = ioutil.ReadAll(r)
+				d.buf, err = readBuf(r, d.buf, blockMaxDataSize)
 				r.Close()
 			case cPackBits:
 				d.buf, err = unpackBits(io.NewSectionReader(d.r, offset, n))
@@ -676,6 +763,12 @@ func Decode(r io.Reader) (img image.Image, err error) {
 		}
 	}
 	return
+}
+
+func readBuf(r io.Reader, buf []byte, lim int64) ([]byte, error) {
+	b := bytes.NewBuffer(buf[:0])
+	_, err := b.ReadFrom(io.LimitReader(r, lim))
+	return b.Bytes(), err
 }
 
 func init() {

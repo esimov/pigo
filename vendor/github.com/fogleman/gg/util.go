@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/draw"
+	"image/jpeg"
 	_ "image/jpeg"
 	"image/png"
 	"io/ioutil"
@@ -53,9 +54,32 @@ func SavePNG(path string, im image.Image) error {
 	return png.Encode(file, im)
 }
 
+func LoadJPG(path string) (image.Image, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	return jpeg.Decode(file)
+}
+
+func SaveJPG(path string, im image.Image, quality int) error {
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	var opt jpeg.Options
+	opt.Quality = quality
+
+	return jpeg.Encode(file, im, &opt)
+}
+
 func imageToRGBA(src image.Image) *image.RGBA {
-	dst := image.NewRGBA(src.Bounds())
-	draw.Draw(dst, dst.Rect, src, image.ZP, draw.Src)
+	bounds := src.Bounds()
+	dst := image.NewRGBA(bounds)
+	draw.Draw(dst, bounds, src, bounds.Min, draw.Src)
 	return dst
 }
 
@@ -100,6 +124,11 @@ func unfix(x fixed.Int26_6) float64 {
 	return 0
 }
 
+// LoadFontFace is a helper function to load the specified font file with
+// the specified point size. Note that the returned `font.Face` objects
+// are not thread safe and cannot be used in parallel across goroutines.
+// You can usually just use the Context.LoadFontFace function instead of
+// this package-level function.
 func LoadFontFace(path string, points float64) (font.Face, error) {
 	fontBytes, err := ioutil.ReadFile(path)
 	if err != nil {
