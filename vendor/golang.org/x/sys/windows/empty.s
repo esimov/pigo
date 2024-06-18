@@ -2,10 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin,arm64,!go1.12
+// +build !go1.12
 
-package unix
-
-func Getdirentries(fd int, buf []byte, basep *uintptr) (n int, err error) {
-	return 0, ENOSYS
-}
+// This file is here to allow bodyless functions with go:linkname for Go 1.11
+// and earlier (see https://golang.org/issue/23311).
