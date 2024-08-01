@@ -218,6 +218,8 @@ To run the `wasm` demo select the `wasm` folder and type `make`.
 
 For more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
 
+**For more awesome WASM demos using the Pigo library check this repo: https://github.com/esimov/pigo-wasm-demos**.
+
 ## Benchmark results
 Below are the benchmark results obtained running Pigo against [GoCV](https://github.com/hybridgroup/gocv) using the same conditions.
 
