@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,12 +19,12 @@ func DownloadImage(url string) (*os.File, error) {
 	}
 	defer res.Body.Close()
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("unable to read response body: %s", err))
 	}
 
-	tmpfile, err := ioutil.TempFile("/tmp", "image")
+	tmpfile, err := os.CreateTemp("/tmp", "image")
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("unable to create temporary file: %v", err))
 	}

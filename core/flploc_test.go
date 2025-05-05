@@ -1,8 +1,8 @@
 package pigo_test
 
 import (
-	"io/ioutil"
 	"log"
+	"os"
 	"runtime"
 	"testing"
 
@@ -14,7 +14,7 @@ var flpc []byte
 const perturb = 63
 
 func init() {
-	flpc, err = ioutil.ReadFile("../cascade/lps/lp42")
+	flpc, err = os.ReadFile("../cascade/lps/lp42")
 	if err != nil {
 		log.Fatalf("missing cascade file: %v", err)
 	}

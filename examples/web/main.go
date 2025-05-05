@@ -8,7 +8,6 @@ import (
 	"image/color"
 	"image/jpeg"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"mime/multipart"
@@ -79,7 +78,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 	}
 	cmd.Start()
 
-	cascadeFile, err := ioutil.ReadFile(*cascadeFile)
+	cascadeFile, err := os.ReadFile(*cascadeFile)
 	if err != nil {
 		log.Fatalf("[ERROR] reading the cascade file: %v", err)
 	}
@@ -104,7 +103,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		data, err := ioutil.ReadAll(p)
+		data, err := io.ReadAll(p)
 		if err != nil {
 			log.Println("[ERROR] reading from bytes ", err)
 			continue

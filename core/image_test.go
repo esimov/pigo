@@ -5,14 +5,14 @@ import (
 	"image/color"
 	"image/color/palette"
 	"image/draw"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestGetImage(t *testing.T) {
 	path := filepath.Join("../testdata", "test.png")
-	_, err := ioutil.ReadFile(path)
+	_, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("unable to read the file: %v", err)
 	}

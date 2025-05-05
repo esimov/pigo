@@ -81,7 +81,7 @@ First, you need to load and parse the binary classifier, then convert the image 
 and finally run the cascade function which returns a slice containing the row, column, scale and the detection score.
 
 ```Go
-cascadeFile, err := ioutil.ReadFile("/path/to/cascade/file")
+cascadeFile, err := os.ReadFile("/path/to/cascade/file")
 if err != nil {
 	log.Fatalf("Error reading the cascade file: %v", err)
 }

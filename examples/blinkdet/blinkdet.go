@@ -3,8 +3,8 @@ package main
 import "C"
 
 import (
-	"io/ioutil"
 	"log"
+	"os"
 	"runtime"
 	"unsafe"
 
@@ -101,7 +101,7 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 
 	// Ensure that the face detection classifier is loaded only once.
 	if len(cascade) == 0 {
-		cascade, err = ioutil.ReadFile("../../cascade/facefinder")
+		cascade, err = os.ReadFile("../../cascade/facefinder")
 		if err != nil {
 			log.Fatalf("Error reading the cascade file: %v", err)
 		}
@@ -117,7 +117,7 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 
 	// Ensure that we load the pupil localization cascade only once
 	if len(puplocCascade) == 0 {
-		puplocCascade, err := ioutil.ReadFile("../../cascade/puploc")
+		puplocCascade, err := os.ReadFile("../../cascade/puploc")
 		if err != nil {
 			log.Fatalf("Error reading the puploc cascade file: %s", err)
 		}

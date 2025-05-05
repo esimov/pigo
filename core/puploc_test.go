@@ -1,8 +1,8 @@
 package pigo_test
 
 import (
-	"io/ioutil"
 	"log"
+	"os"
 	"runtime"
 	"testing"
 
@@ -18,7 +18,7 @@ var (
 )
 
 func init() {
-	puplocCasc, err = ioutil.ReadFile("../cascade/puploc")
+	puplocCasc, err = os.ReadFile("../cascade/puploc")
 	if err != nil {
 		log.Fatalf("error reading the puploc cascade file: %v", err)
 	}

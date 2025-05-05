@@ -3,8 +3,8 @@ package main
 import "C"
 
 import (
-	"io/ioutil"
 	"log"
+	"os"
 	"runtime"
 	"unsafe"
 
@@ -73,7 +73,7 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 	}
 
 	if len(cascade) == 0 {
-		cascade, err = ioutil.ReadFile("../../cascade/facefinder")
+		cascade, err = os.ReadFile("../../cascade/facefinder")
 		if err != nil {
 			log.Fatalf("Error reading the cascade file: %s", err)
 		}

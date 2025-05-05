@@ -2,8 +2,8 @@ package pigo_test
 
 import (
 	"image"
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -20,7 +20,7 @@ var (
 )
 
 func init() {
-	faceCasc, err = ioutil.ReadFile("../cascade/facefinder")
+	faceCasc, err = os.ReadFile("../cascade/facefinder")
 	if err != nil {
 		log.Fatalf("Error reading the cascade file: %v", err)
 	}

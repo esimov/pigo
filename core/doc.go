@@ -3,13 +3,12 @@ Package pigo is a lightweight pure Go face detection, pupil/eyes localization an
 based on Pixel Intensity Comparison-based Object detection paper (https://arxiv.org/pdf/1305.4537.pdf).
 Is platform agnostic and does not require any external dependencies and third party modules.
 
-
-Face detection API example
+# Face detection API example
 
 First you need to load and parse the binary classifier, then convert the image to grayscale mode
 and finally to run the cascade function which returns a slice containing the row, column, scale and the detection score.
 
-	cascadeFile, err := ioutil.ReadFile("/path/to/cascade/file")
+	cascadeFile, err := os.ReadFile("/path/to/cascade/file")
 	if err != nil {
 		log.Fatalf("Error reading the cascade file: %v", err)
 	}
