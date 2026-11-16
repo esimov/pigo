@@ -10,11 +10,11 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -120,7 +120,7 @@ func main() {
 
 	log.SetFlags(0)
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, fmt.Sprintf(banner, Version))
+		fmt.Fprintf(os.Stderr, "%s", fmt.Sprintf(banner, Version))
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -160,7 +160,7 @@ func main() {
 			fileTypes := []string{".jpg", ".jpeg", ".png"}
 			ext := filepath.Ext(strings.ToLower(det.destination))
 
-			if !inSlice(ext, fileTypes) {
+			if !slices.Contains(fileTypes, ext) {
 				log.Fatalf("Output file type not supported: %v", ext)
 			}
 
@@ -204,7 +204,7 @@ func main() {
 			if err != nil {
 				spinner.StopMsg = fmt.Sprintf("Detecting faces... %s failed ✗%s\n", errorColor, defaultColor)
 				spinner.Stop()
-				log.Fatalf(fmt.Sprintf("%sCould not create the json file: %v%s", errorColor, err, defaultColor))
+				log.Fatalf("%s", fmt.Sprintf("%sCould not create the json file: %v%s", errorColor, err, defaultColor))
 			}
 			out = f
 		}
@@ -293,7 +293,7 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 		ImageParams: *imgParams,
 	}
 
-	cascadeFile, err := ioutil.ReadFile(det.cascadeFile)
+	cascadeFile, err := os.ReadFile(det.cascadeFile)
 	if err != nil {
 		return nil, fmt.Errorf("error reading the facefinder cascade file")
 	}
@@ -316,7 +316,7 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 
 	plcReader := func() (*pigo.PuplocCascade, error) {
 		plc := pigo.NewPuplocCascade()
-		cascade, err := ioutil.ReadFile(det.puploc)
+		cascade, err := os.ReadFile(det.puploc)
 		if err != nil {
 			return nil, fmt.Errorf("error reading the puploc cascade file")
 		}
@@ -592,16 +592,6 @@ func (fd *faceDetector) encodeImage(dst io.Writer) error {
 		err = jpeg.Encode(dst, img, &jpeg.Options{Quality: 100})
 	}
 	return err
-}
-
-// inSlice checks if the item exists in the slice.
-func inSlice(item string, slice []string) bool {
-	for _, it := range slice {
-		if it == item {
-			return true
-		}
-	}
-	return false
 }
 
 // drawEyeDetectionMarker is a helper function to draw the detection marks

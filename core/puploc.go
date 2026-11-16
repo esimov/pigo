@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"math"
 	"math/rand"
-	"sort"
+	"slices"
 	"sync"
 	"unsafe"
 )
@@ -264,9 +264,9 @@ func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams, angle float64,
 	}
 
 	// Sorting the perturbations in ascendent order
-	sort.Sort(plocSort(det.rows))
-	sort.Sort(plocSort(det.cols))
-	sort.Sort(plocSort(det.scale))
+	slices.Sort(det.rows)
+	slices.Sort(det.cols)
+	slices.Sort(det.scale)
 
 	// Get the median value of the sorted perturbation results
 	return &Puploc{
@@ -275,10 +275,3 @@ func (plc *PuplocCascade) RunDetector(pl Puploc, img ImageParams, angle float64,
 		Scale: det.scale[int(math.Round(float64(pl.Perturbs)/2))],
 	}
 }
-
-// Implement custom sorting function on detection values.
-type plocSort []float32
-
-func (q plocSort) Len() int           { return len(q) }
-func (q plocSort) Less(i, j int) bool { return q[i] < q[j] }
-func (q plocSort) Swap(i, j int)      { q[i], q[j] = q[j], q[i] }

@@ -2,8 +2,8 @@ package pigo
 
 import (
 	"errors"
-	"io/ioutil"
 	"math"
+	"os"
 	"path/filepath"
 	"sync"
 )
@@ -25,7 +25,7 @@ var flplocPool = sync.Pool{
 // UnpackFlp unpacks the facial landmark points cascade file.
 // This will return the binary representation of the cascade file.
 func (plc *PuplocCascade) UnpackFlp(cf string) (*PuplocCascade, error) {
-	flpc, err := ioutil.ReadFile(cf)
+	flpc, err := os.ReadFile(cf)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (plc *PuplocCascade) GetLandmarkPoint(leftEye, rightEye *Puploc, img ImageP
 
 // ReadCascadeDir reads the facial landmark points cascade files from the provided directory.
 func (plc *PuplocCascade) ReadCascadeDir(path string) (map[string][]*FlpCascade, error) {
-	cascades, err := ioutil.ReadDir(path)
+	cascades, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
