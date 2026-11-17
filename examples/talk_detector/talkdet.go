@@ -3,13 +3,12 @@ package main
 import "C"
 
 import (
-	"io/ioutil"
 	"log"
 	"math"
 	"runtime"
 	"unsafe"
 
-	pigo "github.com/esimov/pigo/core"
+	pigo "github.com/esimov/pigo/pkg"
 )
 
 type point struct {
@@ -43,8 +42,9 @@ func FindFaces(pixels []uint8) uintptr {
 
 	for i := 0; i < len(results); i++ {
 		// Hack: the fifth value in the slice represents the detection type: face, pupils, landmark points.
-		// The sixt value was included only to transfer the mouth aspect ratio.
+		// The sixth value was included only to transfer the mouth aspect ratio.
 		dets[i] = append(dets[i], results[i].Row, results[i].Col, results[i].Scale, int(results[i].Q), 0, 1)
+
 		// left eye
 		puploc := &pigo.Puploc{
 			Row:      results[i].Row - int(0.085*float32(results[i].Scale)),
@@ -52,7 +52,7 @@ func FindFaces(pixels []uint8) uintptr {
 			Scale:    float32(results[i].Scale) * 0.4,
 			Perturbs: 63,
 		}
-		leftEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
+		leftEye := puplocClassifier.RunDetector(puploc, *imgParams, 0.0, false)
 		if leftEye.Row > 0 && leftEye.Col > 0 {
 			dets[i] = append(dets[i], leftEye.Row, leftEye.Col, int(leftEye.Scale), int(results[i].Q), 1, 1)
 		}
@@ -65,7 +65,7 @@ func FindFaces(pixels []uint8) uintptr {
 			Perturbs: 63,
 		}
 
-		rightEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
+		rightEye := puplocClassifier.RunDetector(puploc, *imgParams, 0.0, false)
 		if rightEye.Row > 0 && rightEye.Col > 0 {
 			dets[i] = append(dets[i], rightEye.Row, rightEye.Col, int(rightEye.Scale), int(results[i].Q), 1, 1)
 		}
@@ -73,12 +73,12 @@ func FindFaces(pixels []uint8) uintptr {
 		// Traverse all the eye cascades and run the detector on each of them.
 		for _, eye := range eyeCascades {
 			for _, flpc := range flpcs[eye] {
-				flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
+				flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
 				if flp.Row > 0 && flp.Col > 0 {
 					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
 				}
 
-				flp = flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
+				flp = flpc.LandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
 				if flp.Row > 0 && flp.Col > 0 {
 					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
 				}
@@ -89,14 +89,14 @@ func FindFaces(pixels []uint8) uintptr {
 		// Traverse all the mouth cascades and run the detector on each of them.
 		for _, mouth := range mouthCascade {
 			for _, flpc := range flpcs[mouth] {
-				flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
+				flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
 				if flp.Row > 0 && flp.Col > 0 {
 					mouthPoints = append(mouthPoints, flp.Row, flp.Col)
 					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
 				}
 			}
 		}
-		flp := flpcs["lp84"][0].GetLandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
+		flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
 		if flp.Row > 0 && flp.Col > 0 {
 			mouthPoints = append(mouthPoints, flp.Row, flp.Col)
 			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
@@ -166,32 +166,21 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 
 	// Ensure that the face detection classifier is loaded only once.
 	if len(cascade) == 0 {
-		cascade, err = ioutil.ReadFile("../../cascade/facefinder")
-		if err != nil {
-			log.Fatalf("Error reading the cascade file: %v", err)
-		}
 		p := pigo.NewPigo()
 
 		// Unpack the binary file. This will return the number of cascade trees,
 		// the tree depth, the threshold and the prediction from tree's leaf nodes.
-		faceClassifier, err = p.Unpack(cascade)
-		if err != nil {
-			log.Fatalf("Error unpacking the cascade file: %s", err)
-		}
+		faceClassifier = p.Unpack()
 	}
 
 	// Ensure that we load the pupil localization cascade only once
 	if len(puplocCascade) == 0 {
-		puplocCascade, err := ioutil.ReadFile("../../cascade/puploc")
-		if err != nil {
-			log.Fatalf("Error reading the puploc cascade file: %s", err)
-		}
-		puplocClassifier, err = puplocClassifier.UnpackCascade(puplocCascade)
+		puplocClassifier, err = puplocClassifier.ReadCascade()
 		if err != nil {
 			log.Fatalf("Error unpacking the puploc cascade file: %s", err)
 		}
 
-		flpcs, err = puplocClassifier.ReadCascadeDir("../../cascade/lps")
+		flpcs, err = puplocClassifier.ReadCascadeDir()
 		if err != nil {
 			log.Fatalf("Error unpacking the facial landmark detection cascades: %s", err)
 		}
@@ -205,13 +194,4 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 	dets = faceClassifier.ClusterDetections(dets, 0.0)
 
 	return dets
-}
-
-// round returns the nearest integer, rounding ties away from zero.
-func round(x float64) float64 {
-	t := math.Trunc(x)
-	if math.Abs(x-t) >= 0.5 {
-		return t + math.Copysign(1, x)
-	}
-	return t
 }

@@ -1,12 +1,17 @@
 ## Webcam demo (slow)
 
-This demo shows how we can transfer the webcam frames from Python to Go by sending the captured frames as byte array into the standard output.
-We will run the face detector over the byte arrays received from the standard output and send the result into a web browser through a webserver.
+This demo was prepared as a first attempt to show the Pigo library real time face detection capabilities and also as a POC for how it can be embedded into other languages and environments.
+
+In this demo we are spinning up a Python application in order to access the webcam, then the captured frame rates are written to the standard output.
+
+Next, in the Go application, we read the captured frames, convert them into a byte stream, run the face recognition algorithm on the captured data, and finally transform the result into a stream of images served on a web server.
 
 ### Run
 
+Install the required Python dependencies, then run the following command:
+
 ```bash
-$ go run main.go -cf "../../cascade/facefinder"
+$ go run main.go
 ```
 
-Then access the `http://localhost:8081/cam` url from a web browser.
+Then access the `http://localhost:8081` url from a web browser.

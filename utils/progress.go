@@ -11,8 +11,8 @@ import (
 	"unicode/utf8"
 )
 
-// ProgressIndicator initializes the progress indicator.
-type ProgressIndicator struct {
+// ProcessIndicator initializes the progress indicator.
+type ProcessIndicator struct {
 	mu         *sync.RWMutex
 	delay      time.Duration
 	writer     io.Writer
@@ -29,9 +29,9 @@ const (
 	defaultColor = "\x1b[0m"
 )
 
-// NewSpinner instantiates a new progress indicator.
-func NewSpinner(msg string, d time.Duration) *ProgressIndicator {
-	return &ProgressIndicator{
+// NewIndicator instantiates a new progress indicator.
+func NewIndicator(msg string, d time.Duration) *ProcessIndicator {
+	return &ProcessIndicator{
 		mu:         &sync.RWMutex{},
 		delay:      d,
 		writer:     os.Stderr,
@@ -42,7 +42,7 @@ func NewSpinner(msg string, d time.Duration) *ProgressIndicator {
 }
 
 // Start starts the progress indicator.
-func (pi *ProgressIndicator) Start() {
+func (pi *ProcessIndicator) Start() {
 	if pi.hideCursor && runtime.GOOS != "windows" {
 		// hides the cursor
 		fmt.Fprintf(pi.writer, "\033[?25l")
@@ -58,7 +58,7 @@ func (pi *ProgressIndicator) Start() {
 					pi.mu.Lock()
 
 					output := fmt.Sprintf("\r%s%s %c%s", pi.message, successColor, r, defaultColor)
-					fmt.Fprintf(pi.writer, output)
+					fmt.Fprintf(pi.writer, "%s", output)
 					pi.lastOutput = output
 
 					pi.mu.Unlock()
@@ -70,20 +70,20 @@ func (pi *ProgressIndicator) Start() {
 }
 
 // Stop stops the progress indicator.
-func (pi *ProgressIndicator) Stop() {
+func (pi *ProcessIndicator) Stop() {
 	pi.mu.Lock()
 	defer pi.mu.Unlock()
 
 	pi.clear()
 	pi.RestoreCursor()
 	if len(pi.StopMsg) > 0 {
-		fmt.Fprintf(pi.writer, pi.StopMsg)
+		fmt.Fprintf(pi.writer, "%s", pi.StopMsg)
 	}
 	pi.stopChan <- struct{}{}
 }
 
 // RestoreCursor restores back the cursor visibility.
-func (pi *ProgressIndicator) RestoreCursor() {
+func (pi *ProcessIndicator) RestoreCursor() {
 	if pi.hideCursor && runtime.GOOS != "windows" {
 		// makes the cursor visible
 		fmt.Fprint(pi.writer, "\033[?25h")
@@ -91,7 +91,7 @@ func (pi *ProgressIndicator) RestoreCursor() {
 }
 
 // clear deletes the last line. Caller must hold the the locker.
-func (pi *ProgressIndicator) clear() {
+func (pi *ProcessIndicator) clear() {
 	n := utf8.RuneCountInString(pi.lastOutput)
 	if runtime.GOOS == "windows" {
 		clearString := "\r" + strings.Repeat(" ", n) + "\r"
