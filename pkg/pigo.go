@@ -10,7 +10,7 @@ import (
 )
 
 //go:embed cascade/facefinder
-var facefinder []byte
+var cascade []byte
 
 // CascadeParams contains the basic parameters to run the analyzer function over the defined image.
 // MinSize: represents the minimum size of the face.
@@ -66,11 +66,11 @@ func (p *Pigo) Unpack() *Pigo {
 	pos := 8
 
 	// Obtain the depth of each tree from the binary data.
-	treeDepth = binary.LittleEndian.Uint32(facefinder[pos:])
+	treeDepth = binary.LittleEndian.Uint32(cascade[pos:])
 	pos += 4
 
 	// Get the number of cascade trees as 32-bit unsigned integer.
-	treeNum = binary.LittleEndian.Uint32(facefinder[pos:])
+	treeNum = binary.LittleEndian.Uint32(cascade[pos:])
 
 	// To avoid constant memory allocation on each append we predefine the slice capacity.
 	treeThreshold = make([]float32, 0, treeNum)
@@ -83,7 +83,7 @@ func (p *Pigo) Unpack() *Pigo {
 		// Obtain the tree codes of each tree nodes.
 		treeCodes = append(treeCodes, []int8{0, 0, 0, 0}...)
 
-		code := facefinder[pos : pos+int(4*pow(2, int(treeDepth))-4)]
+		code := cascade[pos : pos+int(4*pow(2, int(treeDepth))-4)]
 		// Convert unsigned bytecodes to signed ones.
 		signedCode := *(*[]int8)(unsafe.Pointer(&code))
 		treeCodes = append(treeCodes, signedCode...)
@@ -92,13 +92,13 @@ func (p *Pigo) Unpack() *Pigo {
 
 		// Read prediction from tree's leaf nodes.
 		for i := 0; i < int(pow(2, int(treeDepth))); i++ {
-			u32pred := binary.LittleEndian.Uint32(facefinder[pos:])
+			u32pred := binary.LittleEndian.Uint32(cascade[pos:])
 			// Convert uint32 to float32
 			f32pred := *(*float32)(unsafe.Pointer(&u32pred))
 			treePred = append(treePred, f32pred)
 			pos += 4
 		}
-		u32thr := binary.LittleEndian.Uint32(facefinder[pos:])
+		u32thr := binary.LittleEndian.Uint32(cascade[pos:])
 		// Convert uint32 to float32
 		f32thr := *(*float32)(unsafe.Pointer(&u32thr))
 		treeThreshold = append(treeThreshold, f32thr)
