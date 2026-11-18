@@ -10,16 +10,16 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/disintegration/imaging"
-	pigo "github.com/esimov/pigo/core"
+	pigo "github.com/esimov/pigo/pkg"
 	"github.com/esimov/pigo/utils"
 	"github.com/fogleman/gg"
 	"golang.org/x/term"
@@ -30,7 +30,7 @@ const banner = `
 ├─┘││ ┬│ │
 ┴  ┴└─┘└─┘
 
-Go (Golang) Face detection library.
+Pure Go face detection and facial landmark points detection library.
     Version: %s
 
 `
@@ -74,8 +74,8 @@ var (
 type faceDetector struct {
 	cascadeFile  string
 	destination  string
-	puploc       string
-	flploc       string
+	puploc       bool
+	flploc       bool
 	angle        float64
 	minSize      int
 	maxSize      int
@@ -96,7 +96,7 @@ type coord struct {
 type detection struct {
 	EyePoints      []coord `json:"eyes,omitempty"`
 	LandmarkPoints []coord `json:"landmark_points,omitempty"`
-	FacePoints     coord   `json:"face,omitempty"`
+	FacePoints     coord   `json:"face"`
 }
 
 func main() {
@@ -104,7 +104,6 @@ func main() {
 		// Flags
 		source       = flag.String("in", pipeName, "Source image")
 		destination  = flag.String("out", pipeName, "Destination image")
-		cascadeFile  = flag.String("cf", "", "Cascade binary file")
 		minSize      = flag.Int("min", 20, "Minimum size of face")
 		maxSize      = flag.Int("max", 1000, "Maximum size of face")
 		shiftFactor  = flag.Float64("shift", 0.15, "Shift detection window by percentage")
@@ -112,33 +111,32 @@ func main() {
 		angle        = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
 		iouThreshold = flag.Float64("iou", 0.15, "Intersection over union (IoU) threshold")
 		marker       = flag.String("marker", "rect", "Detection marker: rect|circle|ellipse")
-		puploc       = flag.String("plc", "", "Pupils/eyes localization cascade file")
-		flploc       = flag.String("flpc", "", "Facial landmark points cascade directory")
+		puploc       = flag.Bool("puploc", false, "Activate pupils/eyes localization")
+		flploc       = flag.Bool("flploc", false, "Activate facial landmark points localization")
 		markEyes     = flag.Bool("mark", true, "Mark detected eyes")
 		jsonf        = flag.String("json", "", "Output the detection points into a json file")
 	)
 
 	log.SetFlags(0)
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, fmt.Sprintf(banner, Version))
+		fmt.Fprintf(os.Stderr, "%s", fmt.Sprintf(banner, Version))
 		flag.PrintDefaults()
 	}
 	flag.Parse()
 
-	if len(*source) == 0 || len(*cascadeFile) == 0 {
-		log.Fatal("Usage: pigo -in input.jpg -out out.png -cf cascade/facefinder")
+	if len(*source) == 0 {
+		log.Fatal("Usage: pigo -in input.jpg -out out.png")
 	}
 
 	start := time.Now()
 
 	// Progress indicator
-	spinner := utils.NewSpinner("Detecting faces...", time.Millisecond*100)
+	spinner := utils.NewIndicator("Detecting faces...", time.Millisecond*100)
 	spinner.Start()
 
 	det = &faceDetector{
 		angle:        *angle,
 		destination:  *destination,
-		cascadeFile:  *cascadeFile,
 		minSize:      *minSize,
 		maxSize:      *maxSize,
 		shiftFactor:  *shiftFactor,
@@ -160,7 +158,7 @@ func main() {
 			fileTypes := []string{".jpg", ".jpeg", ".png"}
 			ext := filepath.Ext(strings.ToLower(det.destination))
 
-			if !inSlice(ext, fileTypes) {
+			if !slices.Contains(fileTypes, ext) {
 				log.Fatalf("Output file type not supported: %v", ext)
 			}
 
@@ -177,7 +175,7 @@ func main() {
 	if err != nil {
 		spinner.StopMsg = fmt.Sprintf("Detecting faces... %s failed ✗%s\n", errorColor, defaultColor)
 		spinner.Stop()
-		log.Fatalf("Detection error: %s%v%s", errorColor, err, defaultColor)
+		log.Fatalf("Error: %s%v%s", errorColor, err, defaultColor)
 	}
 
 	dets, err := det.drawFaces(faces, *marker)
@@ -204,7 +202,7 @@ func main() {
 			if err != nil {
 				spinner.StopMsg = fmt.Sprintf("Detecting faces... %s failed ✗%s\n", errorColor, defaultColor)
 				spinner.Stop()
-				log.Fatalf(fmt.Sprintf("%sCould not create the json file: %v%s", errorColor, err, defaultColor))
+				log.Fatalf("%s", fmt.Sprintf("%sCould not create the json file: %v%s", errorColor, err, defaultColor))
 			}
 			out = f
 		}
@@ -293,55 +291,24 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 		ImageParams: *imgParams,
 	}
 
-	cascadeFile, err := ioutil.ReadFile(det.cascadeFile)
-	if err != nil {
-		return nil, fmt.Errorf("error reading the facefinder cascade file")
-	}
-
-	contentType, err := utils.DetectFileContentType(det.cascadeFile)
-	if err != nil {
-		return nil, err
-	}
-	if contentType != "application/octet-stream" {
-		return nil, fmt.Errorf("the provided cascade classifier is not valid")
-	}
-
 	p := pigo.NewPigo()
-	// Unpack the binary file. This will return the number of cascade trees,
+	plc = pigo.NewPuplocCascade()
+
+	// Unpack the facefinder binary file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
-	classifier, err := p.Unpack(cascadeFile)
-	if err != nil {
-		return nil, err
-	}
+	classifier := p.Unpack()
 
-	plcReader := func() (*pigo.PuplocCascade, error) {
-		plc := pigo.NewPuplocCascade()
-		cascade, err := ioutil.ReadFile(det.puploc)
+	if det.puploc || det.flploc {
+		plc, err = plc.ReadCascade()
 		if err != nil {
-			return nil, fmt.Errorf("error reading the puploc cascade file")
-		}
-		plc, err = plc.UnpackCascade(cascade)
-		if err != nil {
-			return nil, err
-		}
-		return plc, nil
-	}
-
-	if len(det.puploc) > 0 {
-		plc, err = plcReader()
-		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to unpack the pupil localization cascade file: %w", err)
 		}
 	}
 
-	if len(det.flploc) > 0 {
-		plc, err = plcReader()
+	if det.flploc {
+		flpcs, err = plc.ReadCascadeDir()
 		if err != nil {
-			return nil, fmt.Errorf("the puploc cascade file is required: use the -plc flag")
-		}
-		flpcs, err = plc.ReadCascadeDir(det.flploc)
-		if err != nil {
-			return nil, fmt.Errorf("error reading the facial landmark points directory")
+			return nil, fmt.Errorf("failed to unpack the facial landmark points cascade files: %w", err)
 		}
 	}
 
@@ -401,7 +368,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 			dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 0, B: 0, A: 255}))
 			dc.Stroke()
 
-			if len(det.puploc) > 0 && face.Scale > 50 {
+			if (det.puploc || det.flploc) && face.Scale > 50 {
 				rect := image.Rect(
 					face.Col-face.Scale/2,
 					face.Row-face.Scale/2,
@@ -419,7 +386,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 					Scale:    float32(face.Scale) * 0.25,
 					Perturbs: perturb,
 				}
-				leftEye := plc.RunDetector(*puploc, *imgParams, det.angle, false)
+				leftEye := plc.RunDetector(puploc, *imgParams, det.angle, false)
 				if leftEye.Row > 0 && leftEye.Col > 0 {
 					if det.angle > 0 {
 						drawEyeDetectionMarker(ctx,
@@ -458,7 +425,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 					Perturbs: perturb,
 				}
 
-				rightEye := plc.RunDetector(*puploc, *imgParams, det.angle, false)
+				rightEye := plc.RunDetector(puploc, *imgParams, det.angle, false)
 				if rightEye.Row > 0 && rightEye.Col > 0 {
 					if det.angle > 0 {
 						drawEyeDetectionMarker(ctx,
@@ -490,10 +457,10 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 					})
 				}
 
-				if len(det.flploc) > 0 {
+				if det.flploc {
 					for _, eye := range eyeCascades {
 						for _, flpc := range flpcs[eye] {
-							flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
+							flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
 							if flp.Row > 0 && flp.Col > 0 {
 								drawEyeDetectionMarker(dc,
 									float64(flp.Col),
@@ -509,7 +476,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 								})
 							}
 
-							flp = flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
+							flp = flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
 							if flp.Row > 0 && flp.Col > 0 {
 								drawEyeDetectionMarker(dc,
 									float64(flp.Col),
@@ -529,7 +496,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 
 					for _, mouth := range mouthCascades {
 						for _, flpc := range flpcs[mouth] {
-							flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
+							flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
 							if flp.Row > 0 && flp.Col > 0 {
 								drawEyeDetectionMarker(dc,
 									float64(flp.Col),
@@ -546,7 +513,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 							}
 						}
 					}
-					flp := flpcs["lp84"][0].GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
+					flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
 					if flp.Row > 0 && flp.Col > 0 {
 						drawEyeDetectionMarker(dc,
 							float64(flp.Col),
@@ -592,16 +559,6 @@ func (fd *faceDetector) encodeImage(dst io.Writer) error {
 		err = jpeg.Encode(dst, img, &jpeg.Options{Quality: 100})
 	}
 	return err
-}
-
-// inSlice checks if the item exists in the slice.
-func inSlice(item string, slice []string) bool {
-	for _, it := range slice {
-		if it == item {
-			return true
-		}
-	}
-	return false
 }
 
 // drawEyeDetectionMarker is a helper function to draw the detection marks

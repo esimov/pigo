@@ -8,7 +8,6 @@ import (
 	"image/color"
 	"image/jpeg"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"mime/multipart"
@@ -16,7 +15,7 @@ import (
 	"os"
 	"os/exec"
 
-	pigo "github.com/esimov/pigo/core"
+	pigo "github.com/esimov/pigo/pkg"
 	"github.com/fogleman/gg"
 )
 
@@ -36,35 +35,27 @@ var Version string
 
 var (
 	// Flags
-	source       = flag.String("in", "", "Source image")
-	destination  = flag.String("out", "", "Destination image")
-	cascadeFile  = flag.String("cf", "", "Cascade binary file")
 	minSize      = flag.Int("min", 20, "Minimum size of face")
 	maxSize      = flag.Int("max", 1000, "Maximum size of face")
 	shiftFactor  = flag.Float64("shift", 0.15, "Shift detection window by percentage")
 	scaleFactor  = flag.Float64("scale", 1.1, "Scale detection window by percentage")
 	angle        = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
-	iouThreshold = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
 	circleMarker = flag.Bool("circle", false, "Use circle as detection marker")
 )
 var dc *gg.Context
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, fmt.Sprintf(banner, Version))
+		fmt.Fprintf(os.Stderr, "%s", fmt.Sprintf(banner, Version))
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-
-	if len(*cascadeFile) == 0 {
-		log.Fatal("Usage: go run main.go -cf ../../cascade/facefinder")
-	}
 
 	if *scaleFactor < 1 {
 		log.Fatal("Scale factor must be greater than 1.")
 	}
 
-	http.HandleFunc("/cam", webcam)
+	http.HandleFunc("/", webcam)
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }
 
@@ -79,18 +70,10 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 	}
 	cmd.Start()
 
-	cascadeFile, err := ioutil.ReadFile(*cascadeFile)
-	if err != nil {
-		log.Fatalf("[ERROR] reading the cascade file: %v", err)
-	}
-
 	p := pigo.NewPigo()
 	// Unpack the binary file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
-	classifier, err := p.Unpack(cascadeFile)
-	if err != nil {
-		log.Fatalf("[ERROR] reading the cascade file: %v", err)
-	}
+	classifier := p.Unpack()
 
 	mpart := multipart.NewReader(stdout, boundary)
 	for {
@@ -104,7 +87,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		data, err := ioutil.ReadAll(p)
+		data, err := io.ReadAll(p)
 		if err != nil {
 			log.Println("[ERROR] reading from bytes ", err)
 			continue

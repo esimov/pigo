@@ -64,4 +64,4 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Run tests
         run: |
-          go test -v ./core/... -run=. -cover
+          go test -v ./pkg/... -run=. -cover

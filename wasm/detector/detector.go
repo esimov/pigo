@@ -1,25 +1,17 @@
 package detector
 
 import (
-	"errors"
+	"fmt"
 
-	pigo "github.com/esimov/pigo/core"
+	pigo "github.com/esimov/pigo/pkg"
 )
-
-// FlpCascade holds the binary representation of the facial landmark points cascade files
-type FlpCascade struct {
-	*pigo.PuplocCascade
-	error
-}
 
 const perturb = 63
 
 var (
-	cascade          []byte
-	puplocCascade    []byte
 	faceClassifier   *pigo.Pigo
 	puplocClassifier *pigo.PuplocCascade
-	flpcs            map[string][]*FlpCascade
+	flpcs            map[string][]*pigo.FlpCascade
 	imgParams        *pigo.ImageParams
 	err              error
 )
@@ -29,37 +21,25 @@ var (
 	mouthCascade = []string{"lp93", "lp84", "lp82", "lp81"}
 )
 
-// UnpackCascades unpack all of used cascade files.
+// UnpackCascades unpack all of the existing cascade files.
 func (d *Detector) UnpackCascades() error {
 	p := pigo.NewPigo()
 
-	cascade, err = d.ParseCascade("/cascade/facefinder")
-	if err != nil {
-		return errors.New("error reading the facefinder cascade file")
-	}
 	// Unpack the binary file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
-	faceClassifier, err = p.Unpack(cascade)
-	if err != nil {
-		return errors.New("error unpacking the facefinder cascade file")
-	}
-
+	faceClassifier = p.Unpack()
 	plc := pigo.NewPuplocCascade()
 
-	puplocCascade, err = d.ParseCascade("/cascade/puploc")
+	puplocClassifier, err = plc.ReadCascade()
 	if err != nil {
-		return errors.New("error reading the puploc cascade file")
+		return fmt.Errorf("error unpacking the pupil localization cascade file: %w", err)
 	}
 
-	puplocClassifier, err = plc.UnpackCascade(puplocCascade)
+	flpcs, err = plc.ReadCascadeDir()
 	if err != nil {
-		return errors.New("error unpacking the puploc cascade file")
+		return fmt.Errorf("failed to unpack the facial landmark points cascade files: %w", err)
 	}
 
-	flpcs, err = d.parseFlpCascades("/cascade/lps/")
-	if err != nil {
-		return errors.New("error unpacking the facial landmark points detection cascades")
-	}
 	return nil
 }
 
@@ -72,6 +52,7 @@ func (d *Detector) DetectFaces(pixels []uint8, width, height int) [][]int {
 	for i := 0; i < len(results); i++ {
 		dets[i] = append(dets[i], results[i].Row, results[i].Col, results[i].Scale, int(results[i].Q))
 	}
+
 	return dets
 }
 
@@ -83,10 +64,12 @@ func (d *Detector) DetectLeftPupil(results []int) *pigo.Puploc {
 		Scale:    float32(results[2]) * 0.4,
 		Perturbs: perturb,
 	}
-	leftEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
+
+	leftEye := puplocClassifier.RunDetector(puploc, *imgParams, 0.0, false)
 	if leftEye.Row > 0 && leftEye.Col > 0 {
 		return leftEye
 	}
+
 	return nil
 }
 
@@ -98,10 +81,12 @@ func (d *Detector) DetectRightPupil(results []int) *pigo.Puploc {
 		Scale:    float32(results[2]) * 0.4,
 		Perturbs: perturb,
 	}
-	rightEye := puplocClassifier.RunDetector(*puploc, *imgParams, 0.0, false)
+
+	rightEye := puplocClassifier.RunDetector(puploc, *imgParams, 0.0, false)
 	if rightEye.Row > 0 && rightEye.Col > 0 {
 		return rightEye
 	}
+
 	return nil
 }
 
@@ -114,13 +99,13 @@ func (d *Detector) DetectLandmarkPoints(leftEye, rightEye *pigo.Puploc) [][]int 
 
 	for _, eye := range eyeCascades {
 		for _, flpc := range flpcs[eye] {
-			flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
+			flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
 			idx++
 
-			flp = flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
+			flp = flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
@@ -130,17 +115,19 @@ func (d *Detector) DetectLandmarkPoints(leftEye, rightEye *pigo.Puploc) [][]int 
 
 	for _, mouth := range mouthCascade {
 		for _, flpc := range flpcs[mouth] {
-			flp := flpc.GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
+			flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
 			idx++
 		}
 	}
-	flp := flpcs["lp84"][0].GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
+
+	flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
 	if flp.Row > 0 && flp.Col > 0 {
 		det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 	}
+
 	return det
 }
 
@@ -169,22 +156,4 @@ func (d *Detector) clusterDetection(pixels []uint8, width, height int) []pigo.De
 	dets = faceClassifier.ClusterDetections(dets, 0.1)
 
 	return dets
-}
-
-// parseFlpCascades reads the facial landmark points cascades from the provided url.
-func (d *Detector) parseFlpCascades(path string) (map[string][]*FlpCascade, error) {
-	cascades := append(eyeCascades, mouthCascade...)
-	flpcs := make(map[string][]*FlpCascade)
-
-	pl := pigo.NewPuplocCascade()
-
-	for _, cascade := range cascades {
-		puplocCascade, err = d.ParseCascade(path + cascade)
-		if err != nil {
-			d.Log("Error reading the cascade file: %v", err)
-		}
-		flpc, err := pl.UnpackCascade(puplocCascade)
-		flpcs[cascade] = append(flpcs[cascade], &FlpCascade{flpc, err})
-	}
-	return flpcs, err
 }

@@ -3,7 +3,7 @@ package detector
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"syscall/js"
@@ -26,7 +26,7 @@ func NewDetector() *Detector {
 	return &d
 }
 
-// FetchCascade retrive the cascade file through a JS http connection.
+// FetchCascade retrieve the cascade file through a JS http connection.
 // It should return the binary data as uint8 integers or err in case of an error.
 func (d *Detector) FetchCascade(url string) ([]byte, error) {
 	d.respChan = make(chan []uint8)
@@ -94,7 +94,7 @@ func (d *Detector) ParseCascade(path string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	buffer, err := ioutil.ReadAll(resp.Body)
+	buffer, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

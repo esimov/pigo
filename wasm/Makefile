@@ -15,7 +15,7 @@ endif
 all: wasm serve
 
 wasm:
-	cp -f "$$(go env GOROOT)/misc/wasm/wasm_exec.js" ./js/
+	cp -f "$$(go env GOROOT)/lib/wasm/wasm_exec.js" ./js/
 	GOOS=js GOARCH=wasm go build -o lib.wasm wasm.go
 
 serve:

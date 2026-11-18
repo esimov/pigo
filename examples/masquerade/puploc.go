@@ -3,13 +3,12 @@ package main
 import "C"
 
 import (
-	"io/ioutil"
 	"log"
 	"math"
 	"runtime"
 	"unsafe"
 
-	pigo "github.com/esimov/pigo/core"
+	pigo "github.com/esimov/pigo/pkg"
 )
 
 type point struct {
@@ -42,7 +41,7 @@ func FindFaces(pixels []uint8) uintptr {
 			Scale:    float32(results[i].Scale) * 0.4,
 			Perturbs: 50,
 		}
-		det := puplocClassifier.RunDetector(*puploc, *imageParams, 0.0, false)
+		det := puplocClassifier.RunDetector(puploc, *imageParams, 0.0, false)
 		if det.Row > 0 && det.Col > 0 {
 			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q), 0)
 		}
@@ -56,7 +55,7 @@ func FindFaces(pixels []uint8) uintptr {
 			Perturbs: 50,
 		}
 
-		det = puplocClassifier.RunDetector(*puploc, *imageParams, 0.0, false)
+		det = puplocClassifier.RunDetector(puploc, *imageParams, 0.0, false)
 		if det.Row > 0 && det.Col > 0 {
 			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q), 0)
 		}
@@ -112,27 +111,16 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 
 	// Ensure that the face detection classifier is loaded only once.
 	if len(cascade) == 0 {
-		cascade, err = ioutil.ReadFile("../../cascade/facefinder")
-		if err != nil {
-			log.Fatalf("Error reading the cascade file: %v", err)
-		}
 		p := pigo.NewPigo()
 
 		// Unpack the binary file. This will return the number of cascade trees,
 		// the tree depth, the threshold and the prediction from tree's leaf nodes.
-		faceClassifier, err = p.Unpack(cascade)
-		if err != nil {
-			log.Fatalf("Error unpacking the cascade file: %s", err)
-		}
+		faceClassifier = p.Unpack()
 	}
 
 	// Ensure that we load the pupil localization cascade only once
 	if len(puplocCascade) == 0 {
-		puplocCascade, err := ioutil.ReadFile("../../cascade/puploc")
-		if err != nil {
-			log.Fatalf("Error reading the puploc cascade file: %s", err)
-		}
-		puplocClassifier, err = puplocClassifier.UnpackCascade(puplocCascade)
+		puplocClassifier, err = puplocClassifier.ReadCascade()
 		if err != nil {
 			log.Fatalf("Error unpacking the puploc cascade file: %s", err)
 		}
