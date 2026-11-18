@@ -69,7 +69,7 @@ $ go install github.com/esimov/pigo/cmd/pigo@latest
 ## API
 Below is a minimal example of using the face detection API.
 
-First the source image should be converted to grayscale mode, then the cascade function can be invoked, which returns a slice containing the row, column, the scale and the detection score.
+Prior invoking the cascade classifier function the source image should be converted to grayscale mode, which returns a slice containing the row, column, the scale and the detection score.
 
 ```Go
 src, err := pigo.GetImage("/path/to/image")
@@ -174,14 +174,14 @@ Using the `empty` string as value for the `-out` flag will skip the image genera
 
 ## Real time face detection (running as a shared object)
 
-If you wish to test the library's real time face detection capabilities as a desktop application, the `examples` folder contains a few demos written in Python.
+If you wish to test the library's real time face detection capabilities as a desktop application, the [examples](https://github.com/esimov/pigo/tree/master/examples) folder contains a few demos written in Python.
 
 **The obvious question is why Python?** Because the Go ecosystem is (still) missing a cross platform and system independent library for accessing the webcam.
 
-We opted for Python just because it's very simple to write a simple script to access the webcam.
+I choose Python just because it's very simple to write a simple script to access the webcam.
 
 ### How does it works?
-From the Python script we access the webcam, converts the pixel data to a byte array and through `cgo` we transfer the results as a **shared object** to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates and higher latency than the library is capable of.
+From the Python script we access the webcam, converts the pixel data to a byte array and through `cgo` we transfer the results as a **shared object** to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates and higher latency.
 
 ## WASM (Webassembly) support 🎉
 
@@ -195,7 +195,7 @@ For more details check this subpage: https://github.com/esimov/pigo/tree/master/
 **For more awesome WASM demos using the Pigo library check this repo: https://github.com/esimov/pigo-wasm-demos**.
 
 ## Releases
-In case you do not have installed or do not wish to install Go, you can obtain the binary file from the [releases](https://github.com/esimov/pigo/releases) folder.
+In case you don't have it installed or do not want to install Go, you can obtain the binary file from the [releases](https://github.com/esimov/pigo/releases) folder.
 
 The library can be accessed as a snapcraft function too.
 
