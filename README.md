@@ -12,19 +12,17 @@ Pigo is a pure Go face detection, pupil/eyes localization and facial landmark po
 |:--:|:--:
 | ![rectangle](https://user-images.githubusercontent.com/883386/40916662-2fbbae1a-6809-11e8-8afd-d4ed40c7d4e9.png) | ![circle](https://user-images.githubusercontent.com/883386/40916683-447088a8-6809-11e8-942f-3112c10bede3.png) |
 
-### Motivation
-The reason why Pigo has been developed is because almost all of the currently existing solutions for face detection in the Go ecosystem are purely bindings to some C/C++ libraries like `OpenCV` or `dlib`, but calling a C program through `cgo` introduces huge latencies and implies a significant trade-off in terms of performance. Also, in many cases installing OpenCV on various platforms is cumbersome.
+## Motivation
+The reason why this library has been developed is because all of the currently existing solutions for face and facial landmark points detections the Go ecosystem are purely bindings, wrappers to other C/C++ libraries like `OpenCV` or `dlib`, but calling a C program through `cgo` introduces unnecessary latencies and produces a significant trade-off in terms of performance. Also, in many cases installing OpenCV on various platforms is cumbersome.
 
-**The Pigo library does not require any additional modules or third party applications to be installed**, although you might need to install Python and OpenCV if you wish to run the library in a real time desktop application. Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more details.
-
-### Key features
+## Key features
 - [x] Does not require OpenCV or any 3rd party modules to be installed
 - [x] High processing speed
 - [x] There is no need for image preprocessing prior to detection
 - [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure
 - [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure
 - [x] Fast detection of in-plane rotated faces
-- [x] The library can detect even faces with eyeglasses
+- [x] The cascade files are directly embedded into the generated binary file
 - [x] [Pupils/eyes localization](#pupils--eyes-localization)
 - [x] [Facial landmark points detection](#facial-landmark-points-detection)
 - [x] **[Webassembly support 🎉](#wasm-webassembly-support-)**
@@ -32,10 +30,12 @@ The reason why Pigo has been developed is because almost all of the currently ex
 ### Todo
 - [ ] Object detection and description
 
+**The library does not require any additional modules or third party applications to be installed**, although you might need to install Python and OpenCV if you wish to try out the provided demos running in real time. Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more details.
+
 **The library can also detect in plane rotated faces.** For this reason a new `-angle` parameter has been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
 ```bash
-$ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
+$ pigo -in input.jpg -out output.jpg -angle=0.8 -iou=0.01
 ```
 
 | Input file | Output file
@@ -45,17 +45,17 @@ $ pigo -in input.jpg -out output.jpg -cf cascade/facefinder -angle=0.8 -iou=0.01
 
 Note: In case of in plane rotated faces the angle value should be adapted to the provided image.
 
-### Pupils / eyes localization
-Starting from **v1.2.0** Pigo offers pupils/eyes localization capabilities. The implementation is based on [Eye pupil localization with an ensemble of randomized trees](https://www.sciencedirect.com/science/article/abs/pii/S0031320313003294).
+## Pupils / eyes localization
+Starting from **v1.2.0** Pigo supports pupils/eyes localization capabilities also. The implementation is based on [Eye pupil localization with an ensemble of randomized trees](https://www.sciencedirect.com/science/article/abs/pii/S0031320313003294).
 
-Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/puploc
+Check out this real time demo: https://github.com/esimov/pigo/tree/master/examples/puploc
 
 ![puploc](https://user-images.githubusercontent.com/883386/62784340-f5b3c100-bac6-11e9-865e-a2b4b9520b08.png)
 
 ### Facial landmark points detection
 **v1.3.0** marks a new milestone in the library evolution, Pigo being able to detect facial landmark points. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
 
-Check out this example for a realtime demo: https://github.com/esimov/pigo/tree/master/examples/facial_landmark
+Check out this real time demo: https://github.com/esimov/pigo/tree/master/examples/facial_landmark
 
 ![flp_example](https://user-images.githubusercontent.com/883386/66802771-3b0cc880-ef26-11e9-9ee3-7e9e981ef3f7.png)
 
@@ -80,11 +80,6 @@ First, you need to load and parse the binary classifier, then convert the image 
 and finally run the cascade function which returns a slice containing the row, column, scale and the detection score.
 
 ```Go
-cascadeFile, err := ioutil.ReadFile("/path/to/cascade/file")
-if err != nil {
-	log.Fatalf("Error reading the cascade file: %v", err)
-}
-
 src, err := pigo.GetImage("/path/to/image")
 if err != nil {
 	log.Fatalf("Cannot open the image file: %v", err)
@@ -107,13 +102,10 @@ cParams := pigo.CascadeParams{
 	},
 }
 
-pigo := pigo.NewPigo()
+p := pigo.NewPigo()
 // Unpack the binary file. This will return the number of cascade trees,
 // the tree depth, the threshold and the prediction from tree's leaf nodes.
-classifier, err := pigo.Unpack(cascadeFile)
-if err != nil {
-	log.Fatalf("Error reading the cascade file: %s", err)
-}
+classifier := p.Unpack()
 
 angle := 0.0 // cascade rotation angle. 0.0 is 0 radians and 1.0 is 2*pi radians
 
@@ -125,20 +117,11 @@ dets := classifier.RunCascade(cParams, angle)
 dets = classifier.ClusterDetections(dets, 0.2)
 ```
 
-**A note about imports**: in order to decode the generated image you have to import `image/jpeg` or `image/png` (depending on the provided image type) as in the following example, otherwise you will get a `"Image: Unknown format"` error.
-
-```Go
-import (
-    _ "image/jpeg"
-    pigo "github.com/esimov/pigo/pkg"
-)
-```
-
 ## Usage
 A command line utility is bundled into the library.
 
 ```bash
-$ pigo -in input.jpg -out out.jpg -cf cascade/facefinder
+$ pigo -in input.jpg -out out.jpg
 ```
 
 ### Supported flags:
@@ -150,8 +133,8 @@ $ pigo --help
 ├─┘││ ┬│ │
 ┴  ┴└─┘└─┘
 
-Go (Golang) Face detection library.
-    Version: 1.4.2
+Pure Go Face detection library.
+    Version: 1.5.0
 
   -angle float
     	0.0 is 0 radians and 1.0 is 2*pi radians

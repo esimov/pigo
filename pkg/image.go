@@ -6,6 +6,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"io"
+	"log"
 	"os"
 )
 
@@ -15,7 +16,11 @@ func GetImage(input string) (*image.NRGBA, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Panicf("could not close the opened file: %v", err)
+		}
+	}()
 
 	return DecodeImage(file)
 }

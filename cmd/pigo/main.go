@@ -30,7 +30,7 @@ const banner = `
 ├─┘││ ┬│ │
 ┴  ┴└─┘└─┘
 
-Go (Golang) Face detection library.
+Pure Go face detection and facial landmark points detection library.
     Version: %s
 
 `
