@@ -134,8 +134,8 @@ func FindFaces(pixels []uint8) uintptr {
 		// We need to transfer this value in order to define the Python array buffer length.
 		coords = append([]int{len(dets), 0, 0, 0, 0, 0}, coords...)
 
-		// Convert the slice into an array pointer.
 		s := *(*[]uint8)(unsafe.Pointer(&coords))
+		// Convert the slice into uint pointer.
 		p := uintptr(unsafe.Pointer(&s[0]))
 
 		// Ensure `det` is not freed up by GC prematurely.
