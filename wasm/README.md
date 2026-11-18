@@ -1,12 +1,4 @@
-## WASM (Webassembly) integration
-
-**Important notice: in order to run the Webassembly demo at least Go 1.13 is required!**
-
-Starting from **v1.4.0** Pigo has been ported to Webassembly 🎉.
-
-This proves the library real time face detection capabilities, which means that it's not needed anymore to run the library in a Python environment as a shared library. For more details check the project description from the [Readme](https://github.com/esimov/pigo#real-time-face-detection-running-as-a-shared-object) file and also read this [blog post](https://esimov.com/2019/11/pupilseyes-localization-in-the-pigo-face-detection-library) for a more detailed explanation.
-
-## How to run it?
+## Run
 
 Start the WASM demo by simply running the <kbd>make</kbd> command inside the `wasm` folder. This will build the `wasm` file and at the same time will start a new webserver. That's all. It will automatically open a new page in your default browser under the following address: `http://localhost:5000/`.
 

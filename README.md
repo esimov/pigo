@@ -3,7 +3,7 @@
 [![Build](https://github.com/esimov/pigo/actions/workflows/build.yml/badge.svg)](https://github.com/esimov/pigo/actions/workflows/build.yml)
 [![go.dev reference](https://img.shields.io/badge/pkg.go.dev-reference-007d9c?logo=go)](https://pkg.go.dev/github.com/esimov/pigo/core)
 [![license](https://img.shields.io/github/license/esimov/pigo)](./LICENSE)
-[![release](https://img.shields.io/badge/release-v1.4.6-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.4.6)
+[![release](https://img.shields.io/badge/release-v1.5.0-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.5.0)
 [![pigo](https://snapcraft.io/pigo/badge.svg)](https://snapcraft.io/pigo)
 
 Pigo is a pure Go face detection, pupil/eyes localization and facial landmark points detection library based on the **[Pixel Intensity Comparison-based Object detection](https://arxiv.org/pdf/1305.4537.pdf)** paper.
@@ -66,13 +66,6 @@ Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
 $ go install github.com/esimov/pigo/cmd/pigo@latest
 ```
 
-### Binary releases
-In case you do not have installed or do not wish to install Go, you can obtain the binary file from the [releases](https://github.com/esimov/pigo/releases) folder.
-
-The library can be accessed as a snapcraft function too.
-
-<a href="https://snapcraft.io/pigo"><img src="https://raw.githubusercontent.com/snapcore/snap-store-badges/master/EN/%5BEN%5D-snap-store-white-uneditable.png" alt="snapcraft pigo"></a>
-
 ## API
 Below is a minimal example of using the face detection API.
 
@@ -133,74 +126,81 @@ $ pigo --help
 ├─┘││ ┬│ │
 ┴  ┴└─┘└─┘
 
-Pure Go Face detection library.
+Go (Golang) Face detection library.
     Version: 1.5.0
 
   -angle float
-    	0.0 is 0 radians and 1.0 is 2*pi radians
-  -cf string
-    	Cascade binary file
-  -flpc string
-    	Facial landmark points cascade directory
+        0.0 is 0 radians and 1.0 is 2*pi radians
+  -flploc
+        Activate facial landmark points localization
   -in string
-    	Source image (default "-")
+        Source image (default "-")
   -iou float
-    	Intersection over union (IoU) threshold (default 0.2)
+        Intersection over union (IoU) threshold (default 0.15)
   -json string
-    	Output the detection points into a json file
+        Output the detection points into a json file
   -mark
-    	Mark detected eyes (default true)
+        Mark detected eyes (default true)
   -marker string
-    	Detection marker: rect|circle|ellipse (default "rect")
+        Detection marker: rect|circle|ellipse (default "rect")
   -max int
-    	Maximum size of face (default 1000)
+        Maximum size of face (default 1000)
   -min int
-    	Minimum size of face (default 20)
+        Minimum size of face (default 20)
   -out string
-    	Destination image (default "-")
-  -plc string
-    	Pupils/eyes localization cascade file
+        Destination image (default "-")
+  -puploc
+        Activate pupils/eyes localization
   -scale float
-    	Scale detection window by percentage (default 1.1)
+        Scale detection window by percentage (default 1.15)
   -shift float
-    	Shift detection window by percentage (default 0.1)
+        Shift detection window by percentage (default 0.15)
 ```
 
-**Important notice:** In case you also wish to run the pupil/eyes localization, then you need to use the `plc` flag and provide a valid path to the pupil localization cascade file. The same applies for facial landmark points detection, only that this time the parameter accepted by the `flpc` flag is a directory pointing to the facial landmark points cascade files found under `cascades/lps`.
+**Notice:** The library automatically embeds the cascade files required for pupil/eyes localization and facial landmark points detection.
 
 ### CLI command examples
 You can also use the `stdin` and `stdout` pipe commands:
 
 ```bash
-$ cat input/source.jpg | pigo > -in - -out - >out.jpg -cf=/path/to/cascade
+$ cat input/source.jpg | pigo > -in - -out - >out.jpg
 ```
 
 `in` and `out` default to `-` so you can also use:
 ```bash
-$ cat input/source.jpg | pigo >out.jpg -cf=/path/to/cascade
-$ pigo -out out.jpg < input/source.jpg -cf=/path/to/cascade
+$ cat input/source.jpg | pigo >out.jpg
+$ pigo -out out.jpg < input/source.jpg
 ```
 Using the `empty` string as value for the `-out` flag will skip the image generation part. This, combined with the `-json` flag will encode the detection results into the specified json file. You can also use the pipe `-` value combined with the `-json` flag to output the detection coordinates to the standard (`stdout`) output.
 
 ## Real time face detection (running as a shared object)
 
-If you wish to test the library's real time face detection capabilities, the `examples` folder contains a few demos written in Python.
+If you wish to test the library's real time face detection capabilities as a desktop application, the `examples` folder contains a few demos written in Python.
 
-**But why Python you might ask?** Because the Go ecosystem is (still) missing a cross platform and system independent library for accessing the webcam.
+**The obvious question is why Python?** Because the Go ecosystem is (still) missing a cross platform and system independent library for accessing the webcam.
 
-In the Python program we access the webcam and transfer the pixel data as a byte array through `cgo` as a **shared object** to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates than the library is capable of.
+We opted for Python just because it's very simple to write a simple script to access the webcam.
+
+### How does it works?
+From the Python script we access the webcam, converts the pixel data to a byte array and through `cgo` we transfer the results as a **shared object** to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates and higher latency than the library is capable of.
 
 ## WASM (Webassembly) support 🎉
-**Important note: In order to run the Webassembly demos at least Go 1.13 is required!**
 
 Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This proves the library's real time face detection capabilities, constantly producing **~60 FPS**.
 
 ### WASM demo
-To run the `wasm` demo select the `wasm` folder and type `make`.
+To run the `wasm` demo select the `wasm` folder and type `make`. This will open a new tab in the web browser and run the face detector real time.
 
 For more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
 
 **For more awesome WASM demos using the Pigo library check this repo: https://github.com/esimov/pigo-wasm-demos**.
+
+## Releases
+In case you do not have installed or do not wish to install Go, you can obtain the binary file from the [releases](https://github.com/esimov/pigo/releases) folder.
+
+The library can be accessed as a snapcraft function too.
+
+<a href="https://snapcraft.io/pigo"><img src="https://raw.githubusercontent.com/snapcore/snap-store-badges/master/EN/%5BEN%5D-snap-store-white-uneditable.png" alt="snapcraft pigo"></a>
 
 ## Benchmark results
 Below are the benchmark results obtained running Pigo against [GoCV](https://github.com/hybridgroup/gocv) using the same conditions.
