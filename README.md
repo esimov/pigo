@@ -52,7 +52,7 @@ Check out this real time demo: https://github.com/esimov/pigo/tree/master/exampl
 
 ![puploc](https://user-images.githubusercontent.com/883386/62784340-f5b3c100-bac6-11e9-865e-a2b4b9520b08.png)
 
-### Facial landmark points detection
+## Facial landmark points detection
 **v1.3.0** marks a new milestone in the library evolution, Pigo being able to detect facial landmark points. The implementation is based on [Fast Localization of Facial Landmark Points](https://arxiv.org/pdf/1403.6888.pdf).
 
 Check out this real time demo: https://github.com/esimov/pigo/tree/master/examples/facial_landmark
@@ -69,8 +69,7 @@ $ go install github.com/esimov/pigo/cmd/pigo@latest
 ## API
 Below is a minimal example of using the face detection API.
 
-First, you need to load and parse the binary classifier, then convert the image to grayscale mode,
-and finally run the cascade function which returns a slice containing the row, column, scale and the detection score.
+First the source image should be converted to grayscale mode, then the cascade function can be invoked, which returns a slice containing the row, column, the scale and the detection score.
 
 ```Go
 src, err := pigo.GetImage("/path/to/image")
@@ -189,9 +188,9 @@ From the Python script we access the webcam, converts the pixel data to a byte a
 Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This proves the library's real time face detection capabilities, constantly producing **~60 FPS**.
 
 ### WASM demo
-To run the `wasm` demo select the `wasm` folder and type `make`. This will open a new tab in the web browser and run the face detector real time.
+To run the `wasm` demo select the `wasm` folder and type `make`. This will automatically open a new tab in the web browser and start capturing the detected faces.
 
-For more details check the subpage description: https://github.com/esimov/pigo/tree/master/wasm.
+For more details check this subpage: https://github.com/esimov/pigo/tree/master/wasm.
 
 **For more awesome WASM demos using the Pigo library check this repo: https://github.com/esimov/pigo-wasm-demos**.
 
