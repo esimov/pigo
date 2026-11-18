@@ -1,5 +1,5 @@
 name: pigo
-version: '1.4.5'
+version: '1.6.0'
 summary: Pure Go face detection library
 description: |
   Key features:
@@ -14,7 +14,7 @@ description: |
    - WASM (Webassembly) support
 grade: stable
 confinement: strict
-base: core18
+base: core22
 parts:
   pigo:
     plugin: nil
@@ -25,7 +25,3 @@ parts:
       export GO111MODULE=on
       export CGO_ENABLED=0
       go build cmd/pigo/main.go
-
-    filesets:
-      exclude-wasm-files:
-        - -wasm
