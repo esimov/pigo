@@ -3,16 +3,9 @@ Package pigo is a lightweight pure Go face detection, pupil/eyes localization an
 based on Pixel Intensity Comparison-based Object detection paper (https://arxiv.org/pdf/1305.4537.pdf).
 Is platform agnostic and does not require any external dependencies and third party modules.
 
+Face detection API example.
 
-Face detection API example
-
-First you need to load and parse the binary classifier, then convert the image to grayscale mode
-and finally to run the cascade function which returns a slice containing the row, column, scale and the detection score.
-
-	cascadeFile, err := ioutil.ReadFile("/path/to/cascade/file")
-	if err != nil {
-		log.Fatalf("Error reading the cascade file: %v", err)
-	}
+First the source image should be converted to grayscale mode, then the cascade function can be invoked, which returns a slice containing the row, column, the scale and the detection score.
 
 	src, err := pigo.GetImage("/path/to/image")
 	if err != nil {
@@ -23,10 +16,10 @@ and finally to run the cascade function which returns a slice containing the row
 	cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
 
 	cParams := pigo.CascadeParams{
-		MinSize:     fd.minSize,
-		MaxSize:     fd.maxSize,
-		ShiftFactor: fd.shiftFactor,
-		ScaleFactor: fd.scaleFactor,
+		MinSize:     20,
+		MaxSize:     1000,
+		ShiftFactor: 0.1,
+		ScaleFactor: 1.1,
 
 		ImageParams: pigo.ImageParams{
 			Pixels: pixels,
@@ -36,13 +29,10 @@ and finally to run the cascade function which returns a slice containing the row
 		},
 	}
 
-	pigo := pigo.NewPigo()
+	p := pigo.NewPigo()
 	// Unpack the binary file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
-	classifier, err := pigo.Unpack(cascadeFile)
-	if err != nil {
-		log.Fatalf("Error reading the cascade file: %s", err)
-	}
+	classifier := p.Unpack()
 
 	angle := 0.0 // cascade rotation angle. 0.0 is 0 radians and 1.0 is 2*pi radians
 
