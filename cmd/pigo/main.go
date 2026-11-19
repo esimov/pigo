@@ -51,7 +51,8 @@ const (
 	errorColor   = "\x1b[31m"
 	defaultColor = "\x1b[0m"
 
-	perturb = 63
+	confidenceLevel = 5.0
+	perturb         = 63
 )
 
 // Version indicates the current build version.
@@ -324,8 +325,6 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 
 // drawFaces marks the detected faces with the marker type defined as parameter (rectangle|circle|ellipse).
 func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]detection, error) {
-	var qThresh float32 = 5.0
-
 	var (
 		detections     = make([]detection, 0, len(faces))
 		eyesCoords     = make([]coord, 0, len(faces))
@@ -334,7 +333,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 	)
 
 	for _, face := range faces {
-		if face.Q > qThresh {
+		if face.Q > confidenceLevel {
 			switch marker {
 			case markerRectangle:
 				dc.DrawRectangle(float64(face.Col-face.Scale/2),
