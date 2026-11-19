@@ -30,7 +30,7 @@ The reason why this library has been developed is because all of the currently e
 ### Todo
 - [ ] Object detection and description
 
-**The library does not require any additional modules or third party applications to be installed**, although you might need to install Python and OpenCV if you wish to try out the provided demos running in real time. Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more details.
+**The library does not require any additional modules or third party applications to be installed**, although if you you wish to try out the demos from the [examples](https://github.com/esimov/pigo/tree/master/examples) folder you might need to install Python and OpenCV if you haven't it already. Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more details.
 
 **The library can also detect in plane rotated faces.** For this reason a new `-angle` parameter has been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
 
@@ -58,6 +58,17 @@ Check out this real time demo: https://github.com/esimov/pigo/tree/master/exampl
 Check out this real time demo: https://github.com/esimov/pigo/tree/master/examples/facial_landmark
 
 ![flp_example](https://user-images.githubusercontent.com/883386/66802771-3b0cc880-ef26-11e9-9ee3-7e9e981ef3f7.png)
+
+## WASM (Webassembly) support 🎉
+
+Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This proves the library's real time face detection capabilities, constantly producing **~60 FPS**.
+
+### WASM demo
+To run the `wasm` demo select the `wasm` folder and type `make`. This will automatically open a new tab in the web browser and start capturing the detected faces.
+
+For more details check this subpage: https://github.com/esimov/pigo/tree/master/wasm.
+
+**For more awesome WASM demos using the Pigo library check this repo: https://github.com/esimov/pigo-wasm-demos**.
 
 ## Install
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
@@ -174,25 +185,12 @@ Using the `empty` string as value for the `-out` flag will skip the image genera
 
 ## Real time face detection (running as a shared object)
 
-If you wish to test the library's real time face detection capabilities as a desktop application, the [examples](https://github.com/esimov/pigo/tree/master/examples) folder contains a few demos written in Python.
+The demos from the [examples](https://github.com/esimov/pigo/tree/master/examples) folder are meant to show how the Pigo library can be integrated into other languages, like in our case Python.
 
-**The obvious question is why Python?** Because the Go ecosystem is (still) missing a cross platform and system independent library for accessing the webcam.
-
-I choose Python just because it's very simple to write a simple script to access the webcam.
+I choose Python just because it's very easy to write a simple script to access the webcam.
 
 ### How does it works?
 From the Python script we access the webcam, converts the pixel data to a byte array and through `cgo` we transfer the results as a **shared object** to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates and higher latency.
-
-## WASM (Webassembly) support 🎉
-
-Starting from version **v1.4.0** the library has been ported to [**WASM**](http://webassembly.org/). This proves the library's real time face detection capabilities, constantly producing **~60 FPS**.
-
-### WASM demo
-To run the `wasm` demo select the `wasm` folder and type `make`. This will automatically open a new tab in the web browser and start capturing the detected faces.
-
-For more details check this subpage: https://github.com/esimov/pigo/tree/master/wasm.
-
-**For more awesome WASM demos using the Pigo library check this repo: https://github.com/esimov/pigo-wasm-demos**.
 
 ## Releases
 In case you don't have it installed or do not want to install Go, you can obtain the binary file from the [releases](https://github.com/esimov/pigo/releases) folder.

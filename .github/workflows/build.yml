@@ -48,7 +48,7 @@ jobs:
     name: Test
     strategy:
       matrix:
-        go-version: [~1.21, ~1.22]
+        go-version: [oldstable, stable]
         platform:
           - ubuntu-latest
           - macos-latest
