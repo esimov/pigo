@@ -23,19 +23,16 @@ var (
 
 // UnpackCascades unpack all of the existing cascade files.
 func (d *Detector) UnpackCascades() error {
-	p := pigo.NewPigo()
-
-	// Unpack the binary file. This will return the number of cascade trees,
+	// Unpack the facefinder binary file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
-	faceClassifier = p.Unpack()
-	plc := pigo.NewPuplocCascade()
+	faceClassifier = pigo.UnpackCascade()
 
-	puplocClassifier, err = plc.ReadCascade()
+	puplocClassifier, err = pigo.ReadPuplocCascade()
 	if err != nil {
 		return fmt.Errorf("error unpacking the pupil localization cascade file: %w", err)
 	}
 
-	flpcs, err = plc.ReadCascadeDir()
+	flpcs, err = pigo.ReadFlpCascadeDir()
 	if err != nil {
 		return fmt.Errorf("failed to unpack the facial landmark points cascade files: %w", err)
 	}

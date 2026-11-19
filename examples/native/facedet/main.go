@@ -35,8 +35,7 @@ var (
 )
 
 func main() {
-	p := pigo.NewPigo()
-	classifier = p.Unpack()
+	classifier = pigo.UnpackCascade()
 
 	mediaStream, err := mediadevices.GetUserMedia(mediadevices.MediaStreamConstraints{
 		Video: func(c *mediadevices.MediaTrackConstraints) {

@@ -292,22 +292,19 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 		ImageParams: *imgParams,
 	}
 
-	p := pigo.NewPigo()
-	plc = pigo.NewPuplocCascade()
-
 	// Unpack the facefinder binary file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
-	classifier := p.Unpack()
+	classifier := pigo.UnpackCascade()
 
 	if det.puploc || det.flploc {
-		plc, err = plc.ReadCascade()
+		plc, err = pigo.ReadPuplocCascade()
 		if err != nil {
 			return nil, fmt.Errorf("failed to unpack the pupil localization cascade file: %w", err)
 		}
 	}
 
 	if det.flploc {
-		flpcs, err = plc.ReadCascadeDir()
+		flpcs, err = pigo.ReadFlpCascadeDir()
 		if err != nil {
 			return nil, fmt.Errorf("failed to unpack the facial landmark points cascade files: %w", err)
 		}

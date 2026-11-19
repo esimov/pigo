@@ -70,10 +70,9 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 	}
 	cmd.Start()
 
-	p := pigo.NewPigo()
 	// Unpack the binary file. This will return the number of cascade trees,
 	// the tree depth, the threshold and the prediction from tree's leaf nodes.
-	classifier := p.Unpack()
+	classifier := pigo.UnpackCascade()
 
 	mpart := multipart.NewReader(stdout, boundary)
 	for {

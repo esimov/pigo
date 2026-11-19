@@ -22,13 +22,13 @@ func init() {
 }
 
 func TestFlploc_UnpackCascadeFileShouldNotBeNil(t *testing.T) {
-	plc = pl.Unpack(flpc)
+	plc = pigo.UnpackPlc(flpc)
 
 	assert.NotNil(t, plc)
 }
 
 func TestFlploc_LandmarkDetectorShouldReturnDetectionPoints(t *testing.T) {
-	p = p.Unpack()
+	p = pigo.UnpackCascade()
 
 	dets := p.RunCascade(*cParams, 0.0)
 	dets = p.ClusterDetections(dets, 0.1)
@@ -72,12 +72,12 @@ func TestFlploc_LandmarkDetectorShouldReturnCorrectDetectionPoints(t *testing.T)
 		detected int
 	)
 
-	p = p.Unpack()
+	p = pigo.UnpackCascade()
 
 	dets := p.RunCascade(*cParams, 0.0)
 	dets = p.ClusterDetections(dets, 0.1)
 
-	flpcs, err = plc.ReadCascadeDir()
+	flpcs, err = pigo.ReadFlpCascadeDir()
 	assert.ErrorIs(t, err, nil)
 
 	for _, det := range dets {
@@ -137,12 +137,12 @@ func TestFlploc_LandmarkDetectorShouldReturnCorrectDetectionPoints(t *testing.T)
 
 func BenchmarkFlploc_ReadCascadeDir(b *testing.B) {
 	for b.Loop() {
-		plc.ReadCascadeDir()
+		pigo.ReadFlpCascadeDir()
 	}
 }
 
 func BenchmarkFlploc_LendmarkPoint(b *testing.B) {
-	plc = pl.Unpack(puplocCasc)
+	plc = pigo.UnpackPlc(puplocCasc)
 
 	cParams.Pixels = pixs
 
@@ -160,8 +160,8 @@ func BenchmarkFlploc_LendmarkPoint(b *testing.B) {
 }
 
 func BenchmarkFlploc_Detection(b *testing.B) {
-	p = p.Unpack()
-	plc = pl.Unpack(puplocCasc)
+	p = pigo.UnpackCascade()
+	plc = pigo.UnpackPlc(puplocCasc)
 
 	cParams.Pixels = pixs
 

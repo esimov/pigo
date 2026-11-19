@@ -11,9 +11,8 @@ import (
 )
 
 var (
-	pl         = pigo.NewPuplocCascade()
-	puplocCasc []byte
 	plc        *pigo.PuplocCascade
+	puplocCasc []byte
 	imgParams  *pigo.ImageParams
 	cParams    *pigo.CascadeParams
 )
@@ -26,14 +25,14 @@ func init() {
 }
 
 func TestPuploc_UnpackCascadeFileShouldNotBeNil(t *testing.T) {
-	plc = plc.Unpack(puplocCasc)
+	plc = pigo.UnpackPlc(puplocCasc)
 
 	assert.NotNil(t, plc)
 }
 
 func TestPuploc_Detector_ShouldDetectEyes(t *testing.T) {
-	p = p.Unpack()
-	plc = plc.Unpack(puplocCasc)
+	p = pigo.UnpackCascade()
+	plc = pigo.UnpackPlc(puplocCasc)
 
 	dets := p.RunCascade(*cParams, 0.0)
 	dets = p.ClusterDetections(dets, 0.1)
@@ -67,19 +66,19 @@ func TestPuploc_Detector_ShouldDetectEyes(t *testing.T) {
 }
 
 func BenchmarkPuploc_UnpackCascade(b *testing.B) {
-	p = p.Unpack()
+	p = pigo.UnpackCascade()
 
 	runtime.GC()
 	b.ResetTimer()
 
 	for b.Loop() {
 		// Unpack the pupil localization cascade file.
-		plc = plc.Unpack(puplocCasc)
+		plc = pigo.UnpackPlc(puplocCasc)
 	}
 }
 
 func BenchmarkPuploc_DetectorRun(b *testing.B) {
-	plc = plc.Unpack(puplocCasc)
+	plc = pigo.UnpackPlc(puplocCasc)
 
 	cParams.Pixels = pixs
 	puploc := &pigo.Puploc{Row: 10, Col: 10, Scale: 20, Perturbs: 50}
@@ -90,8 +89,8 @@ func BenchmarkPuploc_DetectorRun(b *testing.B) {
 }
 
 func BenchmarkPuploc_Detection(b *testing.B) {
-	p = p.Unpack()
-	plc = plc.Unpack(puplocCasc)
+	p = pigo.UnpackCascade()
+	plc = pigo.UnpackPlc(puplocCasc)
 
 	cParams.Pixels = pixs
 

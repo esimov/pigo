@@ -70,11 +70,9 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 	}
 
 	if len(cascade) == 0 {
-		p := pigo.NewPigo()
-
 		// Unpack the binary file. This will return the number of cascade trees,
 		// the tree depth, the threshold and the prediction from tree's leaf nodes.
-		classifier = p.Unpack()
+		classifier = pigo.UnpackCascade()
 	}
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.

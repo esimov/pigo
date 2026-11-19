@@ -46,14 +46,10 @@ type Pigo struct {
 	treeNum       uint32
 }
 
-// NewPigo initializes the Pigo constructor method.
-func NewPigo() *Pigo {
-	return &Pigo{}
-}
-
-// Unpack the embedded binary file. This will return the number of cascade trees,
-// the tree depth, the threshold and the prediction from tree's leaf nodes.
-func (p *Pigo) Unpack() *Pigo {
+// UnpackCascade unpack the embedded facefinder binary file.
+// This will return the number of cascade trees, the tree depth,
+// the threshold and the prediction from tree's leaf nodes.
+func UnpackCascade() *Pigo {
 	var (
 		treeDepth     uint32
 		treeNum       uint32

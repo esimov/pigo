@@ -15,8 +15,6 @@ import (
 //go:embed cascade/puploc
 var plcFs embed.FS
 
-var _ Cascade = (*PuplocCascade)(nil)
-
 // Puploc is used to gather all the relevant information
 // resulted from the pupil detection.
 type Puploc struct {
@@ -41,13 +39,8 @@ type PuplocCascade struct {
 	treeDepth uint32
 }
 
-// NewPuplocCascade initializes the PuplocCascade constructor method.
-func NewPuplocCascade() *PuplocCascade {
-	return &PuplocCascade{}
-}
-
-// Unpack extracts the binary cascade file and decodes the result into certain data structure.
-func (plc *PuplocCascade) Unpack(cascade []byte) *PuplocCascade {
+// UnpackPlc extracts the puploc cascade file and decodes the result into the PuplocCascade.
+func UnpackPlc(cascade []byte) *PuplocCascade {
 	var (
 		stages    uint32
 		scales    float32
@@ -294,12 +287,12 @@ func (plc *PuplocCascade) RunDetector(pl *Puploc, img ImageParams, angle float64
 	}
 }
 
-// ReadCascade reads the embedded pupil localization (puploc) cascade file and unpack it's content.
-func (plc *PuplocCascade) ReadCascade() (*PuplocCascade, error) {
+// ReadPuplocCascade reads the embedded pupil localization (puploc) cascade file and unpack it's content.
+func ReadPuplocCascade() (*PuplocCascade, error) {
 	f, err := plcFs.ReadFile("cascade/puploc")
 	if err != nil {
 		return nil, fmt.Errorf("cannot read the embedded cascade file: %w", err)
 	}
 
-	return plc.Unpack(f), nil
+	return UnpackPlc(f), nil
 }

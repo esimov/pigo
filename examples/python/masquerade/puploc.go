@@ -111,16 +111,14 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 
 	// Ensure that the face detection classifier is loaded only once.
 	if len(cascade) == 0 {
-		p := pigo.NewPigo()
-
 		// Unpack the binary file. This will return the number of cascade trees,
 		// the tree depth, the threshold and the prediction from tree's leaf nodes.
-		faceClassifier = p.Unpack()
+		faceClassifier = pigo.UnpackCascade()
 	}
 
 	// Ensure that we load the pupil localization cascade only once
 	if len(puplocCascade) == 0 {
-		puplocClassifier, err = puplocClassifier.ReadCascade()
+		puplocClassifier, err = pigo.ReadPuplocCascade()
 		if err != nil {
 			log.Fatalf("Error unpacking the puploc cascade file: %s", err)
 		}

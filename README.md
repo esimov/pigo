@@ -105,10 +105,9 @@ cParams := pigo.CascadeParams{
 	},
 }
 
-p := pigo.NewPigo()
-// Unpack the binary file. This will return the number of cascade trees,
+// Unpack the facefinder binary file. This will return the number of cascade trees,
 // the tree depth, the threshold and the prediction from tree's leaf nodes.
-classifier := p.Unpack()
+classifier := pigo.Unpack()
 
 angle := 0.0 // cascade rotation angle. 0.0 is 0 radians and 1.0 is 2*pi radians
 
