@@ -77,7 +77,7 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
-	dets := classifier.RunCascade(cParams, 0.0)
+	dets := classifier.RunClassifier(cParams, 0.0)
 
 	// Calculate the intersection over union (IoU) of two clusters.
 	dets = classifier.ClusterDetections(dets, 0)

@@ -48,14 +48,14 @@ func (plc *PuplocCascade) LandmarkPoint(leftEye, rightEye *Puploc, img ImagePara
 	flploc.Perturbs = perturb
 
 	if flipV {
-		return plc.RunDetector(flploc, img, 0.0, true)
+		return plc.RunClassifier(flploc, img, 0.0, true)
 	}
 
-	return plc.RunDetector(flploc, img, 0.0, false)
+	return plc.RunClassifier(flploc, img, 0.0, false)
 }
 
-// ReadFlpCascadeDir reads the embedded facial landmark points cascade directory
-// and unpacks the cascade files contents.
+// ReadFlpCascadeDir reads the directory of the embedded
+// facial landmark points cascade files and extracts their content.
 func ReadFlpCascadeDir() (map[string][]*FlpCascade, error) {
 	cascadeFiles, err := fs.ReadDir(lpsDir)
 	if err != nil {
@@ -70,7 +70,7 @@ func ReadFlpCascadeDir() (map[string][]*FlpCascade, error) {
 			return nil, fmt.Errorf("cannot read the cascade file: %w", err)
 		}
 
-		flpc := UnpackPlc(data)
+		flpc := unpack(data)
 		flpcs[f.Name()] = append(flpcs[f.Name()], &FlpCascade{flpc})
 	}
 

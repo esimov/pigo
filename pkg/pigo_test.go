@@ -60,7 +60,7 @@ func TestPigo_InputImageShouldBeGrayscale(t *testing.T) {
 func TestPigo_Detector_ShouldDetectFace(t *testing.T) {
 	p = pigo.UnpackCascade()
 
-	dets := p.RunCascade(*cParams, 0.0)
+	dets := p.RunClassifier(*cParams, 0.0)
 	dets = p.ClusterDetections(dets, 0.1)
 
 	assert.NotEmpty(t, dets)
@@ -87,7 +87,7 @@ func BenchmarkPigoFaceDetection(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// Run the classifier over the obtained leaf nodes and return the detection results.
 		// The result contains quadruplets representing the row, column, scale and detection score.
-		dets = p.RunCascade(*cParams, 0.0)
+		dets = p.RunClassifier(*cParams, 0.0)
 		// Calculate the intersection over union (IoU) of two clusters.
 		dets = p.ClusterDetections(dets, 0.1)
 	}
@@ -105,7 +105,7 @@ func BenchmarkPigoClusterDetection(b *testing.B) {
 	runtime.GC()
 	b.ResetTimer()
 
-	dets = p.RunCascade(*cParams, 0.0)
+	dets = p.RunClassifier(*cParams, 0.0)
 
 	for i := 0; i < b.N; i++ {
 		dets = p.ClusterDetections(dets, 0.1)

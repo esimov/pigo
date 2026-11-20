@@ -13,6 +13,7 @@ require (
 
 require (
 	gioui.org/shader v1.0.9 // indirect
+	github.com/blackjack/webcam v0.6.2 // indirect
 	github.com/go-text/typesetting v0.3.5 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect

@@ -25,16 +25,17 @@ func init() {
 }
 
 func TestPuploc_UnpackCascadeFileShouldNotBeNil(t *testing.T) {
-	plc = pigo.UnpackPlc(puplocCasc)
-
+	plc, err = pigo.UnpackPlc()
+	assert.Nil(t, err)
 	assert.NotNil(t, plc)
 }
 
 func TestPuploc_Detector_ShouldDetectEyes(t *testing.T) {
 	p = pigo.UnpackCascade()
-	plc = pigo.UnpackPlc(puplocCasc)
+	plc, err = pigo.UnpackPlc()
+	assert.Nil(t, err)
 
-	dets := p.RunCascade(*cParams, 0.0)
+	dets := p.RunClassifier(*cParams, 0.0)
 	dets = p.ClusterDetections(dets, 0.1)
 
 	eyes := []pigo.Puploc{}
@@ -48,7 +49,7 @@ func TestPuploc_Detector_ShouldDetectEyes(t *testing.T) {
 				Scale:    float32(det.Scale) * 0.25,
 				Perturbs: 50,
 			}
-			plc.RunDetector(puploc, *imgParams, 0.0, false)
+			plc.RunClassifier(puploc, *imgParams, 0.0, false)
 
 			// right eye
 			puploc = &pigo.Puploc{
@@ -57,7 +58,7 @@ func TestPuploc_Detector_ShouldDetectEyes(t *testing.T) {
 				Scale:    float32(det.Scale) * 0.25,
 				Perturbs: 50,
 			}
-			plc.RunDetector(puploc, *imgParams, 0.0, false)
+			plc.RunClassifier(puploc, *imgParams, 0.0, false)
 			eyes = append(eyes, *puploc)
 		}
 	}
@@ -72,32 +73,34 @@ func BenchmarkPuploc_UnpackCascade(b *testing.B) {
 	b.ResetTimer()
 
 	for b.Loop() {
-		// Unpack the pupil localization cascade file.
-		plc = pigo.UnpackPlc(puplocCasc)
+		// Read and unpack the pupil localization cascade file.
+		plc, _ = pigo.UnpackPlc()
 	}
 }
 
 func BenchmarkPuploc_DetectorRun(b *testing.B) {
-	plc = pigo.UnpackPlc(puplocCasc)
+	plc, err = pigo.UnpackPlc()
+	assert.Nil(b, err)
 
 	cParams.Pixels = pixs
 	puploc := &pigo.Puploc{Row: 10, Col: 10, Scale: 20, Perturbs: 50}
 
 	for b.Loop() {
-		plc.RunDetector(puploc, *imgParams, 0.0, false)
+		plc.RunClassifier(puploc, *imgParams, 0.0, false)
 	}
 }
 
 func BenchmarkPuploc_Detection(b *testing.B) {
 	p = pigo.UnpackCascade()
-	plc = pigo.UnpackPlc(puplocCasc)
+	plc, err = pigo.UnpackPlc()
+	assert.Nil(b, err)
 
 	cParams.Pixels = pixs
 
 	runtime.GC()
 	b.ResetTimer()
 
-	dets := p.RunCascade(*cParams, 0.0)
+	dets := p.RunClassifier(*cParams, 0.0)
 	dets = p.ClusterDetections(dets, 0.1)
 
 	for b.Loop() {
@@ -110,7 +113,7 @@ func BenchmarkPuploc_Detection(b *testing.B) {
 					Scale:    float32(det.Scale) * 0.25,
 					Perturbs: 50,
 				}
-				plc.RunDetector(puploc, *imgParams, 0.0, false)
+				plc.RunClassifier(puploc, *imgParams, 0.0, false)
 
 				// right eye
 				puploc = &pigo.Puploc{
@@ -119,7 +122,7 @@ func BenchmarkPuploc_Detection(b *testing.B) {
 					Scale:    float32(det.Scale) * 0.25,
 					Perturbs: 50,
 				}
-				plc.RunDetector(puploc, *imgParams, 0.0, false)
+				plc.RunClassifier(puploc, *imgParams, 0.0, false)
 			}
 		}
 	}

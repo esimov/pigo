@@ -39,8 +39,19 @@ type PuplocCascade struct {
 	treeDepth uint32
 }
 
-// UnpackPlc extracts the puploc cascade file and decodes the result into the PuplocCascade.
-func UnpackPlc(cascade []byte) *PuplocCascade {
+// UnpackPlc reads and unpack the embedded pupil localization (puploc) cascade file.
+// Returns error in case of failure on reading the embedded file.
+func UnpackPlc() (*PuplocCascade, error) {
+	f, err := plcFs.ReadFile("cascade/puploc")
+	if err != nil {
+		return nil, fmt.Errorf("cannot read the embedded cascade file: %w", err)
+	}
+
+	return unpack(f), nil
+}
+
+// decode unpacks the cascade file provided as byte array and decodes the results to PuplocCascade.
+func unpack(cascade []byte) *PuplocCascade {
 	var (
 		stages    uint32
 		scales    float32
@@ -246,8 +257,8 @@ var plcPool = sync.Pool{
 	},
 }
 
-// RunDetector runs the pupil localization function.
-func (plc *PuplocCascade) RunDetector(pl *Puploc, img ImageParams, angle float64, flipV bool) *Puploc {
+// RunClassifier runs the pupil localization function.
+func (plc *PuplocCascade) RunClassifier(pl *Puploc, img ImageParams, faceAngle float64, flipV bool) *Puploc {
 	var res []float32
 
 	det := plcPool.Get().(*puplocPool)
@@ -260,11 +271,11 @@ func (plc *PuplocCascade) RunDetector(pl *Puploc, img ImageParams, angle float64
 		col := float32(pl.Col) + float32(pl.Scale)*0.15*(0.5-rand.Float32())
 		sc := float32(pl.Scale) * (0.925 + 0.15*rand.Float32())
 
-		if angle > 0.0 {
-			if angle > 1.0 {
-				angle = 1.0
+		if faceAngle > 0.0 {
+			if faceAngle > 1.0 {
+				faceAngle = 1.0
 			}
-			res = plc.classifyRotatedRegion(row, col, sc, angle, treeDepth, img.Rows, img.Cols, img.Pixels, img.Dim, flipV)
+			res = plc.classifyRotatedRegion(row, col, sc, faceAngle, treeDepth, img.Rows, img.Cols, img.Pixels, img.Dim, flipV)
 		} else {
 			res = plc.classifyRegion(row, col, sc, treeDepth, img.Rows, img.Cols, img.Pixels, img.Dim, flipV)
 		}
@@ -285,14 +296,4 @@ func (plc *PuplocCascade) RunDetector(pl *Puploc, img ImageParams, angle float64
 		Col:   int(det.cols[int(math.Round(float64(pl.Perturbs)/2))]),
 		Scale: det.scale[int(math.Round(float64(pl.Perturbs)/2))],
 	}
-}
-
-// ReadPuplocCascade reads the embedded pupil localization (puploc) cascade file and unpack it's content.
-func ReadPuplocCascade() (*PuplocCascade, error) {
-	f, err := plcFs.ReadFile("cascade/puploc")
-	if err != nil {
-		return nil, fmt.Errorf("cannot read the embedded cascade file: %w", err)
-	}
-
-	return UnpackPlc(f), nil
 }

@@ -52,7 +52,7 @@ const (
 	defaultColor = "\x1b[0m"
 
 	confidenceLevel = 5.0
-	perturb         = 63
+	perturbation    = 63
 )
 
 // Version indicates the current build version.
@@ -77,7 +77,7 @@ type faceDetector struct {
 	destination  string
 	puploc       bool
 	flploc       bool
-	angle        float64
+	faceAngle    float64
 	minSize      int
 	maxSize      int
 	shiftFactor  float64
@@ -109,7 +109,7 @@ func main() {
 		maxSize      = flag.Int("max", 1000, "Maximum size of face")
 		shiftFactor  = flag.Float64("shift", 0.15, "Shift detection window by percentage")
 		scaleFactor  = flag.Float64("scale", 1.15, "Scale detection window by percentage")
-		angle        = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
+		faceAngle    = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
 		iouThreshold = flag.Float64("iou", 0.15, "Intersection over union (IoU) threshold")
 		marker       = flag.String("marker", "rect", "Detection marker: rect|circle|ellipse")
 		puploc       = flag.Bool("puploc", false, "Activate pupils/eyes localization")
@@ -136,13 +136,13 @@ func main() {
 	spinner.Start()
 
 	det = &faceDetector{
-		angle:        *angle,
 		destination:  *destination,
 		minSize:      *minSize,
 		maxSize:      *maxSize,
 		shiftFactor:  *shiftFactor,
 		scaleFactor:  *scaleFactor,
 		iouThreshold: *iouThreshold,
+		faceAngle:    *faceAngle,
 		puploc:       *puploc,
 		flploc:       *flploc,
 		markDetEyes:  *markEyes,
@@ -297,7 +297,7 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 	classifier := pigo.UnpackCascade()
 
 	if det.puploc || det.flploc {
-		plc, err = pigo.ReadPuplocCascade()
+		plc, err = pigo.UnpackPlc()
 		if err != nil {
 			return nil, fmt.Errorf("failed to unpack the pupil localization cascade file: %w", err)
 		}
@@ -312,7 +312,7 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
-	faces := classifier.RunCascade(cParams, det.angle)
+	faces := classifier.RunClassifier(cParams, det.faceAngle)
 
 	// Calculate the intersection over union (IoU) of two clusters.
 	faces = classifier.ClusterDetections(faces, det.iouThreshold)
@@ -380,11 +380,11 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 					Row:      face.Row - int(0.075*float32(face.Scale)),
 					Col:      face.Col - int(0.175*float32(face.Scale)),
 					Scale:    float32(face.Scale) * 0.25,
-					Perturbs: perturb,
+					Perturbs: perturbation,
 				}
-				leftEye := plc.RunDetector(puploc, *imgParams, det.angle, false)
+				leftEye := plc.RunClassifier(puploc, *imgParams, det.faceAngle, false)
 				if leftEye.Row > 0 && leftEye.Col > 0 {
-					if det.angle > 0 {
+					if det.faceAngle > 0 {
 						drawEyeDetectionMarker(ctx,
 							float64(cols/2-(face.Col-leftEye.Col)),
 							float64(rows/2-(face.Row-leftEye.Row)),
@@ -392,7 +392,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 							color.RGBA{R: 255, G: 0, B: 0, A: 255},
 							det.markDetEyes,
 						)
-						angle := (det.angle * 180) / math.Pi
+						angle := (det.faceAngle * 180) / math.Pi
 						rotated := imaging.Rotate(faceZone, 2*angle, color.Transparent)
 						final := imaging.FlipH(rotated)
 
@@ -418,12 +418,12 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 					Row:      face.Row - int(0.075*float32(face.Scale)),
 					Col:      face.Col + int(0.185*float32(face.Scale)),
 					Scale:    float32(face.Scale) * 0.25,
-					Perturbs: perturb,
+					Perturbs: perturbation,
 				}
 
-				rightEye := plc.RunDetector(puploc, *imgParams, det.angle, false)
+				rightEye := plc.RunClassifier(puploc, *imgParams, det.faceAngle, false)
 				if rightEye.Row > 0 && rightEye.Col > 0 {
-					if det.angle > 0 {
+					if det.faceAngle > 0 {
 						drawEyeDetectionMarker(ctx,
 							float64(cols/2-(face.Col-rightEye.Col)),
 							float64(rows/2-(face.Row-rightEye.Row)),
@@ -432,7 +432,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 							det.markDetEyes,
 						)
 						// convert radians to angle
-						angle := (det.angle * 180) / math.Pi
+						angle := (det.faceAngle * 180) / math.Pi
 						rotated := imaging.Rotate(faceZone, 2*angle, color.Transparent)
 						final := imaging.FlipH(rotated)
 
@@ -456,7 +456,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 				if det.flploc {
 					for _, eye := range eyeCascades {
 						for _, flpc := range flpcs[eye] {
-							flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
+							flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturbation, false)
 							if flp.Row > 0 && flp.Col > 0 {
 								drawEyeDetectionMarker(dc,
 									float64(flp.Col),
@@ -472,7 +472,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 								})
 							}
 
-							flp = flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
+							flp = flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturbation, true)
 							if flp.Row > 0 && flp.Col > 0 {
 								drawEyeDetectionMarker(dc,
 									float64(flp.Col),
@@ -492,7 +492,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 
 					for _, mouth := range mouthCascades {
 						for _, flpc := range flpcs[mouth] {
-							flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
+							flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturbation, false)
 							if flp.Row > 0 && flp.Col > 0 {
 								drawEyeDetectionMarker(dc,
 									float64(flp.Col),
@@ -509,7 +509,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 							}
 						}
 					}
-					flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
+					flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, *imgParams, perturbation, true)
 					if flp.Row > 0 && flp.Col > 0 {
 						drawEyeDetectionMarker(dc,
 							float64(flp.Col),

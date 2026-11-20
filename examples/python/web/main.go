@@ -120,7 +120,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 
 		// Run the classifier over the obtained leaf nodes and return the detection results.
 		// The result contains quadruplets representing the row, column, scale and detection score.
-		dets := classifier.RunCascade(cParams, *angle)
+		dets := classifier.RunClassifier(cParams, *angle)
 
 		// Calculate the intersection over union (IoU) of two clusters.
 		dets = classifier.ClusterDetections(dets, 0)

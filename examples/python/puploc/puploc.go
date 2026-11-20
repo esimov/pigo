@@ -37,7 +37,7 @@ func FindFaces(pixels []uint8) uintptr {
 			Scale:    float32(results[i].Scale) * 0.4,
 			Perturbs: 50,
 		}
-		det := puplocClassifier.RunDetector(puploc, *imageParams, 0.0, false)
+		det := puplocClassifier.RunClassifier(puploc, *imageParams, 0.0, false)
 		if det.Row > 0 && det.Col > 0 {
 			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q), 0)
 		}
@@ -50,7 +50,7 @@ func FindFaces(pixels []uint8) uintptr {
 			Perturbs: 50,
 		}
 
-		det = puplocClassifier.RunDetector(puploc, *imageParams, 0.0, false)
+		det = puplocClassifier.RunClassifier(puploc, *imageParams, 0.0, false)
 		if det.Row > 0 && det.Col > 0 {
 			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q), 0)
 		}
@@ -107,7 +107,7 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 
 	// Ensure that we load the pupil localization cascade only once
 	if len(puplocCascade) == 0 {
-		puplocClassifier, err = pigo.ReadPuplocCascade()
+		puplocClassifier, err = pigo.UnpackPlc()
 		if err != nil {
 			log.Fatalf("Error unpacking the puploc cascade file: %s", err)
 		}
@@ -115,7 +115,7 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
-	dets := faceClassifier.RunCascade(cParams, 0.0)
+	dets := faceClassifier.RunClassifier(cParams, 0.0)
 
 	// Calculate the intersection over union (IoU) of two clusters.
 	dets = faceClassifier.ClusterDetections(dets, 0.0)

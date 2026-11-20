@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"math"
 	"os"
 
 	"gioui.org/app"
@@ -16,6 +17,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	pigo "github.com/esimov/pigo/pkg"
+	"github.com/fogleman/gg"
 	"github.com/pion/mediadevices"
 	_ "github.com/pion/mediadevices/pkg/driver/camera" // This is required to register camera adapter
 	"github.com/pion/mediadevices/pkg/io/video"
@@ -27,15 +29,25 @@ const (
 	windowHeight = 640
 
 	confidenceLevel = 5.0
+	perturbation    = 63
 )
 
 var (
-	classifier  *pigo.Pigo
-	videoReader video.Reader
+	videoReader    video.Reader
+	faceClassifier *pigo.Pigo
+	puplocCascade  *pigo.PuplocCascade
+	imgParams      *pigo.ImageParams
+	imgCtx         *gg.Context
 )
 
 func main() {
-	classifier = pigo.UnpackCascade()
+	var err error
+
+	faceClassifier = pigo.UnpackCascade()
+	puplocCascade, err = pigo.UnpackPlc()
+	if err != nil {
+		panic(err)
+	}
 
 	mediaStream, err := mediadevices.GetUserMedia(mediadevices.MediaStreamConstraints{
 		Video: func(c *mediadevices.MediaTrackConstraints) {
@@ -46,6 +58,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	imgCtx = gg.NewContext(windowWidth, windowHeight)
 
 	// since we're trying to access the raw data, we need to cast Track to its real type, *mediadevices.VideoTrack
 	videoTrack := mediaStream.GetVideoTracks()[0].(*mediadevices.VideoTrack)
@@ -88,10 +102,12 @@ func run(w *app.Window) error {
 
 			frame, release, err := videoReader.Read()
 			if err != nil {
-				return fmt.Errorf("error encountered reading the frame: %w", err)
+				return fmt.Errorf("error encountered reading video frame: %w", err)
 			}
 
 			if img, ok := frame.(*image.YCbCr); ok {
+				imgCtx.DrawImage(frame, 0, 0)
+
 				dets := detectFace(img)
 				for _, det := range dets {
 					if det.Q >= confidenceLevel {
@@ -99,6 +115,29 @@ func run(w *app.Window) error {
 							image.Rect(det.Col-det.Scale/2, det.Row-det.Scale/2, det.Col+det.Scale/2, det.Row+det.Scale/2),
 							color.RGBA{R: 0xff, A: 0xff})
 
+						leftPupil := detectLeftPupil(det)
+						rect := image.Rect(
+							det.Col-det.Scale/2,
+							det.Row-det.Scale/2,
+							det.Col+det.Scale/2,
+							det.Row+det.Scale/2,
+						)
+						rows, cols := rect.Max.X-rect.Min.X, rect.Max.Y-rect.Min.Y
+						if leftPupil.Row > 0 && leftPupil.Col > 0 {
+							fmt.Println("left pupil detected")
+							drawEyeDetectionMarker(imgCtx,
+								float64(cols/2-(det.Col-leftPupil.Col)),
+								float64(rows/2-(det.Row-leftPupil.Row)),
+								float64(leftPupil.Scale),
+								color.RGBA{R: 255, G: 0, B: 0, A: 255},
+								true,
+							)
+						}
+
+						rightPupil := detectRightPupil(det)
+						if rightPupil.Row > 0 && rightPupil.Col > 0 {
+							fmt.Println("right pupil detected")
+						}
 					}
 				}
 			}
@@ -112,8 +151,7 @@ func run(w *app.Window) error {
 				layout.Stacked(func(gtx layout.Context) layout.Dimensions {
 					imageWidget := widget.Image{
 						Src:      src,
-						Scale:    1 / float32(unit.Dp(1)),
-						Fit:      widget.Contain,
+						Fit:      widget.Cover,
 						Position: layout.Center,
 					}
 
@@ -140,6 +178,7 @@ func run(w *app.Window) error {
 
 			// Pass the drawing operations to the GPU.
 			e.Frame(gtx.Ops)
+
 			// Redraw the window immediately.
 			gtx.Execute(op.InvalidateCmd{})
 		}
@@ -150,27 +189,61 @@ func detectFace(frame *image.YCbCr) []pigo.Detection {
 	bounds := frame.Bounds()
 	width, height := bounds.Dx(), bounds.Dy()
 
+	imgParams = &pigo.ImageParams{
+		Pixels: frame.Y, // Y in YCbCr should be enough to detect faces
+		Rows:   height,
+		Cols:   width,
+		Dim:    width,
+	}
+
 	cascadeParams := pigo.CascadeParams{
 		MinSize:     100,
 		MaxSize:     min(width, height),
 		ShiftFactor: 0.15,
 		ScaleFactor: 1.1,
-		ImageParams: pigo.ImageParams{
-			Pixels: frame.Y, // Y in YCbCr should be enough to detect faces
-			Rows:   height,
-			Cols:   width,
-			Dim:    width,
-		},
+		ImageParams: *imgParams,
 	}
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
-	dets := classifier.RunCascade(cascadeParams, 0.0)
+	dets := faceClassifier.RunClassifier(cascadeParams, 0.0)
 
 	// Calculate the intersection over union (IoU) of two clusters.
-	dets = classifier.ClusterDetections(dets, 0)
+	dets = faceClassifier.ClusterDetections(dets, 0.1)
 
 	return dets
+}
+
+func detectLeftPupil(face pigo.Detection) *pigo.Puploc {
+	puploc := &pigo.Puploc{
+		Row:      face.Row - int(0.075*float32(face.Scale)),
+		Col:      face.Col - int(0.175*float32(face.Scale)),
+		Scale:    float32(face.Scale) * 0.25,
+		Perturbs: perturbation,
+	}
+
+	det := puplocCascade.RunClassifier(puploc, *imgParams, 0.0, false)
+	if det.Row > 0 && det.Col > 0 {
+		return det
+	}
+
+	return nil
+}
+
+func detectRightPupil(face pigo.Detection) *pigo.Puploc {
+	puploc := &pigo.Puploc{
+		Row:      face.Row - int(0.075*float32(face.Scale)),
+		Col:      face.Col + int(0.185*float32(face.Scale)),
+		Scale:    float32(face.Scale) * 0.25,
+		Perturbs: perturbation,
+	}
+
+	rightPupil := puplocCascade.RunClassifier(puploc, *imgParams, 0.0, false)
+	if rightPupil.Row > 0 && rightPupil.Col > 0 {
+		return rightPupil
+	}
+
+	return nil
 }
 
 func drawRectangle(img *image.YCbCr, rect image.Rectangle, c color.Color) {
@@ -200,4 +273,18 @@ func setIfInside(img *image.YCbCr, x int, y int, c color.Color) {
 	offset := img.COffset(x, y)
 	img.Cb[offset] = cb
 	img.Cr[offset] = cr
+}
+
+// drawEyeDetectionMarker is a helper function to draw the detection marks
+func drawEyeDetectionMarker(ctx *gg.Context, x, y, r float64, c color.RGBA, markDet bool) {
+	ctx.DrawArc(x, y, r*0.15, 0, 2*math.Pi)
+	ctx.SetFillStyle(gg.NewSolidPattern(c))
+	ctx.Fill()
+
+	if markDet {
+		ctx.DrawRectangle(x-(r*1.5), y-(r*1.5), r*3, r*3)
+		ctx.SetLineWidth(2.0)
+		ctx.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 255, B: 0, A: 255}))
+		ctx.Stroke()
+	}
 }

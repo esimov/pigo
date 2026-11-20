@@ -109,11 +109,11 @@ cParams := pigo.CascadeParams{
 // the tree depth, the threshold and the prediction from tree's leaf nodes.
 classifier := pigo.Unpack()
 
-angle := 0.0 // cascade rotation angle. 0.0 is 0 radians and 1.0 is 2*pi radians
+faceAngle := 0.0 // cascade rotation angle. 0.0 is 0 radians and 1.0 is 2*pi radians
 
 // Run the classifier over the obtained leaf nodes and return the detection results.
 // The result contains quadruplets representing the row, column, scale and detection score.
-dets := classifier.RunCascade(cParams, angle)
+dets := classifier.RunCascade(cParams, faceAngle)
 
 // Calculate the intersection over union (IoU) of two clusters.
 dets = classifier.ClusterDetections(dets, 0.2)

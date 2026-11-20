@@ -56,10 +56,8 @@ func main() {
 	go func() {
 		w := new(app.Window)
 		w.Option(
-			app.Title("Face detection demo"),
+			app.Title("PIGO - face detection"),
 			app.Size(unit.Dp(windowWidth), unit.Dp(windowHeight)),
-			app.MinSize(unit.Dp(windowWidth), unit.Dp(windowHeight)),
-			app.MaxSize(unit.Dp(windowWidth), unit.Dp(windowHeight)),
 		)
 
 		// Center window to the middle of the screen
@@ -88,7 +86,7 @@ func run(w *app.Window) error {
 
 			frame, release, err := videoReader.Read()
 			if err != nil {
-				return fmt.Errorf("error encountered reading the frame: %w", err)
+				return fmt.Errorf("error encountered reading video frame: %w", err)
 			}
 
 			if img, ok := frame.(*image.YCbCr); ok {
@@ -139,6 +137,7 @@ func run(w *app.Window) error {
 
 			// Pass the drawing operations to the GPU.
 			e.Frame(gtx.Ops)
+
 			// Redraw the window immediately.
 			gtx.Execute(op.InvalidateCmd{})
 		}
@@ -164,10 +163,10 @@ func detectFace(frame *image.YCbCr) []pigo.Detection {
 
 	// Run the classifier over the obtained leaf nodes and return the detection results.
 	// The result contains quadruplets representing the row, column, scale and detection score.
-	dets := classifier.RunCascade(cascadeParams, 0.0)
+	dets := classifier.RunClassifier(cascadeParams, 0.0)
 
 	// Calculate the intersection over union (IoU) of two clusters.
-	dets = classifier.ClusterDetections(dets, 0)
+	dets = classifier.ClusterDetections(dets, 0.1)
 
 	return dets
 }
