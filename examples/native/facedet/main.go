@@ -56,7 +56,7 @@ func main() {
 	go func() {
 		w := new(app.Window)
 		w.Option(
-			app.Title("PIGO - face detection"),
+			app.Title("PIGO - Face detection demo"),
 			app.Size(unit.Dp(windowWidth), unit.Dp(windowHeight)),
 		)
 

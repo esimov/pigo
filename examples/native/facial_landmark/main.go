@@ -36,8 +36,16 @@ var (
 	videoReader    video.Reader
 	faceClassifier *pigo.Pigo
 	puplocCascade  *pigo.PuplocCascade
+	flpcs          map[string][]*pigo.FlpCascade
 	imgParams      *pigo.ImageParams
 	imgCtx         *gg.Context
+
+	showLandmarkDet bool = true
+)
+
+var (
+	eyeCascades   = [5]string{"lp46", "lp44", "lp42", "lp38", "lp312"}
+	mouthCascades = [4]string{"lp93", "lp84", "lp82", "lp81"}
 )
 
 func main() {
@@ -46,7 +54,12 @@ func main() {
 	faceClassifier = pigo.UnpackCascade()
 	puplocCascade, err = pigo.UnpackPlc()
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed unpacking the puploc cascade file: %w", err)
+	}
+
+	flpcs, err = pigo.ReadFlpCascadeDir()
+	if err != nil {
+		log.Fatalf("failed unpacking the facial landmark cascade files: %w", err)
 	}
 
 	mediaStream, err := mediadevices.GetUserMedia(mediadevices.MediaStreamConstraints{
@@ -70,10 +83,8 @@ func main() {
 	go func() {
 		w := new(app.Window)
 		w.Option(
-			app.Title("Face detection demo"),
+			app.Title("PIGO - Landmark points detection"),
 			app.Size(unit.Dp(windowWidth), unit.Dp(windowHeight)),
-			app.MinSize(unit.Dp(windowWidth), unit.Dp(windowHeight)),
-			app.MaxSize(unit.Dp(windowWidth), unit.Dp(windowHeight)),
 		)
 
 		// Center window to the middle of the screen
@@ -106,52 +117,107 @@ func run(w *app.Window) error {
 			}
 
 			if img, ok := frame.(*image.YCbCr); ok {
+				scaleX := float64(windowWidth) / float64(img.Bounds().Dx())
+				scaleY := float64(windowHeight) / float64(img.Bounds().Dy())
+
+				imgCtx.Push()
+				imgCtx.Scale(scaleX, scaleY)
 				imgCtx.DrawImage(frame, 0, 0)
 
-				dets := detectFace(img)
+				dets := detectFaces(img)
 				for _, det := range dets {
 					if det.Q >= confidenceLevel {
-						drawRectangle(img,
-							image.Rect(det.Col-det.Scale/2, det.Row-det.Scale/2, det.Col+det.Scale/2, det.Row+det.Scale/2),
-							color.RGBA{R: 0xff, A: 0xff})
+						drawFaceRect(imgCtx, float64(det.Col-det.Scale/2),
+							float64(det.Row-det.Scale/2),
+							float64(det.Scale),
+							float64(det.Scale),
+							color.RGBA{R: 255, G: 0, B: 0, A: 255})
 
 						leftPupil := detectLeftPupil(det)
-						rect := image.Rect(
-							det.Col-det.Scale/2,
-							det.Row-det.Scale/2,
-							det.Col+det.Scale/2,
-							det.Row+det.Scale/2,
-						)
-						rows, cols := rect.Max.X-rect.Min.X, rect.Max.Y-rect.Min.Y
 						if leftPupil.Row > 0 && leftPupil.Col > 0 {
-							fmt.Println("left pupil detected")
-							drawEyeDetectionMarker(imgCtx,
-								float64(cols/2-(det.Col-leftPupil.Col)),
-								float64(rows/2-(det.Row-leftPupil.Row)),
+							drawLandmarkPoint(imgCtx,
+								float64(leftPupil.Col),
+								float64(leftPupil.Row),
 								float64(leftPupil.Scale),
 								color.RGBA{R: 255, G: 0, B: 0, A: 255},
-								true,
 							)
 						}
 
 						rightPupil := detectRightPupil(det)
 						if rightPupil.Row > 0 && rightPupil.Col > 0 {
-							fmt.Println("right pupil detected")
+							drawLandmarkPoint(imgCtx,
+								float64(rightPupil.Col),
+								float64(rightPupil.Row),
+								float64(rightPupil.Scale),
+								color.RGBA{R: 255, G: 0, B: 0, A: 255},
+							)
+						}
+
+						if !showLandmarkDet {
+							continue
+						}
+
+						for _, eye := range eyeCascades {
+							for _, flpc := range flpcs[eye] {
+								flp := flpc.LandmarkPoint(leftPupil, rightPupil, *imgParams, perturbation, false)
+								if flp.Row > 0 && flp.Col > 0 {
+									drawLandmarkPoint(imgCtx,
+										float64(flp.Col),
+										float64(flp.Row),
+										float64(flp.Scale*0.5),
+										color.RGBA{R: 0, G: 255, B: 0, A: 255},
+									)
+								}
+
+								flp = flpc.LandmarkPoint(leftPupil, rightPupil, *imgParams, perturbation, true)
+								if flp.Row > 0 && flp.Col > 0 {
+									drawLandmarkPoint(imgCtx,
+										float64(flp.Col),
+										float64(flp.Row),
+										float64(flp.Scale*0.5),
+										color.RGBA{R: 0, G: 255, B: 0, A: 255},
+									)
+								}
+							}
+						}
+
+						for _, mouth := range mouthCascades {
+							for _, flpc := range flpcs[mouth] {
+								flp := flpc.LandmarkPoint(leftPupil, rightPupil, *imgParams, perturbation, false)
+								if flp.Row > 0 && flp.Col > 0 {
+									drawLandmarkPoint(imgCtx,
+										float64(flp.Col),
+										float64(flp.Row),
+										float64(flp.Scale*0.5),
+										color.RGBA{R: 0, G: 255, B: 0, A: 255},
+									)
+								}
+							}
+						}
+						flp := flpcs["lp84"][0].LandmarkPoint(leftPupil, rightPupil, *imgParams, perturbation, true)
+						if flp.Row > 0 && flp.Col > 0 {
+							drawLandmarkPoint(imgCtx,
+								float64(flp.Col),
+								float64(flp.Row),
+								float64(flp.Scale*0.5),
+								color.RGBA{R: 0, G: 255, B: 0, A: 255},
+							)
 						}
 					}
 				}
+				imgCtx.Pop()
 			}
 
 			release()
 
-			src := paint.NewImageOp(frame)
+			src := paint.NewImageOp(imgCtx.Image())
 			src.Add(gtx.Ops)
 
 			layout.Stack{}.Layout(gtx,
 				layout.Stacked(func(gtx layout.Context) layout.Dimensions {
 					imageWidget := widget.Image{
 						Src:      src,
-						Fit:      widget.Cover,
+						Fit:      widget.Fill,
 						Position: layout.Center,
 					}
 
@@ -160,18 +226,24 @@ func run(w *app.Window) error {
 			)
 
 			for {
-				event, ok := gtx.Event(key.Filter{
-					Name: key.NameEscape,
-				})
+				event, ok := gtx.Event(
+					key.Filter{Name: key.NameEscape},
+					key.Filter{Name: key.Name("S")},
+				)
 				if !ok {
 					break
 				}
+
 				switch event := event.(type) {
 				case key.Event:
-					switch event.Name {
-					case key.NameEscape:
-						w.Perform(system.ActionClose)
-						return nil
+					if event.State == key.Press {
+						switch event.Name {
+						case key.NameEscape:
+							w.Perform(system.ActionClose)
+							return nil
+						case key.Name("S"):
+							showLandmarkDet = !showLandmarkDet
+						}
 					}
 				}
 			}
@@ -185,7 +257,7 @@ func run(w *app.Window) error {
 	}
 }
 
-func detectFace(frame *image.YCbCr) []pigo.Detection {
+func detectFaces(frame *image.YCbCr) []pigo.Detection {
 	bounds := frame.Bounds()
 	width, height := bounds.Dx(), bounds.Dy()
 
@@ -246,45 +318,15 @@ func detectRightPupil(face pigo.Detection) *pigo.Puploc {
 	return nil
 }
 
-func drawRectangle(img *image.YCbCr, rect image.Rectangle, c color.Color) {
-	for x := rect.Min.X; x < rect.Max.X; x++ {
-		setIfInside(img, x, rect.Min.Y, c)
-		setIfInside(img, x, rect.Max.Y-1, c)
-	}
-
-	for y := rect.Min.Y; y < rect.Max.Y; y++ {
-		setIfInside(img, rect.Min.X, y, c)
-		setIfInside(img, rect.Max.X-1, y, c)
-	}
+func drawFaceRect(ctx *gg.Context, x, y, w, h float64, c color.RGBA) {
+	ctx.DrawRectangle(x, y, w, h)
+	ctx.SetLineWidth(2.0)
+	ctx.SetStrokeStyle(gg.NewSolidPattern(c))
+	ctx.Stroke()
 }
 
-func setIfInside(img *image.YCbCr, x int, y int, c color.Color) {
-	point := image.Pt(x, y)
-
-	if !point.In(img.Bounds()) {
-		return
-	}
-
-	r, g, b, _ := c.RGBA()
-	yy, cb, cr := color.RGBToYCbCr(uint8(r>>8), uint8(g>>8), uint8(b>>8))
-
-	img.Y[img.YOffset(x, y)] = yy
-
-	offset := img.COffset(x, y)
-	img.Cb[offset] = cb
-	img.Cr[offset] = cr
-}
-
-// drawEyeDetectionMarker is a helper function to draw the detection marks
-func drawEyeDetectionMarker(ctx *gg.Context, x, y, r float64, c color.RGBA, markDet bool) {
-	ctx.DrawArc(x, y, r*0.15, 0, 2*math.Pi)
+func drawLandmarkPoint(ctx *gg.Context, x, y, w float64, c color.RGBA) {
+	ctx.DrawArc(x, y, w*0.15, 0, 2*math.Pi)
 	ctx.SetFillStyle(gg.NewSolidPattern(c))
 	ctx.Fill()
-
-	if markDet {
-		ctx.DrawRectangle(x-(r*1.5), y-(r*1.5), r*3, r*3)
-		ctx.SetLineWidth(2.0)
-		ctx.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 255, B: 0, A: 255}))
-		ctx.Stroke()
-	}
 }
