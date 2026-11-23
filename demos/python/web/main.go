@@ -105,7 +105,7 @@ func webcam(w http.ResponseWriter, r *http.Request) {
 
 		cols, rows := src.Bounds().Max.X, src.Bounds().Max.Y
 
-		cParams := pigo.CascadeParams{
+		cParams := &pigo.CascadeParams{
 			MinSize:     *minSize,
 			MaxSize:     *maxSize,
 			ShiftFactor: *shiftFactor,

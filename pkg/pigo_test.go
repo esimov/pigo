@@ -12,11 +12,10 @@ import (
 )
 
 var (
-	p        *pigo.Pigo
-	err      error
-	faceCasc []byte
-	pixs     []uint8
-	srcImg   *image.NRGBA
+	classifier *pigo.Pigo
+	err        error
+	pixs       []uint8
+	srcImg     *image.NRGBA
 )
 
 func init() {
@@ -46,9 +45,9 @@ func init() {
 }
 
 func TestPigo_UnpackCascadeFileShouldNotBeNil(t *testing.T) {
-	p = pigo.UnpackCascade()
+	classifier = pigo.UnpackCascade()
 
-	assert.NotNil(t, p)
+	assert.NotNil(t, classifier)
 }
 
 func TestPigo_InputImageShouldBeGrayscale(t *testing.T) {
@@ -58,16 +57,16 @@ func TestPigo_InputImageShouldBeGrayscale(t *testing.T) {
 }
 
 func TestPigo_Detector_ShouldDetectFace(t *testing.T) {
-	p = pigo.UnpackCascade()
+	classifier = pigo.UnpackCascade()
 
-	dets := p.RunClassifier(*cParams, 0.0)
-	dets = p.ClusterDetections(dets, 0.1)
+	dets := classifier.RunClassifier(cParams, 0.0)
+	dets = classifier.ClusterDetections(dets, 0.1)
 
 	assert.NotEmpty(t, dets)
 }
 
 func BenchmarkPigoUnpackCascade(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		// Unpack the facefinder binary cascade file.
 		_ = pigo.UnpackCascade()
 	}
@@ -76,7 +75,7 @@ func BenchmarkPigoUnpackCascade(b *testing.B) {
 func BenchmarkPigoFaceDetection(b *testing.B) {
 	var dets []pigo.Detection
 
-	p = pigo.UnpackCascade()
+	classifier = pigo.UnpackCascade()
 
 	pixs := pigo.RgbToGrayscale(srcImg)
 	cParams.Pixels = pixs
@@ -84,12 +83,12 @@ func BenchmarkPigoFaceDetection(b *testing.B) {
 	runtime.GC()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		// Run the classifier over the obtained leaf nodes and return the detection results.
 		// The result contains quadruplets representing the row, column, scale and detection score.
-		dets = p.RunClassifier(*cParams, 0.0)
+		dets = classifier.RunClassifier(cParams, 0.0)
 		// Calculate the intersection over union (IoU) of two clusters.
-		dets = p.ClusterDetections(dets, 0.1)
+		dets = classifier.ClusterDetections(dets, 0.1)
 	}
 	_ = dets
 }
@@ -97,7 +96,7 @@ func BenchmarkPigoFaceDetection(b *testing.B) {
 func BenchmarkPigoClusterDetection(b *testing.B) {
 	var dets []pigo.Detection
 
-	p = pigo.UnpackCascade()
+	classifier = pigo.UnpackCascade()
 
 	pixs := pigo.RgbToGrayscale(srcImg)
 	cParams.Pixels = pixs
@@ -105,10 +104,10 @@ func BenchmarkPigoClusterDetection(b *testing.B) {
 	runtime.GC()
 	b.ResetTimer()
 
-	dets = p.RunClassifier(*cParams, 0.0)
+	dets = classifier.RunClassifier(cParams, 0.0)
 
-	for i := 0; i < b.N; i++ {
-		dets = p.ClusterDetections(dets, 0.1)
+	for b.Loop() {
+		dets = classifier.ClusterDetections(dets, 0.1)
 	}
 	_ = dets
 }

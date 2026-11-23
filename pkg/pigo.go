@@ -215,7 +215,7 @@ var detpool = sync.Pool{
 // classification function over the detection window.
 // It will return a slice containing the detection row, column, it's center
 // and the detection score (in case this is greater than 0.0).
-func (p *Pigo) RunClassifier(cp CascadeParams, faceAngle float64) []Detection {
+func (p *Pigo) RunClassifier(cp *CascadeParams, faceAngle float64) []Detection {
 	var (
 		detections []Detection
 		pixels     = cp.Pixels

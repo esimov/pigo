@@ -26,11 +26,6 @@ import (
 const (
 	windowWidth  = 1024
 	windowHeight = 640
-
-	confidenceLevel = 3.0
-	perturbation    = 63
-
-	smoothing = 0.2
 )
 
 var (
@@ -38,29 +33,18 @@ var (
 	media video.Reader
 )
 
-var (
-	eyeCascades   = [5]string{"lp46", "lp44", "lp42", "lp38", "lp312"}
-	mouthCascades = [4]string{"lp93", "lp84", "lp82", "lp81"}
-)
-
-type faceTracker struct {
-	x, y, scale float64
-	missed      int
-	detected    bool
-}
-
 func main() {
 	var err error
 
 	faceClassifier := pigo.UnpackCascade()
 	puplocCascade, err := pigo.UnpackPlc()
 	if err != nil {
-		log.Fatalf("failed to unpack the puploc cascade file: %w", err)
+		log.Fatalf("failed to unpack the puploc cascade file: %v", err)
 	}
 
 	flpcs, err := pigo.ReadFlpCascadeDir()
 	if err != nil {
-		log.Fatalf("failed to unpack the facial landmark cascade files: %w", err)
+		log.Fatalf("failed to unpack the facial landmark cascade files: %v", err)
 	}
 
 	mediaStream, err := mediadevices.GetUserMedia(mediadevices.MediaStreamConstraints{
@@ -70,13 +54,13 @@ func main() {
 		},
 	})
 	if err != nil {
-		log.Fatalf("failed to detect user media: %w", err)
+		log.Fatalf("failed to detect user media: %v", err)
 	}
 
 	imgCtx := gg.NewContext(windowWidth, windowHeight)
 	c, err = demo.NewConstructor(imgCtx, faceClassifier, puplocCascade, flpcs, demo.WithLandmarkDetection())
 	if err != nil {
-		log.Fatalf("failed to instantiate constructor: %w", err)
+		log.Fatalf("failed to instantiate constructor: %v", err)
 	}
 
 	// since we're trying to access the raw data, we need to cast Track to its real type, *mediadevices.VideoTrack

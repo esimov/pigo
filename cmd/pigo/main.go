@@ -284,7 +284,7 @@ func (fd *faceDetector) detectFaces(source string) ([]pigo.Detection, error) {
 		Dim:    cols,
 	}
 
-	cParams := pigo.CascadeParams{
+	cParams := &pigo.CascadeParams{
 		MinSize:     det.minSize,
 		MaxSize:     det.maxSize,
 		ShiftFactor: det.shiftFactor,

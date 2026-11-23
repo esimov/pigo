@@ -97,7 +97,7 @@ func (c *Constructor) DetectAndDraw(frame *image.YCbCr) {
 		Dim:    width,
 	}
 
-	cascadeParams := pigo.CascadeParams{
+	cascadeParams := &pigo.CascadeParams{
 		MinSize:     100,
 		MaxSize:     min(width, height),
 		ShiftFactor: 0.15,

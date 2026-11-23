@@ -43,13 +43,13 @@ func main() {
 		},
 	})
 	if err != nil {
-		log.Fatalf("failed to detect user media: %w", err)
+		log.Fatalf("failed to detect user media: %v", err)
 	}
 
 	imgCtx := gg.NewContext(windowWidth, windowHeight)
 	c, err = demo.NewConstructor(imgCtx, classifier, nil, nil)
 	if err != nil {
-		log.Fatalf("failed to instantiate constructor: %w", err)
+		log.Fatalf("failed to instantiate constructor: %v", err)
 	}
 
 	// since we're trying to access the raw data, we need to cast Track to its real type, *mediadevices.VideoTrack
