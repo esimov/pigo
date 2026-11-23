@@ -46,14 +46,10 @@ type Pigo struct {
 	treeNum       uint32
 }
 
-// NewPigo initializes the Pigo constructor method.
-func NewPigo() *Pigo {
-	return &Pigo{}
-}
-
-// Unpack the embedded binary file. This will return the number of cascade trees,
-// the tree depth, the threshold and the prediction from tree's leaf nodes.
-func (p *Pigo) Unpack() *Pigo {
+// UnpackCascade unpack the embedded facefinder binary file.
+// This will return the number of cascade trees, the tree depth,
+// the threshold and the prediction from tree's leaf nodes.
+func UnpackCascade() *Pigo {
 	var (
 		treeDepth     uint32
 		treeNum       uint32
@@ -215,11 +211,11 @@ var detpool = sync.Pool{
 	},
 }
 
-// RunCascade analyze the grayscale converted image pixel data and run the
+// RunClassifier analyze the grayscale converted image pixel data and run the
 // classification function over the detection window.
 // It will return a slice containing the detection row, column, it's center
 // and the detection score (in case this is greater than 0.0).
-func (p *Pigo) RunCascade(cp CascadeParams, angle float64) []Detection {
+func (p *Pigo) RunClassifier(cp *CascadeParams, faceAngle float64) []Detection {
 	var (
 		detections []Detection
 		pixels     = cp.Pixels
@@ -239,11 +235,11 @@ func (p *Pigo) RunCascade(cp CascadeParams, angle float64) []Detection {
 
 		for row := offset; row <= cp.Rows-offset; row += step {
 			for col := offset; col <= cp.Cols-offset; col += step {
-				if angle > 0.0 {
-					if angle > 1.0 {
-						angle = 1.0
+				if faceAngle > 0.0 {
+					if faceAngle > 1.0 {
+						faceAngle = 1.0
 					}
-					q = p.classifyRotatedRegion(row, col, scale, treeDepth, angle, cp.Rows, cp.Cols, pixels, cp.Dim)
+					q = p.classifyRotatedRegion(row, col, scale, treeDepth, faceAngle, cp.Rows, cp.Cols, pixels, cp.Dim)
 				} else {
 					q = p.classifyRegion(row, col, scale, treeDepth, pixels, cp.Dim)
 				}
@@ -299,6 +295,7 @@ func (p *Pigo) ClusterDetections(detections []Detection, iouThreshold float64) [
 				r, c, s, n int
 				q          float32
 			)
+
 			for j := 0; j < len(detections); j++ {
 				// Check if the comparison result is above a certain threshold.
 				// In this case union the detections.
@@ -311,6 +308,7 @@ func (p *Pigo) ClusterDetections(detections []Detection, iouThreshold float64) [
 					n++
 				}
 			}
+
 			if n > 0 {
 				clusters = append(clusters, Detection{r / n, c / n, s / n, q})
 			}

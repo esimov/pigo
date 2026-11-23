@@ -29,7 +29,7 @@ var flplocPool = sync.Pool{
 }
 
 // LandmarkPoint calculates the facial landmark point position based on the eyes localization results.
-func (plc *PuplocCascade) LandmarkPoint(leftEye, rightEye *Puploc, img ImageParams, perturb int, flipV bool) *Puploc {
+func (plc *PuplocCascade) LandmarkPoint(leftEye, rightEye *Puploc, img *ImageParams, perturb int, flipV bool) *Puploc {
 	dx := (leftEye.Row - rightEye.Row) * (leftEye.Row - rightEye.Row)
 	dy := (leftEye.Col - rightEye.Col) * (leftEye.Col - rightEye.Col)
 
@@ -48,14 +48,15 @@ func (plc *PuplocCascade) LandmarkPoint(leftEye, rightEye *Puploc, img ImagePara
 	flploc.Perturbs = perturb
 
 	if flipV {
-		return plc.RunDetector(flploc, img, 0.0, true)
+		return plc.RunClassifier(flploc, img, 0.0, true)
 	}
 
-	return plc.RunDetector(flploc, img, 0.0, false)
+	return plc.RunClassifier(flploc, img, 0.0, false)
 }
 
-// ReadCascadeDir reads the directory where the embedded facial landmark points cascade files are stored.
-func (plc *PuplocCascade) ReadCascadeDir() (map[string][]*FlpCascade, error) {
+// ReadFlpCascadeDir reads the directory of the embedded
+// facial landmark points cascade files and extracts their content.
+func ReadFlpCascadeDir() (map[string][]*FlpCascade, error) {
 	cascadeFiles, err := fs.ReadDir(lpsDir)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read the embedded files directory: %w", err)
@@ -69,7 +70,7 @@ func (plc *PuplocCascade) ReadCascadeDir() (map[string][]*FlpCascade, error) {
 			return nil, fmt.Errorf("cannot read the cascade file: %w", err)
 		}
 
-		flpc := plc.Unpack(data)
+		flpc := unpack(data)
 		flpcs[f.Name()] = append(flpcs[f.Name()], &FlpCascade{flpc})
 	}
 
