@@ -12,6 +12,8 @@ import (
 	"unsafe"
 )
 
+const maxPerturbation = 100
+
 //go:embed cascade/puploc
 var plcFs embed.FS
 
@@ -250,21 +252,26 @@ type puplocPool struct {
 var plcPool = sync.Pool{
 	New: func() any {
 		return &puplocPool{
-			rows:  make([]float32, 63),
-			cols:  make([]float32, 63),
-			scale: make([]float32, 63),
+			rows:  make([]float32, maxPerturbation),
+			cols:  make([]float32, maxPerturbation),
+			scale: make([]float32, maxPerturbation),
 		}
 	},
 }
 
 // RunClassifier runs the pupil localization function.
-func (plc *PuplocCascade) RunClassifier(pl *Puploc, img ImageParams, faceAngle float64, flipV bool) *Puploc {
+func (plc *PuplocCascade) RunClassifier(pl *Puploc, img *ImageParams, faceAngle float64, flipV bool) *Puploc {
 	var res []float32
 
 	det := plcPool.Get().(*puplocPool)
 	defer plcPool.Put(det)
 
 	treeDepth := int(pow(2, int(plc.treeDepth)))
+
+	// Cap perturbation value to maxPerturbation.
+	if pl.Perturbs > maxPerturbation {
+		pl.Perturbs = maxPerturbation
+	}
 
 	for i := 0; i < pl.Perturbs; i++ {
 		row := float32(pl.Row) + float32(pl.Scale)*0.15*(0.5-rand.Float32())

@@ -49,7 +49,7 @@ func TestPuploc_Detector_ShouldDetectEyes(t *testing.T) {
 				Scale:    float32(det.Scale) * 0.25,
 				Perturbs: 50,
 			}
-			plc.RunClassifier(puploc, *imgParams, 0.0, false)
+			plc.RunClassifier(puploc, imgParams, 0.0, false)
 
 			// right eye
 			puploc = &pigo.Puploc{
@@ -58,7 +58,7 @@ func TestPuploc_Detector_ShouldDetectEyes(t *testing.T) {
 				Scale:    float32(det.Scale) * 0.25,
 				Perturbs: 50,
 			}
-			plc.RunClassifier(puploc, *imgParams, 0.0, false)
+			plc.RunClassifier(puploc, imgParams, 0.0, false)
 			eyes = append(eyes, *puploc)
 		}
 	}
@@ -86,7 +86,7 @@ func BenchmarkPuploc_DetectorRun(b *testing.B) {
 	puploc := &pigo.Puploc{Row: 10, Col: 10, Scale: 20, Perturbs: 50}
 
 	for b.Loop() {
-		plc.RunClassifier(puploc, *imgParams, 0.0, false)
+		plc.RunClassifier(puploc, imgParams, 0.0, false)
 	}
 }
 
@@ -113,7 +113,7 @@ func BenchmarkPuploc_Detection(b *testing.B) {
 					Scale:    float32(det.Scale) * 0.25,
 					Perturbs: 50,
 				}
-				plc.RunClassifier(puploc, *imgParams, 0.0, false)
+				plc.RunClassifier(puploc, imgParams, 0.0, false)
 
 				// right eye
 				puploc = &pigo.Puploc{
@@ -122,7 +122,7 @@ func BenchmarkPuploc_Detection(b *testing.B) {
 					Scale:    float32(det.Scale) * 0.25,
 					Perturbs: 50,
 				}
-				plc.RunClassifier(puploc, *imgParams, 0.0, false)
+				plc.RunClassifier(puploc, imgParams, 0.0, false)
 			}
 		}
 	}

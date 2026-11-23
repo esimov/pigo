@@ -37,7 +37,7 @@ func FindFaces(pixels []uint8) uintptr {
 			Scale:    float32(results[i].Scale) * 0.4,
 			Perturbs: 50,
 		}
-		det := puplocClassifier.RunClassifier(puploc, *imageParams, 0.0, false)
+		det := puplocClassifier.RunClassifier(puploc, imageParams, 0.0, false)
 		if det.Row > 0 && det.Col > 0 {
 			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q), 0)
 		}
@@ -50,7 +50,7 @@ func FindFaces(pixels []uint8) uintptr {
 			Perturbs: 50,
 		}
 
-		det = puplocClassifier.RunClassifier(puploc, *imageParams, 0.0, false)
+		det = puplocClassifier.RunClassifier(puploc, imageParams, 0.0, false)
 		if det.Row > 0 && det.Col > 0 {
 			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q), 0)
 		}
@@ -91,8 +91,8 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 		Dim:    cols,
 	}
 	cParams := pigo.CascadeParams{
-		MinSize:     260,
-		MaxSize:     640,
+		MinSize:     60,
+		MaxSize:     600,
 		ShiftFactor: 0.1,
 		ScaleFactor: 1.1,
 		ImageParams: *imageParams,

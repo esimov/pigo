@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"image"
-	"image/color"
 	"log"
 	"os"
 
@@ -15,7 +14,9 @@ import (
 	"gioui.org/op/paint"
 	"gioui.org/unit"
 	"gioui.org/widget"
+	demo "github.com/esimov/pigo/demos/native"
 	pigo "github.com/esimov/pigo/pkg"
+	"github.com/fogleman/gg"
 	"github.com/pion/mediadevices"
 	_ "github.com/pion/mediadevices/pkg/driver/camera" // This is required to register camera adapter
 	"github.com/pion/mediadevices/pkg/io/video"
@@ -25,17 +26,15 @@ import (
 const (
 	windowWidth  = 1024
 	windowHeight = 640
-
-	confidenceLevel = 5.0
 )
 
 var (
-	classifier  *pigo.Pigo
-	videoReader video.Reader
+	c     *demo.Constructor
+	media video.Reader
 )
 
 func main() {
-	classifier = pigo.UnpackCascade()
+	classifier := pigo.UnpackCascade()
 
 	mediaStream, err := mediadevices.GetUserMedia(mediadevices.MediaStreamConstraints{
 		Video: func(c *mediadevices.MediaTrackConstraints) {
@@ -44,14 +43,20 @@ func main() {
 		},
 	})
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to detect user media: %w", err)
+	}
+
+	imgCtx := gg.NewContext(windowWidth, windowHeight)
+	c, err = demo.NewConstructor(imgCtx, classifier, nil, nil)
+	if err != nil {
+		log.Fatalf("failed to instantiate constructor: %w", err)
 	}
 
 	// since we're trying to access the raw data, we need to cast Track to its real type, *mediadevices.VideoTrack
 	videoTrack := mediaStream.GetVideoTracks()[0].(*mediadevices.VideoTrack)
 	defer videoTrack.Close()
 
-	videoReader = videoTrack.NewReader(false)
+	media = videoTrack.NewReader(false)
 
 	go func() {
 		w := new(app.Window)
@@ -84,33 +89,33 @@ func run(w *app.Window) error {
 			// This graphics context is used for managing the rendering state.
 			gtx := app.NewContext(&ops, e)
 
-			frame, release, err := videoReader.Read()
+			frame, release, err := media.Read()
 			if err != nil {
 				return fmt.Errorf("error encountered reading video frame: %w", err)
 			}
 
 			if img, ok := frame.(*image.YCbCr); ok {
-				dets := detectFace(img)
-				for _, det := range dets {
-					if det.Q >= confidenceLevel {
-						drawRectangle(img,
-							image.Rect(det.Col-det.Scale/2, det.Row-det.Scale/2, det.Col+det.Scale/2, det.Row+det.Scale/2),
-							color.RGBA{R: 0xff, A: 0xff})
+				scaleX := float64(windowWidth) / float64(img.Bounds().Dx())
+				scaleY := float64(windowHeight) / float64(img.Bounds().Dy())
 
-					}
-				}
+				c.ImgCtx.Push()
+				c.ImgCtx.Scale(scaleX, scaleY)
+				c.ImgCtx.DrawImage(frame, 0, 0)
+
+				c.DetectAndDraw(img)
+
+				c.ImgCtx.Pop()
 			}
-
 			release()
 
-			src := paint.NewImageOp(frame)
+			src := paint.NewImageOp(c.ImgCtx.Image())
 			src.Add(gtx.Ops)
 
 			layout.Stack{}.Layout(gtx,
 				layout.Stacked(func(gtx layout.Context) layout.Dimensions {
 					imageWidget := widget.Image{
 						Src:      src,
-						Fit:      widget.Cover,
+						Fit:      widget.Fill,
 						Position: layout.Center,
 					}
 
@@ -142,60 +147,4 @@ func run(w *app.Window) error {
 			gtx.Execute(op.InvalidateCmd{})
 		}
 	}
-}
-
-func detectFace(frame *image.YCbCr) []pigo.Detection {
-	bounds := frame.Bounds()
-	width, height := bounds.Dx(), bounds.Dy()
-
-	cascadeParams := pigo.CascadeParams{
-		MinSize:     100,
-		MaxSize:     min(width, height),
-		ShiftFactor: 0.15,
-		ScaleFactor: 1.1,
-		ImageParams: pigo.ImageParams{
-			Pixels: frame.Y, // Y in YCbCr should be enough to detect faces
-			Rows:   height,
-			Cols:   width,
-			Dim:    width,
-		},
-	}
-
-	// Run the classifier over the obtained leaf nodes and return the detection results.
-	// The result contains quadruplets representing the row, column, scale and detection score.
-	dets := classifier.RunClassifier(cascadeParams, 0.0)
-
-	// Calculate the intersection over union (IoU) of two clusters.
-	dets = classifier.ClusterDetections(dets, 0.1)
-
-	return dets
-}
-
-func drawRectangle(img *image.YCbCr, rect image.Rectangle, c color.Color) {
-	for x := rect.Min.X; x < rect.Max.X; x++ {
-		setIfInside(img, x, rect.Min.Y, c)
-		setIfInside(img, x, rect.Max.Y-1, c)
-	}
-
-	for y := rect.Min.Y; y < rect.Max.Y; y++ {
-		setIfInside(img, rect.Min.X, y, c)
-		setIfInside(img, rect.Max.X-1, y, c)
-	}
-}
-
-func setIfInside(img *image.YCbCr, x int, y int, c color.Color) {
-	point := image.Pt(x, y)
-
-	if !point.In(img.Bounds()) {
-		return
-	}
-
-	r, g, b, _ := c.RGBA()
-	yy, cb, cr := color.RGBToYCbCr(uint8(r>>8), uint8(g>>8), uint8(b>>8))
-
-	img.Y[img.YOffset(x, y)] = yy
-
-	offset := img.COffset(x, y)
-	img.Cb[offset] = cb
-	img.Cr[offset] = cr
 }

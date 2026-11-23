@@ -4,16 +4,11 @@ import "C"
 
 import (
 	"log"
-	"math"
 	"runtime"
 	"unsafe"
 
 	pigo "github.com/esimov/pigo/pkg"
 )
-
-type point struct {
-	x, y int
-}
 
 var (
 	cascade          []byte
@@ -34,6 +29,7 @@ func FindFaces(pixels []uint8) uintptr {
 	dets := make([][]int, len(results))
 
 	for i := 0; i < len(results); i++ {
+		dets[i] = append(dets[i], results[i].Row, results[i].Col, results[i].Scale, int(results[i].Q), 1)
 		// left eye
 		puploc := &pigo.Puploc{
 			Row:      results[i].Row - int(0.085*float32(results[i].Scale)),
@@ -41,11 +37,10 @@ func FindFaces(pixels []uint8) uintptr {
 			Scale:    float32(results[i].Scale) * 0.4,
 			Perturbs: 50,
 		}
-		det := puplocClassifier.RunClassifier(puploc, *imageParams, 0.0, false)
+		det := puplocClassifier.RunClassifier(puploc, imageParams, 0.0, false)
 		if det.Row > 0 && det.Col > 0 {
 			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q), 0)
 		}
-		p1 := &point{x: det.Row, y: det.Col}
 
 		// right eye
 		puploc = &pigo.Puploc{
@@ -55,16 +50,10 @@ func FindFaces(pixels []uint8) uintptr {
 			Perturbs: 50,
 		}
 
-		det = puplocClassifier.RunClassifier(puploc, *imageParams, 0.0, false)
+		det = puplocClassifier.RunClassifier(puploc, imageParams, 0.0, false)
 		if det.Row > 0 && det.Col > 0 {
 			dets[i] = append(dets[i], det.Row, det.Col, int(det.Scale), int(results[i].Q), 0)
 		}
-		p2 := &point{x: det.Row, y: det.Col}
-
-		// Calculate the lean angle between the pupils.
-		angle := math.Atan2(float64(p2.y-p1.y), float64(p2.x-p1.x)) * 180 / math.Pi
-		// face
-		dets[i] = append(dets[i], results[i].Row, results[i].Col, results[i].Scale, int(results[i].Q), int(angle))
 	}
 
 	coords := make([]int, 0, len(dets))
@@ -102,8 +91,8 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 		Dim:    cols,
 	}
 	cParams := pigo.CascadeParams{
-		MinSize:     200,
-		MaxSize:     600,
+		MinSize:     260,
+		MaxSize:     640,
 		ShiftFactor: 0.1,
 		ScaleFactor: 1.1,
 		ImageParams: *imageParams,

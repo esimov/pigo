@@ -382,7 +382,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 					Scale:    float32(face.Scale) * 0.25,
 					Perturbs: perturbation,
 				}
-				leftEye := plc.RunClassifier(puploc, *imgParams, det.faceAngle, false)
+				leftEye := plc.RunClassifier(puploc, imgParams, det.faceAngle, false)
 				if leftEye.Row > 0 && leftEye.Col > 0 {
 					if det.faceAngle > 0 {
 						drawEyeDetectionMarker(ctx,
@@ -421,7 +421,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 					Perturbs: perturbation,
 				}
 
-				rightEye := plc.RunClassifier(puploc, *imgParams, det.faceAngle, false)
+				rightEye := plc.RunClassifier(puploc, imgParams, det.faceAngle, false)
 				if rightEye.Row > 0 && rightEye.Col > 0 {
 					if det.faceAngle > 0 {
 						drawEyeDetectionMarker(ctx,
@@ -456,7 +456,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 				if det.flploc {
 					for _, eye := range eyeCascades {
 						for _, flpc := range flpcs[eye] {
-							flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturbation, false)
+							flp := flpc.LandmarkPoint(leftEye, rightEye, imgParams, perturbation, false)
 							if flp.Row > 0 && flp.Col > 0 {
 								drawEyeDetectionMarker(dc,
 									float64(flp.Col),
@@ -472,7 +472,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 								})
 							}
 
-							flp = flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturbation, true)
+							flp = flpc.LandmarkPoint(leftEye, rightEye, imgParams, perturbation, true)
 							if flp.Row > 0 && flp.Col > 0 {
 								drawEyeDetectionMarker(dc,
 									float64(flp.Col),
@@ -492,7 +492,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 
 					for _, mouth := range mouthCascades {
 						for _, flpc := range flpcs[mouth] {
-							flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturbation, false)
+							flp := flpc.LandmarkPoint(leftEye, rightEye, imgParams, perturbation, false)
 							if flp.Row > 0 && flp.Col > 0 {
 								drawEyeDetectionMarker(dc,
 									float64(flp.Col),
@@ -509,7 +509,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection, marker string) ([]dete
 							}
 						}
 					}
-					flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, *imgParams, perturbation, true)
+					flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, imgParams, perturbation, true)
 					if flp.Row > 0 && flp.Col > 0 {
 						drawEyeDetectionMarker(dc,
 							float64(flp.Col),

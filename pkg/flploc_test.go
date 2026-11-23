@@ -45,7 +45,7 @@ func TestFlploc_LandmarkDetectorShouldReturnDetectionPoints(t *testing.T) {
 				Scale:    float32(det.Scale) * 0.25,
 				Perturbs: 50,
 			}
-			leftEye := plc.RunClassifier(puploc, *imgParams, 0.0, false)
+			leftEye := plc.RunClassifier(puploc, imgParams, 0.0, false)
 
 			// right eye
 			puploc = &pigo.Puploc{
@@ -54,9 +54,9 @@ func TestFlploc_LandmarkDetectorShouldReturnDetectionPoints(t *testing.T) {
 				Scale:    float32(det.Scale) * 0.25,
 				Perturbs: 50,
 			}
-			rightEye := plc.RunClassifier(puploc, *imgParams, 0.0, false)
+			rightEye := plc.RunClassifier(puploc, imgParams, 0.0, false)
 
-			flp := plc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
+			flp := plc.LandmarkPoint(leftEye, rightEye, imgParams, perturb, false)
 			landMarkPoints = append(landMarkPoints, *flp)
 		}
 	}
@@ -90,7 +90,7 @@ func TestFlploc_LandmarkDetectorShouldReturnCorrectDetectionPoints(t *testing.T)
 				Scale:    float32(det.Scale) * 0.25,
 				Perturbs: 50,
 			}
-			leftEye := plc.RunClassifier(puploc, *imgParams, 0.0, false)
+			leftEye := plc.RunClassifier(puploc, imgParams, 0.0, false)
 
 			// right eye
 			puploc = &pigo.Puploc{
@@ -99,16 +99,16 @@ func TestFlploc_LandmarkDetectorShouldReturnCorrectDetectionPoints(t *testing.T)
 				Scale:    float32(det.Scale) * 0.25,
 				Perturbs: 50,
 			}
-			rightEye := plc.RunClassifier(puploc, *imgParams, 0.0, false)
+			rightEye := plc.RunClassifier(puploc, imgParams, 0.0, false)
 
 			for _, eye := range eyeCascades {
 				for _, flpc := range flpcs[eye] {
-					flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
+					flp := flpc.LandmarkPoint(leftEye, rightEye, imgParams, perturb, false)
 					if flp.Row > 0 && flp.Col > 0 {
 						detected++
 					}
 
-					flp = flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
+					flp = flpc.LandmarkPoint(leftEye, rightEye, imgParams, perturb, true)
 					if flp.Row > 0 && flp.Col > 0 {
 						detected++
 					}
@@ -116,14 +116,14 @@ func TestFlploc_LandmarkDetectorShouldReturnCorrectDetectionPoints(t *testing.T)
 			}
 			for _, mouth := range mouthCascades {
 				for _, flpc := range flpcs[mouth] {
-					flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
+					flp := flpc.LandmarkPoint(leftEye, rightEye, imgParams, perturb, false)
 					if flp.Row > 0 && flp.Col > 0 {
 						detected++
 					}
 				}
 			}
 
-			flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
+			flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, imgParams, perturb, true)
 			if flp.Row > 0 && flp.Col > 0 {
 				detected++
 			}
@@ -151,13 +151,13 @@ func BenchmarkFlploc_LendmarkPoint(b *testing.B) {
 	flploc := &pigo.Puploc{Row: 10, Col: 10, Scale: 20, Perturbs: 50}
 
 	// For benchmarking we are using common values for left and right eye.
-	puploc := plc.RunClassifier(flploc, *imgParams, 0.0, false)
+	puploc := plc.RunClassifier(flploc, imgParams, 0.0, false)
 
 	runtime.GC()
 	b.ResetTimer()
 
 	for b.Loop() {
-		plc.LandmarkPoint(puploc, puploc, *imgParams, 63, false)
+		plc.LandmarkPoint(puploc, puploc, imgParams, 63, false)
 	}
 }
 
@@ -184,7 +184,7 @@ func BenchmarkFlploc_Detection(b *testing.B) {
 					Scale:    float32(det.Scale) * 0.25,
 					Perturbs: 50,
 				}
-				leftEye := plc.RunClassifier(puploc, *imgParams, 0.0, false)
+				leftEye := plc.RunClassifier(puploc, imgParams, 0.0, false)
 
 				// right eye
 				puploc = &pigo.Puploc{
@@ -193,9 +193,9 @@ func BenchmarkFlploc_Detection(b *testing.B) {
 					Scale:    float32(det.Scale) * 0.25,
 					Perturbs: 50,
 				}
-				rightEye := plc.RunClassifier(puploc, *imgParams, 0.0, false)
+				rightEye := plc.RunClassifier(puploc, imgParams, 0.0, false)
 
-				plc.LandmarkPoint(leftEye, rightEye, *imgParams, 63, false)
+				plc.LandmarkPoint(leftEye, rightEye, imgParams, 63, false)
 
 			}
 		}

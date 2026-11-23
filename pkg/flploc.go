@@ -29,7 +29,7 @@ var flplocPool = sync.Pool{
 }
 
 // LandmarkPoint calculates the facial landmark point position based on the eyes localization results.
-func (plc *PuplocCascade) LandmarkPoint(leftEye, rightEye *Puploc, img ImageParams, perturb int, flipV bool) *Puploc {
+func (plc *PuplocCascade) LandmarkPoint(leftEye, rightEye *Puploc, img *ImageParams, perturb int, flipV bool) *Puploc {
 	dx := (leftEye.Row - rightEye.Row) * (leftEye.Row - rightEye.Row)
 	dy := (leftEye.Col - rightEye.Col) * (leftEye.Col - rightEye.Col)
 

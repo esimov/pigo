@@ -62,7 +62,7 @@ func (d *Detector) DetectLeftPupil(results []int) *pigo.Puploc {
 		Perturbs: perturb,
 	}
 
-	leftEye := puplocCascade.RunClassifier(puploc, *imgParams, 0.0, false)
+	leftEye := puplocCascade.RunClassifier(puploc, imgParams, 0.0, false)
 	if leftEye.Row > 0 && leftEye.Col > 0 {
 		return leftEye
 	}
@@ -79,7 +79,7 @@ func (d *Detector) DetectRightPupil(results []int) *pigo.Puploc {
 		Perturbs: perturb,
 	}
 
-	rightEye := puplocCascade.RunClassifier(puploc, *imgParams, 0.0, false)
+	rightEye := puplocCascade.RunClassifier(puploc, imgParams, 0.0, false)
 	if rightEye.Row > 0 && rightEye.Col > 0 {
 		return rightEye
 	}
@@ -96,13 +96,13 @@ func (d *Detector) DetectLandmarkPoints(leftEye, rightEye *pigo.Puploc) [][]int 
 
 	for _, eye := range eyeCascades {
 		for _, flpc := range flpcs[eye] {
-			flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
+			flp := flpc.LandmarkPoint(leftEye, rightEye, imgParams, perturb, false)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
 			idx++
 
-			flp = flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
+			flp = flpc.LandmarkPoint(leftEye, rightEye, imgParams, perturb, true)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
@@ -112,7 +112,7 @@ func (d *Detector) DetectLandmarkPoints(leftEye, rightEye *pigo.Puploc) [][]int 
 
 	for _, mouth := range mouthCascade {
 		for _, flpc := range flpcs[mouth] {
-			flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
+			flp := flpc.LandmarkPoint(leftEye, rightEye, imgParams, perturb, false)
 			if flp.Row > 0 && flp.Col > 0 {
 				det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 			}
@@ -120,7 +120,7 @@ func (d *Detector) DetectLandmarkPoints(leftEye, rightEye *pigo.Puploc) [][]int 
 		}
 	}
 
-	flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
+	flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, imgParams, perturb, true)
 	if flp.Row > 0 && flp.Col > 0 {
 		det[idx] = append(det[idx], flp.Col, flp.Row, int(flp.Scale))
 	}

@@ -4,16 +4,11 @@ import "C"
 
 import (
 	"log"
-	"math"
 	"runtime"
 	"unsafe"
 
 	pigo "github.com/esimov/pigo/pkg"
 )
-
-type point struct {
-	x, y int
-}
 
 var (
 	cascade          []byte
@@ -34,17 +29,13 @@ func main() {}
 
 //export FindFaces
 func FindFaces(pixels []uint8) uintptr {
-	var talking int
 	pointCh := make(chan uintptr)
 
 	results := clusterDetection(pixels, 480, 640)
 	dets := make([][]int, len(results))
 
 	for i := 0; i < len(results); i++ {
-		// Hack: the fifth value in the slice represents the detection type: face, pupils, landmark points.
-		// The sixth value was included only to transfer the mouth aspect ratio.
-		dets[i] = append(dets[i], results[i].Row, results[i].Col, results[i].Scale, int(results[i].Q), 0, 1)
-
+		dets[i] = append(dets[i], results[i].Row, results[i].Col, results[i].Scale, int(results[i].Q), 0)
 		// left eye
 		puploc := &pigo.Puploc{
 			Row:      results[i].Row - int(0.085*float32(results[i].Scale)),
@@ -52,9 +43,9 @@ func FindFaces(pixels []uint8) uintptr {
 			Scale:    float32(results[i].Scale) * 0.4,
 			Perturbs: 63,
 		}
-		leftEye := puplocClassifier.RunClassifier(puploc, *imgParams, 0.0, false)
+		leftEye := puplocClassifier.RunClassifier(puploc, imgParams, 0.0, false)
 		if leftEye.Row > 0 && leftEye.Col > 0 {
-			dets[i] = append(dets[i], leftEye.Row, leftEye.Col, int(leftEye.Scale), int(results[i].Q), 1, 1)
+			dets[i] = append(dets[i], leftEye.Row, leftEye.Col, int(leftEye.Scale), int(results[i].Q), 1)
 		}
 
 		// right eye
@@ -65,61 +56,39 @@ func FindFaces(pixels []uint8) uintptr {
 			Perturbs: 63,
 		}
 
-		rightEye := puplocClassifier.RunClassifier(puploc, *imgParams, 0.0, false)
+		rightEye := puplocClassifier.RunClassifier(puploc, imgParams, 0.0, false)
 		if rightEye.Row > 0 && rightEye.Col > 0 {
-			dets[i] = append(dets[i], rightEye.Row, rightEye.Col, int(rightEye.Scale), int(results[i].Q), 1, 1)
+			dets[i] = append(dets[i], rightEye.Row, rightEye.Col, int(rightEye.Scale), int(results[i].Q), 1)
 		}
 
 		// Traverse all the eye cascades and run the detector on each of them.
 		for _, eye := range eyeCascades {
 			for _, flpc := range flpcs[eye] {
-				flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
+				flp := flpc.LandmarkPoint(leftEye, rightEye, imgParams, puploc.Perturbs, false)
 				if flp.Row > 0 && flp.Col > 0 {
-					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
+					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2)
 				}
 
-				flp = flpc.LandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
+				flp = flpc.LandmarkPoint(leftEye, rightEye, imgParams, puploc.Perturbs, true)
 				if flp.Row > 0 && flp.Col > 0 {
-					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
+					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2)
 				}
 			}
 		}
 
-		mouthPoints := []int{}
 		// Traverse all the mouth cascades and run the detector on each of them.
 		for _, mouth := range mouthCascade {
 			for _, flpc := range flpcs[mouth] {
-				flp := flpc.LandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, false)
+				flp := flpc.LandmarkPoint(leftEye, rightEye, imgParams, puploc.Perturbs, false)
 				if flp.Row > 0 && flp.Col > 0 {
-					mouthPoints = append(mouthPoints, flp.Row, flp.Col)
-					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
+					dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2)
 				}
 			}
 		}
-		flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, *imgParams, puploc.Perturbs, true)
+		flp := flpcs["lp84"][0].LandmarkPoint(leftEye, rightEye, imgParams, puploc.Perturbs, true)
 		if flp.Row > 0 && flp.Col > 0 {
-			mouthPoints = append(mouthPoints, flp.Row, flp.Col)
-			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2, 1)
+			dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 2)
 		}
-
-		// Calculate the distance ratio between the two horizontal and
-		// two vertical landmark points on the mouth section.
-		// If the ratio is below 1, it means that the mouth is open, otherwise it means that it's closed.
-		p1 := &point{x: mouthPoints[2], y: mouthPoints[3]}
-		p2 := &point{x: mouthPoints[len(mouthPoints)-2], y: mouthPoints[len(mouthPoints)-1]}
-		p3 := &point{x: mouthPoints[4], y: mouthPoints[5]}
-		p4 := &point{x: mouthPoints[len(mouthPoints)-4], y: mouthPoints[len(mouthPoints)-3]}
-
-		dist1 := math.Sqrt(math.Pow(float64(p2.y-p1.y), 2) + math.Pow(float64(p2.x-p1.x), 2))
-		dist2 := math.Sqrt(math.Pow(float64(p4.y-p3.y), 2) + math.Pow(float64(p4.x-p3.x), 2))
-
-		mar := (dist1 / dist2) * 0.19
-		if mar < 0.4 {
-			talking = 1
-		} else {
-			talking = 0
-		}
-		dets[i] = append(dets[i], flp.Row, flp.Col, int(flp.Scale), int(results[i].Q), 3, talking)
 	}
 
 	coords := make([]int, 0, len(dets))
@@ -132,10 +101,10 @@ func FindFaces(pixels []uint8) uintptr {
 		}
 		// Include as a first slice element the number of detected faces.
 		// We need to transfer this value in order to define the Python array buffer length.
-		coords = append([]int{len(dets), 0, 0, 0, 0, 0}, coords...)
+		coords = append([]int{len(dets), 0, 0, 0, 0}, coords...)
 
+		// Convert the slice into an array pointer.
 		s := *(*[]uint8)(unsafe.Pointer(&coords))
-		// Convert the slice into uint pointer.
 		p := uintptr(unsafe.Pointer(&s[0]))
 
 		// Ensure `det` is not freed up by GC prematurely.
@@ -157,7 +126,7 @@ func clusterDetection(pixels []uint8, rows, cols int) []pigo.Detection {
 		Dim:    cols,
 	}
 	cParams := pigo.CascadeParams{
-		MinSize:     100,
+		MinSize:     60,
 		MaxSize:     600,
 		ShiftFactor: 0.1,
 		ScaleFactor: 1.1,
