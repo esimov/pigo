@@ -30,15 +30,17 @@ The reason why this library has been developed is because all of the currently e
 ### Todo
 - [ ] Object detection and description
 
-## Real time detection
+## Real time face detection
 
 ### Native support
 **The library does not require any additional modules or third party applications to be installed**, although if you you wish to try out the real time native webcam [Go demos](https://github.com/esimov/pigo/tree/master/demos/native) you might need to install a couple of dependencies required by the [Gio](http://gioui.org/) library.
 
 Head over to this section https://gioui.org/#installation to check all the required dependencies.
 
-### Embedding into other languages/environments
-The Pigo library can be incorporated into other languages also in case a C linking is supported by that specific language. The demos from the [python](https://github.com/esimov/pigo/tree/master/demos/python) folders are proof of concepts of how Pigo can be embedded as a shared library into a Python environment.
+For accessing the webcam we are using [Pion](https://github.com/pion/mediadevices). For all the required dependencies check the project repository. For Windows and MacOS all the codecs should be available by default. On Linux based systems you might need to install additional dependencies.
+
+### Using as a shared library
+The Pigo library can be incorporated into other languages also in case a C linking is supported by the targeted language. The demos from the [python](https://github.com/esimov/pigo/tree/master/demos/python) folders are proof of concepts of how Pigo can be embedded as a shared library into a Python program.
 
 Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more details.
 
@@ -181,7 +183,7 @@ Using the `empty` string as value for the `-out` flag will skip the image genera
 
 ### Detection of in-plane rotated faces
 
-**The library can also detect in-plane rotated faces.** For this you need to use the `-angle` parameter in the command line utility application. The command below will generate the following result.
+**The library can also detect in-plane rotated faces.** For this you need to use the `-angle` parameter provided in the CLI application. The command below will generate the following result:
 
 ```bash
 $ pigo -in input.jpg -out output.jpg -angle=0.8 -iou=0.01
