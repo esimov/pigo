@@ -30,20 +30,17 @@ The reason why this library has been developed is because all of the currently e
 ### Todo
 - [ ] Object detection and description
 
-**The library does not require any additional modules or third party applications to be installed**, although if you you wish to try out the demos from the [examples](https://github.com/esimov/pigo/tree/master/examples) folder you might need to install Python and OpenCV if you haven't it already. Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more details.
+## Real time detection
 
-**The library can also detect in plane rotated faces.** For this reason a new `-angle` parameter has been included into the command line utility. The command below will generate the following result (see the table below for all the supported options).
+### Native support
+**The library does not require any additional modules or third party applications to be installed**, although if you you wish to try out the real time native webcam [Go demos](https://github.com/esimov/pigo/tree/master/demos/native) you might need to install a couple of dependencies required by the [Gio](http://gioui.org/) library.
 
-```bash
-$ pigo -in input.jpg -out output.jpg -angle=0.8 -iou=0.01
-```
+Head over to this section https://gioui.org/#installation to check all the required dependencies.
 
-| Input file | Output file
-|:--:|:--:
-| ![input](https://user-images.githubusercontent.com/883386/50761018-015db180-1272-11e9-93d9-d3693cae9d66.jpg) | ![output](https://user-images.githubusercontent.com/883386/50761024-03277500-1272-11e9-9c20-2568b87a2344.png) |
+### Embedding into other languages/environments
+The Pigo library can be incorporated into other languages also in case a C linking is supported by that specific language. The demos from the [python](https://github.com/esimov/pigo/tree/master/demos/python) folders are proof of concepts of how Pigo can be embedded as a shared library into a Python environment.
 
-
-Note: In case of in plane rotated faces the angle value should be adapted to the provided image.
+Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more details.
 
 ## Pupils / eyes localization
 Starting from **v1.2.0** Pigo supports pupils/eyes localization capabilities also. The implementation is based on [Eye pupil localization with an ensemble of randomized trees](https://www.sciencedirect.com/science/article/abs/pii/S0031320313003294).
@@ -136,7 +133,7 @@ $ pigo --help
 ┴  ┴└─┘└─┘
 
 Go (Golang) Face detection library.
-    Version: 1.5.0
+    Version: 1.5.1
 
   -angle float
         0.0 is 0 radians and 1.0 is 2*pi radians
@@ -166,7 +163,7 @@ Go (Golang) Face detection library.
         Shift detection window by percentage (default 0.15)
 ```
 
-**Notice:** The library automatically embeds the cascade files required for pupil/eyes localization and facial landmark points detection.
+**Note:** The library automatically embeds the cascade files required for pupil/eyes localization and facial landmark points detection.
 
 ### CLI command examples
 You can also use the `stdin` and `stdout` pipe commands:
@@ -182,11 +179,24 @@ $ pigo -out out.jpg < input/source.jpg
 ```
 Using the `empty` string as value for the `-out` flag will skip the image generation part. This, combined with the `-json` flag will encode the detection results into the specified json file. You can also use the pipe `-` value combined with the `-json` flag to output the detection coordinates to the standard (`stdout`) output.
 
-## Real time face detection (running as a shared object)
+### Detection of in-plane rotated faces
 
-The demos from the [examples](https://github.com/esimov/pigo/tree/master/examples) folder are meant to show how the Pigo library can be integrated into other languages, like in our case Python.
+**The library can also detect in-plane rotated faces.** For this you need to use the `-angle` parameter in the command line utility application. The command below will generate the following result.
 
-I choose Python just because it's very easy to write a simple script to access the webcam.
+```bash
+$ pigo -in input.jpg -out output.jpg -angle=0.8 -iou=0.01
+```
+
+| Input file | Output file
+|:--:|:--:
+| ![input](https://user-images.githubusercontent.com/883386/50761018-015db180-1272-11e9-93d9-d3693cae9d66.jpg) | ![output](https://user-images.githubusercontent.com/883386/50761024-03277500-1272-11e9-9c20-2568b87a2344.png) |
+
+
+Note: In case of in plane rotated faces the angle value should be adapted to the provided image.
+
+## Running the library as a shared object (SO/DLL)
+
+The demos from the [python](https://github.com/esimov/pigo/tree/master/demos/python) folder are meant to show how the library can be integrated into other languages, like in this case, Python.
 
 ### How does it works?
 From the Python script we access the webcam, converts the pixel data to a byte array and through `cgo` we transfer the results as a **shared object** to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates and higher latency.
