@@ -3,7 +3,7 @@
 [![Build](https://github.com/esimov/pigo/actions/workflows/build.yml/badge.svg)](https://github.com/esimov/pigo/actions/workflows/build.yml)
 [![go.dev reference](https://img.shields.io/badge/pkg.go.dev-reference-007d9c?logo=go)](https://pkg.go.dev/github.com/esimov/pigo/core)
 [![license](https://img.shields.io/github/license/esimov/pigo)](./LICENSE)
-[![release](https://img.shields.io/badge/release-v1.5.0-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.5.0)
+[![release](https://img.shields.io/badge/release-v1.5.1-blue.svg)](https://github.com/esimov/pigo/releases/tag/v1.5.1)
 [![pigo](https://snapcraft.io/pigo/badge.svg)](https://snapcraft.io/pigo)
 
 Pigo is a pure Go face detection, pupil/eyes localization and facial landmark points detection library based on the **[Pixel Intensity Comparison-based Object detection](https://arxiv.org/pdf/1305.4537.pdf)** paper.
@@ -17,7 +17,7 @@ The reason why this library has been developed is because all of the currently e
 
 ## Key features
 - [x] Does not require OpenCV or any 3rd party modules to be installed
-- [x] High processing speed
+- [x] [High processing speed](#real-time-face-detection)
 - [x] There is no need for image preprocessing prior to detection
 - [x] There is no need for the computation of integral images, image pyramid, HOG pyramid or any other similar data structure
 - [x] The face detection is based on pixel intensity comparison encoded in the binary file tree structure
@@ -33,14 +33,14 @@ The reason why this library has been developed is because all of the currently e
 ## Real time face detection
 
 ### Native support
-**The library does not require any additional modules or third party applications to be installed**, although if you you wish to try out the real time native webcam [Go demos](https://github.com/esimov/pigo/tree/master/demos/native) you might need to install a couple of dependencies required by the [Gio](http://gioui.org/) library.
+**The library does not require any additional modules or third party applications to be installed**, although if you you wish to try out the real time native Go webcam [examples](https://github.com/esimov/pigo/tree/master/examples/native) you might need to install a couple of dependencies required by the [Gio](http://gioui.org/) library.
 
 Head over to this section https://gioui.org/#installation to check all the required dependencies.
 
-For accessing the webcam we are using [Pion](https://github.com/pion/mediadevices). For all the required dependencies check the project repository. For Windows and MacOS all the codecs should be available by default. On Linux based systems you might need to install additional dependencies.
+The [Pion](https://github.com/pion/mediadevices) library is used to access the webcam. For all the required dependencies check the project repository. For Windows and MacOS all the codecs should be available by default. On Linux based systems you might need to install additional dependencies.
 
-### Using as a shared library
-The Pigo library can be incorporated into other languages also in case a C linking is supported by the targeted language. The demos from the [python](https://github.com/esimov/pigo/tree/master/demos/python) folders are proof of concepts of how Pigo can be embedded as a shared library into a Python program.
+### Using Pigo as shared library
+The Pigo library can be incorporated into other languages in case C linking is supported by the targeted language. The examples in the [python](https://github.com/esimov/pigo/tree/master/examples/python) folder are proof of concepts of how Pigo can be embedded as a shared object into a Python program.
 
 Head over to this [subtopic](#real-time-face-detection-running-as-a-shared-object) for more details.
 
@@ -198,7 +198,7 @@ Note: In case of in plane rotated faces the angle value should be adapted to the
 
 ## Running the library as a shared object (SO/DLL)
 
-The demos from the [python](https://github.com/esimov/pigo/tree/master/demos/python) folder are meant to show how the library can be integrated into other languages, like in this case, Python.
+The examples from the [python](https://github.com/esimov/pigo/tree/master/examples/python) folder are meant to show how the library can be integrated into other languages, like in this case, Python.
 
 ### How does it works?
 From the Python script we access the webcam, converts the pixel data to a byte array and through `cgo` we transfer the results as a **shared object** to the Go program where the core face detection is happening. But as you can imagine this operation is not cost effective, resulting in lower frame rates and higher latency.
